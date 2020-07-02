@@ -5,6 +5,10 @@
 #ifndef TOMADA_SMART_CONDO_JSONDATA_H
 #define TOMADA_SMART_CONDO_JSONDATA_H
 
+#include "projectConfig.h"
+
+#ifdef USER_MANAGEMENT_ENABLED
+
 #include <string>
 #include <nlohmann/json.hpp>
 
@@ -22,5 +26,5 @@ namespace JsonData {
     void from_json(const nlohmann::json &j, User &user);
 }
 
-
+#endif
 #endif //TOMADA_SMART_CONDO_JSONDATA_H

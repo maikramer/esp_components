@@ -49,6 +49,7 @@ public:
     Commander();
 
     static void CheckForCommand(const std::string &rxValue, BluetoothConnection *connection);
+    static void AddCommand(DeviceCommand command);
 
 private:
     static std::list<DeviceCommand> _commands;

@@ -13,8 +13,6 @@
 class ConnectionManager {
 
 public:
-    static void Init();
-
     static auto GetFreeConnection() -> BluetoothConnection *;
 
     static void Connect(uint16_t conn_id);
@@ -24,6 +22,8 @@ public:
     static auto GetConnectionById(uint16_t id) -> BluetoothConnection *;
 
     static void Disconnect(uint16_t id);
+
+    static void Init(ConnectedUser* userType, int noOfConnections);
 
 private:
     static SafeList<BluetoothConnection *> _connectionPool;//NOLINT

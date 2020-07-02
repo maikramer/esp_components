@@ -32,7 +32,12 @@ public:
 
     static auto GetInstance() -> BluetoothServer *;
 
-    void SetupBt();
+#ifdef USER_MANAGEMENT_ENABLED
+    void SetupBt(ConnectedUser* userType);
+#else
+        void SetupBt();
+#endif
+
 
     auto CreatePlugCharacteristic() -> BLECharacteristic *;
 

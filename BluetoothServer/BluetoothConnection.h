@@ -8,6 +8,8 @@
 
 class BluetoothConnection : public BLECharacteristicCallbacks {
 public:
+    BluetoothConnection(ConnectedUser *user);
+
     BLECharacteristic *WriteCharacteristic = nullptr;
     BLECharacteristic *NotifyCharacteristic = nullptr;
     SemaphoreHandle_t xSendMutex = xSemaphoreCreateMutex();
@@ -24,7 +26,7 @@ public:
     void Free() {
         _isFree = false;
         _conn_ID = -1;
-        _user.Clear();
+        _user->Clear();
     }
 
     void Setup(uint16_t conn_id) {
@@ -42,7 +44,7 @@ public:
 
     void onStatus(BLECharacteristic *pCharacteristic, Status s, uint32_t code) override;
 
-    ConnectedUser *GetUser() { return &_user; }
+    ConnectedUser *GetUser() { return _user; }
 
     void SendUsageData(bool isNotification) const;
 
@@ -53,7 +55,7 @@ public:
 private:
     bool _isFree = true;
     int _conn_ID = -1;
-    ConnectedUser _user{};
+    ConnectedUser* _user;
 
     void SendJson(const std::string &json) const;
 };

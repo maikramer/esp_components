@@ -5,6 +5,9 @@
 #ifndef TOMADA_SMART_CONDO_USERMANAGER_H
 #define TOMADA_SMART_CONDO_USERMANAGER_H
 
+#include "projectConfig.h"
+#ifdef USER_MANAGEMENT_ENABLED
+
 #include <string>
 #include <vector>
 #include <list>
@@ -57,5 +60,6 @@ public:
     static void SendLoginTryResult(LoginTry loginTry, BluetoothConnection *connection);
 };
 
+#endif
 
 #endif //TOMADA_SMART_CONDO_USERMANAGER_H

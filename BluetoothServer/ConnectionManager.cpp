@@ -4,16 +4,14 @@
 
 #include "ConnectionManager.h"
 #include "BluetoothServer.h"
-#include "EnergyPlug.h"
 
-#define NO_OF_CONNECTIONS 5
 #define DEBUG_INFO
 
 SafeList<BluetoothConnection *> ConnectionManager::_connectionPool;//NOLINT
 
-void ConnectionManager::Init() {
-    for (auto i = 0; i < NO_OF_CONNECTIONS; i++) {
-        auto *connection = new BluetoothConnection();
+void ConnectionManager::Init(ConnectedUser* userType, int noOfConnections) {
+    for (auto i = 0; i < noOfConnections; i++) {
+        auto *connection = new BluetoothConnection(userType->CreateNewInstance());
         connection->Init();
         _connectionPool.Push(connection);
     }
@@ -90,19 +88,14 @@ void ConnectionManager::SendNotifications() {
 
             auto *user = connection->GetUser();
             auto isLogged = user->IsLogged;
-            auto plugIsValid = user->Plug != nullptr;
-            if (!plugIsValid)
-                continue;
 
-            auto state = user->Plug->GetState();
-            auto stateSending = state == EnergyPlugState::ActiveAndSending || state == EnergyPlugState::Error;
-            auto resendNeeded = user->Plug->SendUsageDataIsNeeded();
+            auto state = user->GetNotificationNeeds();
 
-            if (isLogged && stateSending && resendNeeded) {
+            if (isLogged && state != NotificationNeeds::NoSend) {
                 ESP_LOGI(__FUNCTION__, "Enviando para %s", user->User.c_str());
-                if (state == EnergyPlugState::Error && !user->Plug->ErrorNotified) {
+                if (state == NotificationNeeds::SendImportant) {
                     connection->SendUsageData(false);
-                    user->Plug->ErrorNotified = true;
+                    user->OnImportantSent();
                 } else {
                     connection->SendUsageData(true);
                 }

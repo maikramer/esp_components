@@ -5,6 +5,8 @@
 #ifndef TOMADA_SMART_CONDO_USAGEDATA_H
 #define TOMADA_SMART_CONDO_USAGEDATA_H
 
+#include "projectConfig.h"
+#ifdef USER_MANAGEMENT_ENABLED
 
 #include <cstdint>
 #include <string>
@@ -33,5 +35,7 @@ public:
 
 //void to_json(json &j, const UsageData &usageData);
 //void from_json(const json &j, UsageData &usageData);
+
+#endif
 
 #endif //TOMADA_SMART_CONDO_USAGEDATA_H

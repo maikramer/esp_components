@@ -6,6 +6,9 @@
 
 //#define LOG_SENT
 
+BluetoothConnection::BluetoothConnection(ConnectedUser* user) {
+    _user = user;
+}
 void BluetoothConnection::Init() {
     WriteCharacteristic = BluetoothServer::GetInstance()->CreatePrivateWriteCharacteristic();
     WriteCharacteristic->setCallbacks(this);
@@ -34,18 +37,12 @@ auto BluetoothConnection::GetConnectionInfoJson() -> std::string {
 }
 
 void BluetoothConnection::SendUsageData(bool isNotification) const {
-    auto *plug = _user.Plug;
-    if (plug == nullptr) {
-        ESP_LOGE(__FUNCTION__, "Plug invalido");
-        return;
-    }
 
-    auto json = plug->GetEnergyUsageJson();
-    //            ESP_LOGI(__FUNCTION__, "Sending %s\n", json.c_str());
-    unsigned char bytes[json.length()];
-    auto size = Utility::StringToByteArray(json, bytes);
+    auto list = _user->GetData();
+    uint8_t data[list.size()];
+    std::copy(list.begin(), list.end(), data);
 
-    NotifyCharacteristic->setValue(bytes, size);
+    NotifyCharacteristic->setValue(data, list.size());
     NotifyCharacteristic->notify(isNotification);
 }
 

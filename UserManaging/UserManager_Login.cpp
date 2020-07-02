@@ -3,7 +3,6 @@
 //
 
 #include <esp_log.h>
-#include <EnergyPlugManager.h>
 #include "UserManager.h"
 
 void UserManager::Login(const std::vector<std::string> &data, BluetoothConnection *connection) {
@@ -47,7 +46,7 @@ void UserManager::Login(const std::vector<std::string> &data, BluetoothConnectio
         if (result == LoginTry::Ok) {
             connectedUser->IsLogged = true;
             connectedUser->User = user;
-            EnergyPlugManager::OnLogin(connectedUser);
+            connectedUser->OnLogin();
 
         }
     }
