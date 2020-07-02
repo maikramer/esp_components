@@ -51,10 +51,6 @@ public:
 
     static void ApproveUser(const std::string &userName);
 
-    static void GetUsersAccumulatedUsageMap(std::map<std::string, uint32_t> &map, uint32_t from, uint32_t to);
-
-    static void GetUsersAccumulated(const std::vector<std::string> &data, BluetoothConnection *connection);
-
     static auto CheckPassword(string &user, string &pass) -> LoginTry;
 
     static void SendLoginTryResult(LoginTry loginTry, BluetoothConnection *connection);

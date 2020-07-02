@@ -15,6 +15,8 @@
 #include "ConnectionManager.h"
 #include <sstream>
 #include <Utility.h>
+#include <nlohmann/json.hpp>
+#include <ConnectedUser.h>
 
 static void SendDataTask(void *arg __unused) {
     TickType_t xLastWakeTime = 0;
@@ -102,7 +104,7 @@ auto BluetoothServer::GetInstance() -> BluetoothServer * {
 #ifdef USER_MANAGEMENT_ENABLED
 void BluetoothServer::SetupBt(ConnectedUser* userType) {
 #else
-    void BluetoothServer::SetupBt(ConnectedUser userType) {
+    void BluetoothServer::SetupBt() {
 #endif
     // Create the BLE Device
     BLEDevice::init("Tomada Smart");
@@ -114,8 +116,13 @@ void BluetoothServer::SetupBt(ConnectedUser* userType) {
     publicService = BleServer->createService(PUBLIC_SERVICE_UUID);
     privateService = CreatePrivateService();
     privateServiceUUID = privateService->getUUID().toString();
+#ifdef USER_MANAGEMENT_ENABLED
     ConnectionManager::Init(userType, NO_OF_CONNECTIONS);
     delete userType;
+#else
+    ConnectionManager::Init(NO_OF_CONNECTIONS);
+#endif
+
 
     // Create a BLE Characteristic
     publicTxCharacteristic = publicService->createCharacteristic(

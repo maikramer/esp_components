@@ -8,9 +8,54 @@
 #include "ConnectedUser.h"
 
 //#define DEBUG_INFO
+//todo:Adicionar uma condicao que os codigos devem ser maiores que 10, mudar os codigos de main
+enum class UserManagerCommandCode : uint8_t {
+    SetAdminInfoCode = 5,
+    LoginCode = 6,
+    LogoffCode = 7,
+    SignUpCode = 8,
+    GetUsersWaitingCode = 9,
+    ApproveUserCode = 10
+};
 
 void UserManager::Init() {
+    const DeviceCommand SetAdminInfo(2, "SetAdminInfo", (uint8_t) UserManagerCommandCode::SetAdminInfoCode,
+                                     [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                                         UserManager::SetAdmin(data, connection);
+                                     });
 
+    const DeviceCommand Login(2, "Login", (uint8_t) UserManagerCommandCode::LoginCode,
+                              [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                                  UserManager::Login(data, connection);
+                              });
+
+    const DeviceCommand Logoff(0, "Logoff", (uint8_t) UserManagerCommandCode::LogoffCode,
+                               [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                                   UserManager::Logoff(connection);
+                               });
+
+    const DeviceCommand SignUp(1, "SignUp", (uint8_t) UserManagerCommandCode::SignUpCode,
+                               [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                                   UserManager::SignUp(data[0], connection);
+                               });
+
+    const DeviceCommand GetUsersWaiting(0, "GetUsersWaiting", (uint8_t) UserManagerCommandCode::GetUsersWaitingCode,
+                                        [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                                            UserManager::GetUsersWaitingForApproval(connection);
+                                        });
+
+    const DeviceCommand ApproveUser(1, "ApproveUser", (uint8_t) UserManagerCommandCode::ApproveUserCode,
+                                    [](const std::vector<std::string> &data,
+                                       BluetoothConnection *connection) {
+                                        UserManager::ApproveUser(data[0]);
+                                    });
+
+    Commander::AddCommand(SetAdminInfo);
+    Commander::AddCommand(Login);
+    Commander::AddCommand(Logoff);
+    Commander::AddCommand(SignUp);
+    Commander::AddCommand(GetUsersWaiting);
+    Commander::AddCommand(ApproveUser);
 }
 
 auto UserManager::GetAdminInfoJson() -> std::string {
@@ -190,41 +235,4 @@ void UserManager::ApproveUser(const std::string &userName) {
 
 }
 
-void UserManager::GetUsersAccumulatedUsageMap(std::map<std::string, uint32_t> &map, uint32_t from, uint32_t to) {
-    auto list = SdCard::GetUserListWithFilter(
-            [](const JsonData::User &user) { return true; });
 
-    map.clear();
-    for (const auto &user:list) {
-        auto usage = SdCard::GetAccumulatedFromUser(user.Name, from, to);
-        //So adiciona se nao for zero
-        if (usage > 0) {
-            auto pair = std::pair<std::string, uint32_t>(user.Name, usage);
-            map.insert(pair);
-        }
-    }
-
-    ESP_LOGI(__FUNCTION__, "Size: %u", map.size());
-}
-
-void UserManager::GetUsersAccumulated(const std::vector<std::string> &data, BluetoothConnection *connection) {
-    auto dateFrom = std::stoul(data[0]);
-    auto dateTo = std::stoul(data[1]);
-    std::map<std::string, uint32_t> usageMap;
-    GetUsersAccumulatedUsageMap(usageMap, dateFrom, dateTo);
-    for (auto usage:usageMap) {
-        nlohmann::json j;
-        j["UserName"] = usage.first;
-        j["Usage"] = usage.second;
-
-        auto json_str = j.dump();
-//                ESP_LOGI(__FUNCTION__, "Sending %s", json_str.c_str());
-        connection->SendJsonData(json_str);
-    }
-
-    nlohmann::json j;
-    j["End"] = true;
-    auto json_str = j.dump();
-    connection->SendJsonData(json_str);
-
-}

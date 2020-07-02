@@ -3,40 +3,46 @@
 
 #include <string>
 #include <custom/BLECharacteristic.h>
-#include <ConnectedUser.h>
+#include <functional>
+#include "projectConfig.h"
+
+#ifdef USER_MANAGEMENT_ENABLED
+
+class ConnectedUser;
+
+#endif
+
 #include "JsonData.h"
+#include "list"
+
+enum class NotificationNeeds {
+    NoSend,
+    SendNormal,
+    SendImportant
+};
 
 class BluetoothConnection : public BLECharacteristicCallbacks {
 public:
+#ifdef USER_MANAGEMENT_ENABLED
+
     BluetoothConnection(ConnectedUser *user);
 
+#endif
     BLECharacteristic *WriteCharacteristic = nullptr;
     BLECharacteristic *NotifyCharacteristic = nullptr;
     SemaphoreHandle_t xSendMutex = xSemaphoreCreateMutex();
-    SemaphoreHandle_t xCanNotifySemaphore = xSemaphoreCreateBinary();
 
-    std::string GetWriteUUID() {
-        return WriteCharacteristic->getUUID().toString();
-    }
+    [[nodiscard]] std::string GetWriteUUID() const;
 
-    std::string GetNotifyUUID() {
-        return NotifyCharacteristic->getUUID().toString();
-    }
+    [[nodiscard]] std::string GetNotifyUUID() const;
 
-    void Free() {
-        _isFree = false;
-        _conn_ID = -1;
-        _user->Clear();
-    }
+    void Free();
 
-    void Setup(uint16_t conn_id) {
-        _conn_ID = conn_id;
-        _isFree = false;
-    }
+    void Setup(uint16_t conn_id);
 
-    bool IsFree() { return _isFree; }
+    [[nodiscard]] bool IsFree() const;
 
-    int GetId() { return _conn_ID; }
+    [[nodiscard]] int GetId() const;
 
     void Init();
 
@@ -44,7 +50,14 @@ public:
 
     void onStatus(BLECharacteristic *pCharacteristic, Status s, uint32_t code) override;
 
+#ifdef USER_MANAGEMENT_ENABLED
+
     ConnectedUser *GetUser() { return _user; }
+
+#else
+    NotificationNeeds GetNotificationNeeds();
+    void SetGetDataFunction(std::function<std::list<uint8_t> ()> callback);
+#endif
 
     void SendUsageData(bool isNotification) const;
 
@@ -55,7 +68,11 @@ public:
 private:
     bool _isFree = true;
     int _conn_ID = -1;
-    ConnectedUser* _user;
+#ifdef USER_MANAGEMENT_ENABLED
+    ConnectedUser *_user;
+#else
+    std::function<std::list<uint8_t> ()> _getDataFunction;
+#endif
 
     void SendJson(const std::string &json) const;
 };

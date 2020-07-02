@@ -15,24 +15,24 @@ class BluetoothConnection;
 
 typedef void (*DeviceCommandFunctionPtr)(const std::vector<std::string> &, BluetoothConnection *);
 
-enum class CommandCode : uint8_t {
-    StartCode = 0,
-    FinalizeCode = 1,
-    GetUsageCode = 2,
-    GetAccumCode = 3,
-    GetUsersAccumulatedUsageMap = 4,
-    SetAdminInfoCode = 5,
-    LoginCode = 6,
-    LogoffCode = 7,
-    SignUpCode = 8,
-    GetUsersWaitingCode = 9,
-    ApproveUserCode = 10,
-    UserCommand = 11
-};
+//enum class CommandCode : uint8_t {
+//    StartCode = 0,
+//    FinalizeCode = 1,
+//    GetUsageCode = 2,
+//    GetAccumCode = 3,
+//    GetUsersAccumulatedUsageMap = 4,
+//    SetAdminInfoCode = 5,
+//    LoginCode = 6,
+//    LogoffCode = 7,
+//    SignUpCode = 8,
+//    GetUsersWaitingCode = 9,
+//    ApproveUserCode = 10,
+//    UserCommand = 11
+//};
 
 class DeviceCommand {
 public:
-    DeviceCommand(const uint32_t dataSize, const char *internalName, const CommandCode code,
+    DeviceCommand(const uint32_t dataSize, const char *internalName, const uint8_t code,
                   DeviceCommandFunctionPtr functionPtr) : DataSize(dataSize),
                                                           InternalName(internalName),
                                                           Code(code),
@@ -40,7 +40,7 @@ public:
 
     const uint32_t DataSize;
     const char *InternalName;
-    const CommandCode Code;
+    const uint8_t Code;
     DeviceCommandFunctionPtr Function;
 };
 

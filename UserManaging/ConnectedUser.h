@@ -12,14 +12,9 @@
 #include <string>
 #include <Storage.h>
 #include <SdCard.h>
+#include <BluetoothConnection.h>
 #include "Enums.h"
 #include "list"
-
-enum class NotificationNeeds{
-    NoSend,
-    SendNormal,
-    SendImportant
-};
 
 class ConnectedUser {
 public:

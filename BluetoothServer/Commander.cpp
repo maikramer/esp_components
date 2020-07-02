@@ -8,7 +8,6 @@
 #include <Utility.h>
 #include <priorities.h>
 #include "Commander.h"
-#include "UserManager.h"
 #include "vector"
 
 typedef struct {
@@ -33,10 +32,16 @@ Commander::Commander() {
     Utility::CreateAndProfile("CommandExecuterTask", CommandExecuterTask, 4096, HIGH_PRIORITY, 0, nullptr);
 
 
-
 }
 
-void Commander::AddCommand(DeviceCommand command){
+void Commander::AddCommand(DeviceCommand command) {
+    for (auto comm : _commands) {
+        if (comm.Code == command.Code) {
+            ESP_LOGE(__FUNCTION__, "Codigo %u, para o comando %s, ja utilizado pelo comando %s", comm.Code,
+                     command.InternalName, comm.InternalName);
+            return;
+        }
+    }
     _commands.push_back(command);
 }
 
@@ -56,7 +61,7 @@ void Commander::CheckForCommand(const std::string &rxValue, BluetoothConnection 
     ESP_LOGI(__FUNCTION__, "Data : %s", printData.str().c_str());
 
     for (auto command : _commands) {
-        if ((uint8_t) command.Code == commandCode) {
+        if (command.Code == commandCode) {
             ESP_LOGI(__FUNCTION__, "Comando encontrado: %s", command.InternalName);
             auto *commandToSend = new Command_t;
             commandToSend->Function = command.Function;

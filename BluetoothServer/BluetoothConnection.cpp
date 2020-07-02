@@ -2,13 +2,29 @@
 #include <BluetoothServer.h>
 #include <Utility.h>
 #include <sstream>
+#include <esp_log.h>
+#include <nlohmann/json.hpp>
+#include <utility>
+#include <ConnectedUser.h>
 #include "ConnectionManager.h"
 
 //#define LOG_SENT
+#ifdef USER_MANAGEMENT_ENABLED
 
-BluetoothConnection::BluetoothConnection(ConnectedUser* user) {
+BluetoothConnection::BluetoothConnection(ConnectedUser *user) {
     _user = user;
 }
+
+#else
+void BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t> ()> callback){
+    _getDataFunction = std::move(callback);
+}
+
+NotificationNeeds BluetoothConnection::GetNotificationNeeds() {
+    return NotificationNeeds::SendNormal;
+}
+#endif
+
 void BluetoothConnection::Init() {
     WriteCharacteristic = BluetoothServer::GetInstance()->CreatePrivateWriteCharacteristic();
     WriteCharacteristic->setCallbacks(this);
@@ -37,8 +53,15 @@ auto BluetoothConnection::GetConnectionInfoJson() -> std::string {
 }
 
 void BluetoothConnection::SendUsageData(bool isNotification) const {
-
+#ifdef USER_MANAGEMENT_ENABLED
     auto list = _user->GetData();
+#else
+    if(_getDataFunction == nullptr) {
+        ESP_LOGE(__FUNCTION__ , "Sem funcoes para envio de dados definidas");
+        return;
+    }
+    auto list = _getDataFunction();
+#endif
     uint8_t data[list.size()];
     std::copy(list.begin(), list.end(), data);
 
@@ -114,6 +137,31 @@ BluetoothConnection::onStatus(BLECharacteristic *pCharacteristic, BLECharacteris
     } else {
         ESP_LOGI("Status", "%s", str.c_str());
     }
+#endif
+}
+
+bool BluetoothConnection::IsFree() const { return _isFree; }
+
+int BluetoothConnection::GetId() const { return _conn_ID; }
+
+void BluetoothConnection::Setup(uint16_t conn_id) {
+    _conn_ID = conn_id;
+    _isFree = false;
+}
+
+std::string BluetoothConnection::GetWriteUUID() const {
+    return WriteCharacteristic->getUUID().toString();
+}
+
+std::string BluetoothConnection::GetNotifyUUID() const {
+    return NotifyCharacteristic->getUUID().toString();
+}
+
+void BluetoothConnection::Free() {
+    _isFree = false;
+    _conn_ID = -1;
+#ifdef USER_MANAGEMENT_ENABLED
+    _user->Clear();
 #endif
 }
 

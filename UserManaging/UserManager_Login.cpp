@@ -3,7 +3,9 @@
 //
 
 #include <esp_log.h>
+#include <SdCard.h>
 #include "UserManager.h"
+#include "ConnectedUser.h"
 
 void UserManager::Login(const std::vector<std::string> &data, BluetoothConnection *connection) {
     auto *connectedUser = connection->GetUser();
@@ -47,6 +49,7 @@ void UserManager::Login(const std::vector<std::string> &data, BluetoothConnectio
             connectedUser->IsLogged = true;
             connectedUser->User = user;
             connectedUser->OnLogin();
+
 
         }
     }
