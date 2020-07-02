@@ -15,6 +15,7 @@
 #include "ConnectionManager.h"
 #include <sstream>
 #include <Utility.h>
+#include <projectConfig.h>
 
 static void SendDataTask(void *arg __unused) {
     TickType_t xLastWakeTime = 0;

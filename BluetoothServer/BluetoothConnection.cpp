@@ -3,7 +3,6 @@
 #include <Utility.h>
 #include <sstream>
 #include "ConnectionManager.h"
-#include "EnergyPlug.h"
 
 //#define LOG_SENT
 
