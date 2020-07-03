@@ -33,7 +33,7 @@ public:
     static auto GetInstance() -> BluetoothServer *;
 
 #ifdef USER_MANAGEMENT_ENABLED
-    void SetupBt(ConnectedUser* userType);
+    void SetupBt(ConnectedUser* userType, int maxConnections);
 #else
         void SetupBt();
 #endif

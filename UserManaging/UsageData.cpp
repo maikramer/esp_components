@@ -1,6 +1,8 @@
 //
 // Created by maikeu on 20/08/2019.
 //
+#include "projectConfig.h"
+#ifdef USER_MANAGEMENT_ENABLED
 
 #include <cstring>
 #include "UsageData.h"
@@ -54,3 +56,5 @@ auto UsageData::ToJsonChanged(UsageData lastUsage) -> std::string {
 
     return j.dump();
 }
+
+#endif

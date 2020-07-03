@@ -20,8 +20,12 @@ void BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t> ()> cal
     _getDataFunction = std::move(callback);
 }
 
+void BluetoothConnection::SetNotificationNeeds(NotificationNeeds needs) {
+    _notificationNeeds = needs;
+
+}
 NotificationNeeds BluetoothConnection::GetNotificationNeeds() {
-    return NotificationNeeds::SendNormal;
+    return _notificationNeeds;
 }
 #endif
 

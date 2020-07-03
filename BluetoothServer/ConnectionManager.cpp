@@ -3,7 +3,9 @@
 //
 
 #include <esp_log.h>
+#ifdef USER_MANAGEMENT_ENABLED
 #include <ConnectedUser.h>
+#endif
 #include "ConnectionManager.h"
 #include "BluetoothServer.h"
 
@@ -16,7 +18,7 @@ SafeList<BluetoothConnection *> ConnectionManager::_connectionPool;//NOLINT
 void ConnectionManager::Init(ConnectedUser *userType, int noOfConnections) {
 #else
 
-    void ConnectionManager::Init(int noOfConnections) {
+void ConnectionManager::Init(int noOfConnections) {
 #endif
     for (auto i = 0; i < noOfConnections; i++) {
 #ifdef USER_MANAGEMENT_ENABLED
@@ -39,8 +41,10 @@ void ConnectionManager::Connect(uint16_t conn_id) {
 }
 
 void ConnectionManager::Disconnect(uint16_t id) {
-    auto *conn = GetConnectionById(id);
 #ifdef USER_MANAGEMENT_ENABLED
+}
+    auto *conn = GetConnectionById(id);
+
     auto *user = conn->GetUser();
     if (user != nullptr) {
         user->Clear();
@@ -108,30 +112,27 @@ void ConnectionManager::SendNotifications() {
             if (isLogged) {
                 auto state = user->GetNotificationNeeds();
 #else
-                auto state = connection->GetNotificationNeeds();
+            auto state = connection->GetNotificationNeeds();
 #endif
-                if (state != NotificationNeeds::NoSend) {
+            if (state != NotificationNeeds::NoSend) {
 
 #ifdef USER_MANAGEMENT_ENABLED
-                    ESP_LOGI(__FUNCTION__, "Enviando para %s", user->User.c_str());
+                ESP_LOGI(__FUNCTION__, "Enviando para %s", user->User.c_str());
 #else
-                    ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
+                ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
 #endif
-                    if (state == NotificationNeeds::SendImportant) {
-                        connection->SendUsageData(false);
-#ifdef USER_MANAGEMENT_ENABLED
-                        user->OnImportantSent();
-#endif
-                    } else {
-                        connection->SendUsageData(true);
-                    }
-                }
+                connection->SendUsageData(!(state == NotificationNeeds::SendImportant));
+            }
 #ifdef USER_MANAGEMENT_ENABLED
             }
 #endif
 
         }
+#ifdef USER_MANAGEMENT_ENABLED
         vTaskDelay(2);
+#else
+        vTaskDelay(50);
+#endif
         _connectionPool.EndReadList();
     }
 }

@@ -1,6 +1,8 @@
 //
 // Created by maikeu on 30/09/2019.
 //
+#include "projectConfig.h"
+#ifdef USER_MANAGEMENT_ENABLED
 
 #include "JsonData.h"
 
@@ -20,3 +22,5 @@ namespace JsonData {
         j.at("IsConfirmed").get_to(user.IsConfirmed);
     }
 }
+
+#endif

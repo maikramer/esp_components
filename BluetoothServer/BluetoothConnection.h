@@ -75,6 +75,10 @@ private:
 #endif
 
     void SendJson(const std::string &json) const;
+
+    void SetNotificationNeeds(NotificationNeeds needs);
+
+    NotificationNeeds _notificationNeeds = NotificationNeeds::NoSend;
 };
 
 #endif

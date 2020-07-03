@@ -32,9 +32,9 @@ public:
     static StoreResult
     StoreKeyValue(const std::string &key, uint32_t value, const std::string &fileName, bool overwrite);
 
-    StoreResult ReadKeyValue(const std::string &key, std::string &out, const std::string &fileName);
+    static StoreResult ReadKeyValue(const std::string &key, std::string &out, const std::string &fileName);
 
-    StoreResult ReadKeyValue(const std::string &key, uint32_t *out, const std::string &fileName);
+    static StoreResult ReadKeyValue(const std::string &key, uint32_t *out, const std::string &fileName);
 
     StoreResult LoadConfig(const std::string &key, std::string &config);
 
@@ -42,7 +42,7 @@ private:
     static StoreResult
     StoreKeyValue(const std::string &key, void *value, const std::string &fileName, DataType type, bool overwrite);
 
-    StoreResult ReadKeyValue(const std::string &key, void *out, const std::string &fileName, DataType type);
+    static StoreResult ReadKeyValue(const std::string &key, void *out, const std::string &fileName, DataType type);
 
 };
 

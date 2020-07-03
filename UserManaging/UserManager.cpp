@@ -1,6 +1,8 @@
 //
 // Created by maikeu on 25/09/2019.
 //
+#include "projectConfig.h"
+#ifdef USER_MANAGEMENT_ENABLED
 
 #include <esp_log.h>
 #include <GeneralUtils.h>
@@ -234,5 +236,5 @@ void UserManager::ApproveUser(const std::string &userName) {
     SdCard::StoreUserJson(userName, json_str, true);
 
 }
-
+#endif
 

@@ -11,6 +11,8 @@
 #include <freertos/task.h>
 #include <vector>
 #include "string"
+#include <hal/gpio_types.h>
+#include <driver/gpio.h>
 
 class Utility {
 
@@ -23,6 +25,10 @@ public:
                                  void *parameter) -> TaskHandle_t;
 
     static uint32_t StringToByteArray(const std::string &input, uint8_t *output);
+
+    static void SetInput(gpio_num_t gpioNum, gpio_pullup_t pullUp);
+
+    static void SetOutput(gpio_num_t gpioNum, bool openDrain, uint32_t initial_level = 0);
 };
 
 

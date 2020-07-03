@@ -10,6 +10,7 @@
 #include "Utility.h"
 #include <GeneralUtils.h>
 
+
 //#define PROFILE_STACK
 
 auto Utility::split(const std::string &source, char delimiter) -> std::vector<std::string> {
@@ -39,7 +40,7 @@ auto Utility::StringToByteArray(const std::string &input, uint8_t *output) -> ui
 auto Utility::CreateAndProfile(const char *taskName, TaskFunction_t function, const uint32_t stack,
                                UBaseType_t priority,
                                int core, void *parameter) -> TaskHandle_t {
-    xTaskHandle handle;
+    xTaskHandle handle = nullptr;
     auto res = xTaskCreatePinnedToCore(function, taskName, stack, parameter, priority, &handle, core);
     configASSERT(handle)
     if (res != pdPASS || handle == nullptr) {
@@ -56,6 +57,46 @@ auto Utility::CreateAndProfile(const char *taskName, TaskFunction_t function, co
 #endif
 
     return handle;
+}
+
+void Utility::SetOutput(gpio_num_t gpioNum, bool openDrain, uint32_t initial_level) {
+    gpio_config_t io_conf;
+    //disable interrupt
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    //set as output mode
+    if (openDrain) {
+        io_conf.mode = GPIO_MODE_OUTPUT_OD;
+    }
+    else
+    {
+        io_conf.mode = GPIO_MODE_OUTPUT;
+    }
+    //bit mask of the pins that you want to set.
+    io_conf.pin_bit_mask = ((uint64_t)1) << gpioNum;
+    //disable pull-down mode
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    //disable pull-up mode
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    //configure GPIO with the given settings
+    gpio_config(&io_conf);
+    gpio_set_level(gpioNum, initial_level);
+}
+
+void Utility::SetInput(gpio_num_t gpioNum, gpio_pullup_t pullUp)
+{
+    gpio_config_t io_conf;
+    //disable interrupt
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    //set as output mode
+    io_conf.mode = GPIO_MODE_INPUT;
+    //bit mask of the pins that you want to set.
+    io_conf.pin_bit_mask = ((uint64_t)1) << gpioNum;
+    //disable pull-down mode
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    //disable pull-up mode
+    io_conf.pull_up_en = pullUp;
+    //configure GPIO with the given settings
+    gpio_config(&io_conf);
 }
 
 //auto Utility::CreateAndProfileStatic(const char *taskName, TaskFunction_t function, const uint32_t stack,

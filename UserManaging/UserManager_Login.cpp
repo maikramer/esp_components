@@ -1,6 +1,8 @@
 //
 // Created by maikeu on 23/02/2020.
 //
+#include "projectConfig.h"
+#ifdef USER_MANAGEMENT_ENABLED
 
 #include <esp_log.h>
 #include <SdCard.h>
@@ -120,3 +122,5 @@ void UserManager::Logoff(BluetoothConnection *connection) {
     auto json = j.dump();
     connection->SendJsonData(json);
 }
+
+#endif

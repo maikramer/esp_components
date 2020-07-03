@@ -1,7 +1,7 @@
 //
 // Created by maikeu on 31/12/2019.
 //
-
+#ifdef USER_MANAGEMENT_ENABLED
 #include "SdCard.h"
 #include <JsonData.h>
 #include <GeneralUtils.h>
@@ -162,3 +162,4 @@ auto SdCard::GetAccumulatedFromUser(const std::string &apTorre, const uint32_t f
     ESP_LOGI(__FUNCTION__, "%u Registros encontrados!\nTotal acumulado nos Registros: %u", map.size(), accum);
     return accum;
 }
+#endif

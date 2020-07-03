@@ -117,10 +117,10 @@ void BluetoothServer::SetupBt(ConnectedUser* userType) {
     privateService = CreatePrivateService();
     privateServiceUUID = privateService->getUUID().toString();
 #ifdef USER_MANAGEMENT_ENABLED
-    ConnectionManager::Init(userType, NO_OF_CONNECTIONS);
+    ConnectionManager::Init(userType, CONFIG_BT_ACL_CONNECTIONS);
     delete userType;
 #else
-    ConnectionManager::Init(NO_OF_CONNECTIONS);
+    ConnectionManager::Init(CONFIG_BT_ACL_CONNECTIONS);
 #endif
 
 
