@@ -17,21 +17,36 @@ public:
     SafeList() = default;
 
     auto Empty() -> bool {
-        xSemaphoreTake(xSemaphore, TIMEOUT);
-        bool empty = _list.empty();
-        xSemaphoreGive(xSemaphore);
-        return empty;
+        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
+            bool empty = _list.empty();
+            xSemaphoreGive(xSemaphore);
+            return empty;
+        }
+        return true;
+
+    }
+
+    bool CheckBusy() {
+        bool busy = (xSemaphoreTake(xSemaphore, TIMEOUT) != pdTRUE);
+        if (!busy) {
+            xSemaphoreGive(xSemaphore);
+        }
+
+        return busy;
     }
 
     void Push(T item) {
-        xSemaphoreTake(xSemaphore, TIMEOUT);
-        _list.push_back(item);
-        xSemaphoreGive(xSemaphore);
+        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
+            _list.push_back(item);
+            xSemaphoreGive(xSemaphore);
+        }
     }
 
     auto ReadList() -> std::list<T> {
-        xSemaphoreTake(xSemaphore, TIMEOUT);
-        return _list;
+        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
+            return _list;
+        }
+        return std::list<T>();
     }
 
     void EndReadList() {
@@ -40,15 +55,22 @@ public:
 
     void Remove(T item) {
 
-        xSemaphoreTake(xSemaphore, TIMEOUT);
-        _list.remove(item);
+        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
+            xSemaphoreTake(xSemaphore, TIMEOUT);
+            _list.remove(item);
+            xSemaphoreGive(xSemaphore);
+        }
 
-        xSemaphoreGive(xSemaphore);
 
     }
 
     auto Size() -> uint32_t {
-        return _list.size();
+        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
+            uint32_t size = _list.size();
+            xSemaphoreGive(xSemaphore);
+            return size;
+        }
+        return 0;
     }
 
 private:

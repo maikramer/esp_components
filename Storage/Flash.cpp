@@ -32,6 +32,11 @@ auto Flash::StoreKeyValue(const std::string &key, uint32_t value, const std::str
     return StoreKeyValue(key, reinterpret_cast<void *>(&value), fileName, DataType::Uint32, overwrite);
 }
 
+auto Flash::StoreKeyValue(const std::string &key, int32_t value, const std::string &fileName,
+                          bool overwrite) -> StoreResult {
+    return StoreKeyValue(key, reinterpret_cast<void *>(&value), fileName, DataType::Int32, overwrite);
+}
+
 auto Flash::StoreKeyValue(const std::string &key, void *value, const std::string &fileName, DataType type,
                           bool overwrite) -> StoreResult {
     const char *TAG = __FUNCTION__;

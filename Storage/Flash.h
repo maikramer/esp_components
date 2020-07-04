@@ -24,25 +24,29 @@ class Flash {
 public:
     static void Init();
 
-    static StoreResult StoreConfig(const std::string &key, std::string &value, bool overwrite);
+    static auto StoreConfig(const std::string &key, std::string &value, bool overwrite) -> StoreResult;
 
-    static StoreResult
-    StoreKeyValue(const std::string &key, std::string &str, const std::string &fileName, bool overwrite);
+    static auto
+    StoreKeyValue(const std::string &key, std::string &str, const std::string &fileName, bool overwrite) -> StoreResult;
 
-    static StoreResult
-    StoreKeyValue(const std::string &key, uint32_t value, const std::string &fileName, bool overwrite);
+    static auto
+    StoreKeyValue(const std::string &key, uint32_t value, const std::string &fileName, bool overwrite) -> StoreResult;
 
-    static StoreResult ReadKeyValue(const std::string &key, std::string &out, const std::string &fileName);
+    static auto
+    StoreKeyValue(const std::string &key, int32_t value, const std::string &fileName, bool overwrite) -> StoreResult;
 
-    static StoreResult ReadKeyValue(const std::string &key, uint32_t *out, const std::string &fileName);
+    static auto ReadKeyValue(const std::string &key, std::string &out, const std::string &fileName) -> StoreResult;
 
-    StoreResult LoadConfig(const std::string &key, std::string &config);
+    static auto ReadKeyValue(const std::string &key, uint32_t *out, const std::string &fileName) -> StoreResult;
+
+    auto LoadConfig(const std::string &key, std::string &config) -> StoreResult;
 
 private:
-    static StoreResult
-    StoreKeyValue(const std::string &key, void *value, const std::string &fileName, DataType type, bool overwrite);
+    static auto StoreKeyValue(const std::string &key, void *value, const std::string &fileName, DataType type,
+                              bool overwrite) -> StoreResult;
 
-    static StoreResult ReadKeyValue(const std::string &key, void *out, const std::string &fileName, DataType type);
+    static auto
+    ReadKeyValue(const std::string &key, void *out, const std::string &fileName, DataType type) -> StoreResult;
 
 };
 

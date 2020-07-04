@@ -58,7 +58,10 @@ void Commander::CheckForCommand(const std::string &rxValue, BluetoothConnection 
     for (const auto &d : data) {
         printData << d << " | ";
     }
-    ESP_LOGI(__FUNCTION__, "Data : %s", printData.str().c_str());
+    if (printData.str().size() > 1) {
+        ESP_LOGI(__FUNCTION__, "Data : %s", printData.str().c_str());
+    }
+
 
     for (auto command : _commands) {
         if (command.Code == commandCode) {
