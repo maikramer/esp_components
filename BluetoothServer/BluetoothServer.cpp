@@ -39,9 +39,9 @@ auto BluetoothServer::CreatePrivateService() -> BLEService * {
     return BleServer->createService(uuid);
 }
 
-auto BluetoothServer::CreatePlugCharacteristic() -> BLECharacteristic * {
-    return CreateNotifyCharacteristic(privateService);
-}
+//auto BluetoothServer::CreatePlugCharacteristic() -> BLECharacteristic * {
+//    return CreateNotifyCharacteristic(privateService);
+//}
 
 auto BluetoothServer::CreateWriteCharacteristic(BLEService *service) -> BLECharacteristic * {
     auto uuid = GetUniqueId(true);
@@ -146,9 +146,9 @@ void BluetoothServer::SetupBt(ConnectedUser* userType) {
     Utility::CreateAndProfile("SendDataTask", SendDataTask, 8192, HIGH_PRIORITY, 1, nullptr);
 }
 
-void BluetoothServer::SendError(BLECharacteristic *pCharacteristic) {
+void BluetoothServer::SendStatus(BLECharacteristic *pCharacteristic, bool isOk) {
     nlohmann::json j;
-    j["Ok"] = false;
+    j["Ok"] = isOk;
     auto json_str = j.dump();
     BluetoothServer::SendJson(pCharacteristic, json_str);
 }

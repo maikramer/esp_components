@@ -23,6 +23,8 @@ public:
 
     static void Disconnect(uint16_t id);
 
+    static void NotifyAll(bool isImportant);
+
 #ifdef USER_MANAGEMENT_ENABLED
 
     static void Init(ConnectedUser *userType, int noOfConnections);
@@ -33,6 +35,7 @@ public:
 
 private:
     static SafeList<BluetoothConnection *> _connectionPool;//NOLINT
+
 };
 
 

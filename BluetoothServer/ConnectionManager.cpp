@@ -3,9 +3,11 @@
 //
 
 #include <esp_log.h>
+
 #ifdef USER_MANAGEMENT_ENABLED
 #include <ConnectedUser.h>
 #endif
+
 #include "ConnectionManager.h"
 #include "BluetoothServer.h"
 
@@ -42,19 +44,19 @@ void ConnectionManager::Connect(uint16_t conn_id) {
 
 void ConnectionManager::Disconnect(uint16_t id) {
 #ifdef USER_MANAGEMENT_ENABLED
-}
-    auto *conn = GetConnectionById(id);
-
-    auto *user = conn->GetUser();
-    if (user != nullptr) {
-        user->Clear();
-#ifdef DEBUG_INFO
-        ESP_LOGI(__FUNCTION__, "Usuario com id %d desconectado", id);
-#endif
-        return;
     }
+        auto *conn = GetConnectionById(id);
 
-    ESP_LOGE(__FUNCTION__, "Tentando logoff sem haver um login");
+        auto *user = conn->GetUser();
+        if (user != nullptr) {
+            user->Clear();
+#ifdef DEBUG_INFO
+            ESP_LOGI(__FUNCTION__, "Usuario com id %d desconectado", id);
+#endif
+            return;
+        }
+
+        ESP_LOGE(__FUNCTION__, "Tentando logoff sem haver um login");
 #endif
 }
 
@@ -87,10 +89,12 @@ auto ConnectionManager::GetFreeConnection() -> BluetoothConnection * {
             break;
         }
     }
-    _connectionPool.EndReadList();
+
 
     if (ret == nullptr) {
         ESP_LOGE(__FUNCTION__, "Sem Conecções livres");
+    } else {
+        _connectionPool.EndReadList();
     }
 
     xSemaphoreGive(semaphore);
@@ -119,9 +123,9 @@ void ConnectionManager::SendNotifications() {
 #ifdef USER_MANAGEMENT_ENABLED
                 ESP_LOGI(__FUNCTION__, "Enviando para %s", user->User.c_str());
 #else
-                ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
+//                ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
 #endif
-                connection->SendUsageData(!(state == NotificationNeeds::SendImportant));
+                connection->SendNotifyData(!(state == NotificationNeeds::SendImportant));
             }
 #ifdef USER_MANAGEMENT_ENABLED
             }
@@ -133,6 +137,16 @@ void ConnectionManager::SendNotifications() {
 #else
         vTaskDelay(50);
 #endif
+        _connectionPool.EndReadList();
+    }
+}
+
+void ConnectionManager::NotifyAll(bool isImportant) {
+    if (!_connectionPool.Empty()) {
+        for (auto *connection : _connectionPool.ReadList()) {
+            connection->SetNotificationNeeds(
+                    isImportant ? NotificationNeeds::SendImportant : NotificationNeeds::SendNormal);
+        }
         _connectionPool.EndReadList();
     }
 }

@@ -56,10 +56,12 @@ public:
 
 #else
     NotificationNeeds GetNotificationNeeds();
-    void SetGetDataFunction(std::function<std::list<uint8_t> ()> callback);
+    void SetGetDataFunction(std::function<std::list<uint8_t>()> callback);
+
+    void SetNotificationNeeds(NotificationNeeds needs);
 #endif
 
-    void SendUsageData(bool isNotification) const;
+    void SendNotifyData(bool isNotification);
 
     std::string GetConnectionInfoJson();
 
@@ -76,7 +78,6 @@ private:
 
     void SendJson(const std::string &json) const;
 
-    void SetNotificationNeeds(NotificationNeeds needs);
 
     NotificationNeeds _notificationNeeds = NotificationNeeds::NoSend;
 };

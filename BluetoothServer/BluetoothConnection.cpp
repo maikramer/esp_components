@@ -56,12 +56,12 @@ auto BluetoothConnection::GetConnectionInfoJson() -> std::string {
     return j.dump();
 }
 
-void BluetoothConnection::SendUsageData(bool isNotification) const {
+void BluetoothConnection::SendNotifyData(bool isNotification) {
 #ifdef USER_MANAGEMENT_ENABLED
     auto list = _user->GetData();
 #else
-    if(_getDataFunction == nullptr) {
-        ESP_LOGE(__FUNCTION__ , "Sem funcoes para envio de dados definidas");
+    if (_getDataFunction == nullptr) {
+//        ESP_LOGE(__FUNCTION__ , "Sem funcoes para envio de dados definidas");
         return;
     }
     auto list = _getDataFunction();
@@ -71,6 +71,7 @@ void BluetoothConnection::SendUsageData(bool isNotification) const {
 
     NotifyCharacteristic->setValue(data, list.size());
     NotifyCharacteristic->notify(isNotification);
+    _notificationNeeds = NotificationNeeds::NoSend;
 }
 
 void BluetoothConnection::SendJsonData(const string &json) {

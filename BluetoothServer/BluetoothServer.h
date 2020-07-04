@@ -57,7 +57,7 @@ public:
 
     auto GetPrivateServiceUUID() -> string { return privateServiceUUID; }
 
-    static void SendError(BLECharacteristic *pCharacteristic);
+    static void SendStatus(BLECharacteristic *pCharacteristic, bool isOk);
 
 private:
     static void SendJson(BLECharacteristic *pCharacteristic, const string &json);
@@ -88,6 +88,8 @@ private:
     SemaphoreHandle_t xSendDataSemaphore = nullptr;
 
     string GetUniqueId(bool isCharacteristic);
+
+
 };
 
 #endif //TOMADA_SMART_CONDO_BLUETOOTHSERVER_H
