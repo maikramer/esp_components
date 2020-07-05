@@ -30,7 +30,7 @@ public:
 
     static void SetOutput(gpio_num_t gpioNum, bool openDrain, uint32_t initial_level = 0);
 
-    auto Uint64ToSring(uint64_t number) -> string;
+    auto Uint64ToSring(uint64_t number) -> std::string;
 };
 
 

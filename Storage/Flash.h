@@ -41,13 +41,14 @@ public:
 
     auto LoadConfig(const std::string &key, std::string &config) -> StoreResult;
 
+    static void EraseData();
+
 private:
     static auto StoreKeyValue(const std::string &key, void *value, const std::string &fileName, DataType type,
                               bool overwrite) -> StoreResult;
 
     static auto
     ReadKeyValue(const std::string &key, void *out, const std::string &fileName, DataType type) -> StoreResult;
-
 };
 
 

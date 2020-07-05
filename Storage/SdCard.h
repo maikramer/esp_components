@@ -4,7 +4,7 @@
 
 #ifndef ROCKET_TESTER_SDCARD_H
 #define ROCKET_TESTER_SDCARD_H
-
+#ifdef USE_SDCARD
 
 #include <Storage.h>
 #include <JsonData.h>
@@ -47,5 +47,5 @@ public:
 #endif
 };
 
-
+#endif
 #endif //ROCKET_TESTER_SDCARD_H

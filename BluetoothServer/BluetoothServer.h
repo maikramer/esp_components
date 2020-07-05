@@ -33,13 +33,10 @@ public:
     static auto GetInstance() -> BluetoothServer *;
 
 #ifdef USER_MANAGEMENT_ENABLED
-    void SetupBt(ConnectedUser* userType, int maxConnections);
+    void SetupBt(ConnectedUser* userType, int maxConnections, std::string deviceName);
 #else
-        void SetupBt();
+        void SetupBt(std::string deviceName);
 #endif
-
-
-    auto CreatePlugCharacteristic() -> BLECharacteristic *;
 
     BLECharacteristic *CreatePrivateWriteCharacteristic() {
         return CreateWriteCharacteristic(privateService);

@@ -102,12 +102,12 @@ auto BluetoothServer::GetInstance() -> BluetoothServer * {
 }
 
 #ifdef USER_MANAGEMENT_ENABLED
-void BluetoothServer::SetupBt(ConnectedUser* userType) {
+void BluetoothServer::SetupBt(ConnectedUser* userType, std::string deviceName) {
 #else
-    void BluetoothServer::SetupBt() {
+    void BluetoothServer::SetupBt(std::string deviceName) {
 #endif
     // Create the BLE Device
-    BLEDevice::init("Tomada Smart");
+    BLEDevice::init(deviceName);
 
     // Create the BLE Server
     BleServer = BLEDevice::createServer();

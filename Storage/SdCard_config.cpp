@@ -1,6 +1,7 @@
 //
 // Created by maikeu on 31/12/2019.
 //
+#ifdef USE_SDCARD
 
 #include "SdCard.h"
 
@@ -38,3 +39,5 @@ auto SdCard::LoadConfig(const std::string &key) -> std::string {
 
     return ret;
 }
+
+#endif

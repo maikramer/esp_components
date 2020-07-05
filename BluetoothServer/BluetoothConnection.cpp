@@ -163,8 +163,9 @@ std::string BluetoothConnection::GetNotifyUUID() const {
 }
 
 void BluetoothConnection::Free() {
-    _isFree = false;
+    _isFree = true;
     _conn_ID = -1;
+    _getDataFunction = nullptr;
 #ifdef USER_MANAGEMENT_ENABLED
     _user->Clear();
 #endif

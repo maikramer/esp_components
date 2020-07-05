@@ -43,10 +43,9 @@ void ConnectionManager::Connect(uint16_t conn_id) {
 }
 
 void ConnectionManager::Disconnect(uint16_t id) {
+    auto *conn = GetConnectionById(id);
 #ifdef USER_MANAGEMENT_ENABLED
     }
-        auto *conn = GetConnectionById(id);
-
         auto *user = conn->GetUser();
         if (user != nullptr) {
             user->Clear();
@@ -58,6 +57,7 @@ void ConnectionManager::Disconnect(uint16_t id) {
 
         ESP_LOGE(__FUNCTION__, "Tentando logoff sem haver um login");
 #endif
+        conn->Free();
 }
 
 auto ConnectionManager::GetConnectionById(uint16_t id) -> BluetoothConnection * {

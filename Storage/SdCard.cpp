@@ -1,6 +1,7 @@
 //
 // Created by maikeu on 23/09/2019.
 //
+#ifdef USE_SDCARD
 
 #include "SdCard.h"
 #include <cstdio>
@@ -210,3 +211,5 @@ auto SdCard::ReadKeyFromFile(const std::string &key, const std::string &fileName
     end:
     return res;
 }
+
+#endif

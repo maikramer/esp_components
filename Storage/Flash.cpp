@@ -39,7 +39,6 @@ auto Flash::StoreKeyValue(const std::string &key, int32_t value, const std::stri
 
 auto Flash::StoreKeyValue(const std::string &key, void *value, const std::string &fileName, DataType type,
                           bool overwrite) -> StoreResult {
-    const char *TAG = __FUNCTION__;
     StoreResult result;
     error_t err = 0;
     char outputStr[256];
@@ -57,13 +56,13 @@ auto Flash::StoreKeyValue(const std::string &key, void *value, const std::string
         }
     }
 
-
+#ifdef LOG
     ESP_LOGI(TAG, "Abrindo %s", fileName.c_str());
+#endif
     err = nvs_open_from_partition(PARTITION_NAME, fileName.c_str(), NVS_READWRITE, &file_handle);
     if (err != ESP_OK) {
         ESP_LOGE(__FUNCTION__, "Erro (%s) abrindo NVS handle", esp_err_to_name(err));
-        result = StoreResult::Error;
-        goto end;
+        return StoreResult::Error;
     }
 
     if (!overwrite) {
@@ -105,8 +104,9 @@ auto Flash::StoreKeyValue(const std::string &key, void *value, const std::string
             goto end;
         }
     }
-
+#ifdef LOG
     ESP_LOGI(__FUNCTION__, "Gravando chave");
+#endif
     switch (type) {
         case DataType::String:
             err = nvs_set_str(file_handle, key.c_str(), static_cast<std::string *>(value)->c_str());
@@ -141,7 +141,9 @@ auto Flash::StoreKeyValue(const std::string &key, void *value, const std::string
         goto end;
     } else {
         nvs_commit(file_handle);
+#ifdef LOG
         ESP_LOGI(__FUNCTION__, "Sucesso salvando chave/valor");
+#endif
         result = StoreResult::Ok;
     }
 
@@ -166,19 +168,18 @@ Flash::ReadKeyValue(const std::string &key, std::string &out, const std::string 
 
 auto
 Flash::ReadKeyValue(const std::string &key, void *out, const std::string &fileName, DataType type) -> StoreResult {
-    const char *TAG = __FUNCTION__;
     StoreResult result;
     error_t err = 0;
     size_t outputSize = 0;
     nvs_handle_t file_handle = 0;
 
-
+#ifdef LOG
     ESP_LOGI(TAG, "Abrindo %s", fileName.c_str());
+#endif
     err = nvs_open_from_partition(PARTITION_NAME, fileName.c_str(), NVS_READWRITE, &file_handle);
     if (err != ESP_OK) {
         ESP_LOGE(__FUNCTION__, "Erro (%s) abrindo NVS handle", esp_err_to_name(err));
-        result = StoreResult::Error;
-        goto end;
+        return StoreResult::Error;
     }
 
     switch (type) {
@@ -215,7 +216,9 @@ Flash::ReadKeyValue(const std::string &key, void *out, const std::string &fileNa
         goto end;
     } else {
         nvs_commit(file_handle);
-        ESP_LOGI(__FUNCTION__, "Sucesso salvando chave/valor");
+#ifdef LOG
+        ESP_LOGI(__FUNCTION__, "Sucesso lendo chave/valor");
+#endif
         result = StoreResult::Ok;
     }
 
@@ -230,4 +233,8 @@ auto Flash::LoadConfig(const std::string &key, std::string &config) -> StoreResu
 
 auto Flash::StoreConfig(const std::string &key, std::string &value, bool overwrite) -> StoreResult {
     return StoreKeyValue(key, value, "config", overwrite);
+}
+
+void Flash::EraseData() {
+    nvs_flash_erase_partition(PARTITION_NAME);
 }
