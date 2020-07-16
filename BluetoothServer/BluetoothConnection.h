@@ -49,6 +49,7 @@ public:
     void onWrite(BLECharacteristic *pCharacteristic, uint16_t conn_id) override;
 
     void onStatus(BLECharacteristic *pCharacteristic, Status s, uint32_t code) override;
+    void SendSimpleResult(uint8_t errorCode);
 
 #ifdef USER_MANAGEMENT_ENABLED
 
@@ -63,7 +64,7 @@ public:
 
     void SendNotifyData(bool isNotification);
 
-    std::string GetConnectionInfoJson();
+    std::string GetConnectionInfoJson() const;
 
     void SendJsonData(const std::string &json);
 
@@ -80,6 +81,6 @@ private:
 
 
     NotificationNeeds _notificationNeeds = NotificationNeeds::NoSend;
-};
+    };
 
 #endif

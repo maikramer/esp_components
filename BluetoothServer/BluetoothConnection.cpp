@@ -7,6 +7,7 @@
 #include <utility>
 #include <ConnectedUser.h>
 #include "ConnectionManager.h"
+#include "JsonModels.h"
 
 //#define LOG_SENT
 #ifdef USER_MANAGEMENT_ENABLED
@@ -16,7 +17,8 @@ BluetoothConnection::BluetoothConnection(ConnectedUser *user) {
 }
 
 #else
-void BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t> ()> callback){
+
+void BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t>()> callback) {
     _getDataFunction = std::move(callback);
 }
 
@@ -24,9 +26,11 @@ void BluetoothConnection::SetNotificationNeeds(NotificationNeeds needs) {
     _notificationNeeds = needs;
 
 }
-NotificationNeeds BluetoothConnection::GetNotificationNeeds() {
+
+auto BluetoothConnection::GetNotificationNeeds() -> NotificationNeeds {
     return _notificationNeeds;
 }
+
 #endif
 
 void BluetoothConnection::Init() {
@@ -48,12 +52,19 @@ void BluetoothConnection::onWrite(BLECharacteristic *pCharacteristic, uint16_t c
     Commander::CheckForCommand(rxValue, connection);
 }
 
-auto BluetoothConnection::GetConnectionInfoJson() -> std::string {
+auto BluetoothConnection::GetConnectionInfoJson() const -> std::string {
     nlohmann::json j;
     j["ServiceUUID"] = BluetoothServer::GetInstance()->GetPrivateServiceUUID();
     j["WriteUUID"] = GetWriteUUID();
     j["NotifyUUID"] = GetNotifyUUID();
     return j.dump();
+}
+
+void BluetoothConnection::SendSimpleResult(uint8_t errorCode) {
+    JsonModels::BaseJsonDataError errorData;
+    errorData.ErrorCode = errorCode;
+    auto jsonStr = errorData.ToBaseJson();
+    SendJsonData(jsonStr);
 }
 
 void BluetoothConnection::SendNotifyData(bool isNotification) {
@@ -87,6 +98,7 @@ void BluetoothConnection::SendJson(const string &json) const {
 
 #ifdef LOG_SENT
     ESP_LOGI(__FUNCTION__, "Sending Json");
+        ESP_LOGI(__FUNCTION__, "Enviando %s", json.c_str());
 #endif
     unsigned char bytes[json.length()];
     auto size = Utility::StringToByteArray(json, bytes);
@@ -95,14 +107,14 @@ void BluetoothConnection::SendJson(const string &json) const {
 #ifdef LOG_SENT
     ESP_LOGI(__FUNCTION__, "Json Sent : %s", json.c_str());
 #endif
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(2 * json.length()));
 
     xSemaphoreGive(xSendMutex);
 }
 
 void
 BluetoothConnection::onStatus(BLECharacteristic *pCharacteristic, BLECharacteristicCallbacks::Status s, uint32_t code) {
-#ifdef LOG_SENT
+#ifdef LOG_STATUS_SENT
     string str;
     bool error = false;
     switch (s) {
@@ -145,20 +157,20 @@ BluetoothConnection::onStatus(BLECharacteristic *pCharacteristic, BLECharacteris
 #endif
 }
 
-bool BluetoothConnection::IsFree() const { return _isFree; }
+auto BluetoothConnection::IsFree() const -> bool { return _isFree; }
 
-int BluetoothConnection::GetId() const { return _conn_ID; }
+auto BluetoothConnection::GetId() const -> int { return _conn_ID; }
 
 void BluetoothConnection::Setup(uint16_t conn_id) {
     _conn_ID = conn_id;
     _isFree = false;
 }
 
-std::string BluetoothConnection::GetWriteUUID() const {
+auto BluetoothConnection::GetWriteUUID() const -> std::string {
     return WriteCharacteristic->getUUID().toString();
 }
 
-std::string BluetoothConnection::GetNotifyUUID() const {
+auto BluetoothConnection::GetNotifyUUID() const -> std::string {
     return NotifyCharacteristic->getUUID().toString();
 }
 

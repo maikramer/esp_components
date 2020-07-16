@@ -16,6 +16,7 @@
 #include <sstream>
 #include <Utility.h>
 #include <nlohmann/json.hpp>
+#include <utility>
 #include <ConnectedUser.h>
 
 static void SendDataTask(void *arg __unused) {
@@ -107,7 +108,7 @@ void BluetoothServer::SetupBt(ConnectedUser* userType, std::string deviceName) {
     void BluetoothServer::SetupBt(std::string deviceName) {
 #endif
     // Create the BLE Device
-    BLEDevice::init(deviceName);
+    BLEDevice::init(std::move(deviceName));
 
     // Create the BLE Server
     BleServer = BLEDevice::createServer();

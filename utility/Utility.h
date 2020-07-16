@@ -13,6 +13,8 @@
 #include "string"
 #include <hal/gpio_types.h>
 #include <driver/gpio.h>
+#include "esp_log.h"
+#include "stdexcept"
 
 class Utility {
 
@@ -31,6 +33,33 @@ public:
     static void SetOutput(gpio_num_t gpioNum, bool openDrain, uint32_t initial_level = 0);
 
     auto Uint64ToSring(uint64_t number) -> std::string;
+
+    template<typename T>
+    static auto GetConvertedFromString(std::string str) -> T {
+        T out;
+        try {
+            if (std::is_same<T, std::string>()) {
+                out = *reinterpret_cast<T *>(&str);
+            } else if (std::is_same<T, std::int32_t>()) {
+                out = stoi(str);
+            } else if (std::is_same<T, std::uint32_t>()) {
+                out = stoul(str);
+            } else if (std::is_same<T, std::int64_t>()) {
+                out = stoll(str);
+            } else if (std::is_same<T, std::uint64_t>()) {
+                out = stoull(str);
+            } else {
+                ESP_LOGE(__FUNCTION__, "Tipo invalido ou nao suportado");
+            }
+        } catch (std::invalid_argument &e) {
+            ESP_LOGE(__FUNCTION__, "Excessao: %s", e.what());
+            throw std::exception();
+        } catch (std::out_of_range &e) {
+            ESP_LOGE(__FUNCTION__, "Excessao: %s", e.what());
+            throw std::exception();
+        }
+        return out;
+    }
 };
 
 

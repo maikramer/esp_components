@@ -26,7 +26,14 @@ public:
 
     }
 
-    bool CheckBusy() {
+    void PopFront() {
+        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
+            _list.pop_front();
+            xSemaphoreGive(xSemaphore);
+        }
+    }
+
+    auto CheckBusy() -> bool {
         bool busy = (xSemaphoreTake(xSemaphore, TIMEOUT) != pdTRUE);
         if (!busy) {
             xSemaphoreGive(xSemaphore);

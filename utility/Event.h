@@ -8,16 +8,21 @@
 #include <functional>
 #include "list"
 #include "map"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
 
 //C - Caller e A o argumento
 template<class C, class A>
 class Event {
 private:
+    const int MAX_DELAY = 1000;
+    SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
     int counter = 0;
     std::map<int, std::function<void(C, A)>> listeners{};
 public:
     // Retorna um handler para remover da lista depois
-    int AddListener(std::function<void(C, A)> func);
+    auto AddListener(std::function<void(C, A)> func) -> int;
 
     void RemoveListener(int handle);
 
@@ -25,26 +30,34 @@ public:
 };
 
 template<class C, class A>
-int Event<C, A>::AddListener(std::function<void(C, A)> func) {
+auto Event<C, A>::AddListener(std::function<void(C, A)> func) -> int {
     int handler = counter;
-    listeners.insert(std::pair<int, std::function<void(C, A)>>(handler, func));
+    if (xSemaphoreTake(xSemaphore, MAX_DELAY) == pdPASS) {
+        listeners.insert(std::pair<int, std::function<void(C, A)>>(handler, func));
+        xSemaphoreGive(xSemaphore);
+    }
     counter++;
+
     return handler;
 }
 
 template<class C, class A>
 void Event<C, A>::RemoveListener(int handle) {
-    listeners.erase(handle);
+    if (xSemaphoreTake(xSemaphore, MAX_DELAY) == pdPASS) {
+        listeners.erase(handle);
+        xSemaphoreGive(xSemaphore);
+    }
 }
 
 template<class C, class A>
 void Event<C, A>::FireEvent(C caller, A eventArgs) {
-    for (auto const& f : listeners) {
-        f.second(caller, eventArgs);
+    if (xSemaphoreTake(xSemaphore, MAX_DELAY) == pdPASS) {
+        for (auto const &f : listeners) {
+            f.second(caller, eventArgs);
+        }
+        xSemaphoreGive(xSemaphore);
     }
 }
-
-
 
 
 #endif //ROCKET_TESTER_EVENT_H

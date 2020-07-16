@@ -16,7 +16,7 @@ typedef struct {
     BluetoothConnection *Connection{};
 } Command_t;
 
-static QueueHandle_t xCommandQueue = xQueueCreate(5, sizeof(void *));//NOLINT
+static QueueHandle_t xCommandQueue = xQueueCreate(10, sizeof(void *));//NOLINT
 
 static void CommandExecuterTask(void *arg __unused) {
     for (;;) {
@@ -30,8 +30,6 @@ static void CommandExecuterTask(void *arg __unused) {
 
 Commander::Commander() {
     Utility::CreateAndProfile("CommandExecuterTask", CommandExecuterTask, 4096, HIGH_PRIORITY, 0, nullptr);
-
-
 }
 
 void Commander::AddCommand(DeviceCommand command) {
@@ -52,7 +50,6 @@ void Commander::CheckForCommand(const std::string &rxValue, BluetoothConnection 
     uint8_t commandCode = rxValue.c_str()[0];
     auto rxData = std::string(rxValue.c_str() + 1);
     auto data = Utility::split(rxData, ':');
-
     ESP_LOGI(__FUNCTION__, "Command: %u", commandCode);
     std::stringstream printData;
     for (const auto &d : data) {
@@ -66,6 +63,10 @@ void Commander::CheckForCommand(const std::string &rxValue, BluetoothConnection 
     for (auto command : _commands) {
         if (command.Code == commandCode) {
             ESP_LOGI(__FUNCTION__, "Comando encontrado: %s", command.InternalName);
+            if (data.size() != command.DataSize) {
+                ESP_LOGW(__FUNCTION__, "Número de argumentos recebidos %d diferente do esperado %d", data.size(),
+                         command.DataSize);
+            }
             auto *commandToSend = new Command_t;
             commandToSend->Function = command.Function;
             commandToSend->Data = data;

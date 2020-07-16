@@ -125,18 +125,13 @@ void ConnectionManager::SendNotifications() {
 #else
 //                ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
 #endif
-                connection->SendNotifyData(!(state == NotificationNeeds::SendImportant));
+                connection->SendNotifyData(state != NotificationNeeds::SendImportant);
             }
 #ifdef USER_MANAGEMENT_ENABLED
             }
 #endif
 
         }
-#ifdef USER_MANAGEMENT_ENABLED
-        vTaskDelay(2);
-#else
-        vTaskDelay(50);
-#endif
         _connectionPool.EndReadList();
     }
 }
