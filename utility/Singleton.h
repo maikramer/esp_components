@@ -5,22 +5,26 @@
 #ifndef TOMADA_SMART_CONDO_SINGLETON_H
 #define TOMADA_SMART_CONDO_SINGLETON_H
 
+#include "esp_log.h"
 
+template<typename T>
 class Singleton {
-private:
-    /* Here will be the _instance stored. */
-    static Singleton *_instance;
-
-    /* Private constructor to prevent instancing. */
-    Singleton();
-
 public:
-    /* Static access method. */
-    static Singleton *GetInstance();
+
+    Singleton(const Singleton &) = delete;
+
+    Singleton &operator=(const Singleton) = delete;
+
+    static T &instance() {
+        static T instance{token{}};
+        return instance;
+    }
+
+protected:
+    struct token {
+    };
+
+    Singleton() = default;
 };
-
-/* Null, because _instance will be initialized on demand. */
-
-
 
 #endif //TOMADA_SMART_CONDO_SINGLETON_H

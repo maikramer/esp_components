@@ -6,7 +6,7 @@
 
 wl_handle_t Flash::_wearHandle = WL_INVALID_HANDLE;
 
-auto Flash::Init() -> MountError {
+auto Flash::Init() -> ErrorCode {
     const esp_vfs_fat_mount_config_t mount_config = {
             .format_if_mount_failed = true,
             .max_files = 4,
@@ -21,16 +21,17 @@ auto Flash::Init() -> MountError {
     return ToMountError(err);
 }
 
-auto Flash::ToMountError(esp_err_t error) -> MountError {
+auto Flash::ToMountError(esp_err_t error) -> ErrorCode {
     if (error == ESP_OK) {
-        return MountError::Ok;
+        return ErrorCode(ErrorCodes::None);
     } else if (error == ESP_ERR_NOT_FOUND) {
-        return MountError::PartitionNotFound;
+        return ErrorCode(ErrorCodes::PartitionNotFound);
     } else if (error == ESP_ERR_NO_MEM) {
-        return MountError::NoFreeMemory;
+        return ErrorCode(ErrorCodes::NoFreeMemory);
     } else if (error == ESP_ERR_INVALID_STATE) {
-        return MountError::AlreadyMounted;
-    } else {
-        return MountError::Error;
+        return ErrorCode(ErrorCodes::AlreadyMounted);
     }
+
+    return ErrorCode(ErrorCodes::Error);
+
 }

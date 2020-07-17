@@ -9,6 +9,7 @@
 #include <utility>
 #include <list>
 #include <vector>
+#include <nameof.hpp>
 #include "BluetoothConnection.h"
 
 class BluetoothConnection;
@@ -32,14 +33,14 @@ typedef void (*DeviceCommandFunctionPtr)(const std::vector<std::string> &, Bluet
 
 class DeviceCommand {
 public:
-    DeviceCommand(const uint32_t dataSize, const char *internalName, const uint8_t code,
+    DeviceCommand(const uint32_t dataSize, std::string internalName, const uint8_t code,
                   DeviceCommandFunctionPtr functionPtr) : DataSize(dataSize),
-                                                          InternalName(internalName),
+                                                          InternalName(std::move(internalName)),
                                                           Code(code),
                                                           Function(functionPtr) {}
 
     const uint32_t DataSize;
-    const char *InternalName;
+    std::string InternalName;
     const uint8_t Code;
     DeviceCommandFunctionPtr Function;
 };
@@ -49,7 +50,7 @@ public:
     Commander();
 
     static void CheckForCommand(const std::string &rxValue, BluetoothConnection *connection);
-    static void AddCommand(DeviceCommand command);
+    static void AddCommand(const DeviceCommand& command);
 
 private:
     static std::list<DeviceCommand> _commands;

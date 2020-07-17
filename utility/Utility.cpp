@@ -98,18 +98,16 @@ void Utility::SetInput(gpio_num_t gpioNum, gpio_pullup_t pullUp, gpio_int_type_t
     gpio_config(&io_conf);
 }
 
-std::string Utility::Uint64ToSring(uint64_t number) {
-    char ch1 = (uint8_t) (number & (0xFF));
-    char ch2 = (uint8_t) (number & (0xFF << 8));
-    char ch3 = (uint8_t) (number & (0xFF << 16));
-    char ch4 = (uint8_t) (number & (0xFF << 24));
-    char ch5 = (uint8_t) (number & ((uint64_t) 0xFF << 32));
-    char ch6 = (uint8_t) (number & ((uint64_t) 0xFF << 40));
-    char ch7 = (uint8_t) (number & ((uint64_t) 0xFF << 48));
-    char ch8 = (uint8_t) (number & ((uint64_t) 0xFF << 56));
-    std::stringstream stream;
-    stream << ch8 << ch7 << ch6 << ch5 << ch4 << ch3 << ch2 << ch1;
-    return stream.str();
+std::string Utility::CamelCaseToTitleCase(const std::string &toConvert) {
+    std::stringstream str{};
+    for (auto ch:toConvert) {
+        if (ch >= 'A' && ch <= 'Z') {
+            str << " " << ch;
+        } else {
+            str << ch;
+        }
+    }
+    return str.str();
 }
 
 //auto Utility::CreateAndProfileStatic(const char *taskName, TaskFunction_t function, const uint32_t stack,

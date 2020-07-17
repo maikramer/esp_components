@@ -1,9 +1,9 @@
 set(srcs "SdCard.cpp"
-        "SdCard_user.cpp"
-        "SdCard_config.cpp"
+        "Storage_config.cpp"
         "Flash.cpp"
         "NVS.cpp"
-        "Storage.cpp")
+        "Storage.cpp"
+        "Storage_user.cpp")
 set(include_dirs .)
 set(requires config utility sdmmc vfs fatfs UserManaging cppjson nvs_flash)
 

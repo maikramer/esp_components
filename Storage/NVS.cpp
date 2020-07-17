@@ -19,11 +19,11 @@ void NVS::Init() {
     ESP_ERROR_CHECK(err);
 }
 
-auto NVS::LoadConfig(const std::string &key, std::string &config) -> StoreResult {
+auto NVS::LoadConfig(const std::string &key, std::string &config) -> ErrorCode {
     return ReadKeyValue<std::string>(key, config, "config");
 }
 
-auto NVS::StoreConfig(const std::string &key, std::string &value, bool overwrite) -> StoreResult {
+auto NVS::StoreConfig(const std::string &key, std::string &value, bool overwrite) -> ErrorCode {
     return StoreKeyValue(key, value, "config", overwrite);
 }
 

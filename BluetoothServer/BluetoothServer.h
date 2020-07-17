@@ -16,6 +16,7 @@
 #include <Enums.h>
 #include <list>
 #include <projectConfig.h>
+#include "Singleton.h"
 class BluetoothConnection;
 
 #define DELAY500MS (pdMS_TO_TICKS( 500))
@@ -24,16 +25,13 @@ class BluetoothConnection;
 using std::list;
 using std::string;
 
-class BluetoothServer {
+class BluetoothServer : public Singleton<BluetoothServer>{
 public:
     BLEServer *BleServer = nullptr;
-
-    BluetoothServer();
-
-    static auto GetInstance() -> BluetoothServer *;
+    explicit BluetoothServer(token);
 
 #ifdef USER_MANAGEMENT_ENABLED
-    void SetupBt(ConnectedUser* userType, int maxConnections, std::string deviceName);
+    void SetupBt(ConnectedUser* userType, std::string deviceName);
 #else
         void SetupBt(std::string deviceName);
 #endif
@@ -65,9 +63,6 @@ private:
     std::list<std::string> uuidList;
 
     class ServerCallbacks : public BLEServerCallbacks {
-        const bool _true = true;
-        const bool _false = false;
-
         void onConnect(BLEServer *server, esp_ble_gatts_cb_param_t *param) override;
 
         void onDisconnect(BLEServer *server, esp_ble_gatts_cb_param_t *param) override;
@@ -78,7 +73,6 @@ private:
         void onRead(BLECharacteristic *pCharacteristic, uint16_t conn_id) override;
     };
 
-    static BluetoothServer *instance;
     BLEService *publicService = nullptr;
     BLEService *privateService = nullptr;
     BLECharacteristic *publicTxCharacteristic = nullptr;

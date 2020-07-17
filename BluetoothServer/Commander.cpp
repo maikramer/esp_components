@@ -32,11 +32,11 @@ Commander::Commander() {
     Utility::CreateAndProfile("CommandExecuterTask", CommandExecuterTask, 4096, HIGH_PRIORITY, 0, nullptr);
 }
 
-void Commander::AddCommand(DeviceCommand command) {
-    for (auto comm : _commands) {
+void Commander::AddCommand(const DeviceCommand& command) {
+    for (const auto& comm : _commands) {
         if (comm.Code == command.Code) {
             ESP_LOGE(__FUNCTION__, "Codigo %u, para o comando %s, ja utilizado pelo comando %s", comm.Code,
-                     command.InternalName, comm.InternalName);
+                     command.InternalName.c_str(), comm.InternalName.c_str());
             return;
         }
     }
@@ -60,9 +60,9 @@ void Commander::CheckForCommand(const std::string &rxValue, BluetoothConnection 
     }
 
 
-    for (auto command : _commands) {
+    for (const auto& command : _commands) {
         if (command.Code == commandCode) {
-            ESP_LOGI(__FUNCTION__, "Comando encontrado: %s", command.InternalName);
+            ESP_LOGI(__FUNCTION__, "Comando encontrado: %s", command.InternalName.c_str());
             if (data.size() != command.DataSize) {
                 ESP_LOGW(__FUNCTION__, "Número de argumentos recebidos %d diferente do esperado %d", data.size(),
                          command.DataSize);

@@ -15,6 +15,8 @@
 #include <driver/gpio.h>
 #include "esp_log.h"
 #include "stdexcept"
+#include "JsonModels.h"
+#include "sstream"
 
 class Utility {
 
@@ -32,7 +34,7 @@ public:
 
     static void SetOutput(gpio_num_t gpioNum, bool openDrain, uint32_t initial_level = 0);
 
-    auto Uint64ToSring(uint64_t number) -> std::string;
+    static std::string CamelCaseToTitleCase(const std::string &toConvert);
 
     template<typename T>
     static auto GetConvertedFromString(std::string str) -> T {
@@ -41,13 +43,15 @@ public:
             if (std::is_same<T, std::string>()) {
                 out = *reinterpret_cast<T *>(&str);
             } else if (std::is_same<T, std::int32_t>()) {
-                out = stoi(str);
+                out = *reinterpret_cast<T *>(stoi(str));
             } else if (std::is_same<T, std::uint32_t>()) {
-                out = stoul(str);
+                out = *reinterpret_cast<T *>(stoul(str));
             } else if (std::is_same<T, std::int64_t>()) {
-                out = stoll(str);
+                out = *reinterpret_cast<T *>(stoll(str));
             } else if (std::is_same<T, std::uint64_t>()) {
-                out = stoull(str);
+                out = *reinterpret_cast<T *>(stoull(str));
+            } else if (std::is_base_of<JsonModels::BaseJsonData, T>()) {
+                reinterpret_cast<JsonModels::BaseJsonData *>(&out)->FromString(str);
             } else {
                 ESP_LOGE(__FUNCTION__, "Tipo invalido ou nao suportado");
             }
@@ -59,6 +63,22 @@ public:
             throw std::exception();
         }
         return out;
+    }
+
+    template<typename T>
+    struct memfun_type {
+        using type = void;
+    };
+
+    template<typename Ret, typename Class, typename... Args>
+    struct memfun_type<Ret(Class::*)(Args...) const> {
+        using type = std::function<Ret(Args...)>;
+    };
+
+    template<typename F>
+    typename memfun_type<decltype(&F::operator())>::type
+    static FFL(F const &func) { // Function from lambda !
+        return func;
     }
 };
 

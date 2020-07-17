@@ -1,4 +1,4 @@
-set(srcs "JsonModels.cpp")
+set(srcs "ErrorCode.cpp")
 set(include_dirs .)
 set(requires utility config cppjson)
 

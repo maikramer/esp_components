@@ -2,12 +2,15 @@
 // Created by maikeu on 25/09/2019.
 //
 #include "projectConfig.h"
+
 #ifdef USER_MANAGEMENT_ENABLED
 
 #include <esp_log.h>
 #include <GeneralUtils.h>
 #include "UserManager.h"
 #include "ConnectedUser.h"
+#include "nameof.hpp"
+#include "string"
 
 //#define DEBUG_INFO
 //todo:Adicionar uma condicao que os codigos devem ser maiores que 10, mudar os codigos de main
@@ -21,36 +24,42 @@ enum class UserManagerCommandCode : uint8_t {
 };
 
 void UserManager::Init() {
-    const DeviceCommand SetAdminInfo(2, "SetAdminInfo", (uint8_t) UserManagerCommandCode::SetAdminInfoCode,
-                                     [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                                         UserManager::SetAdmin(data, connection);
-                                     });
+    const DeviceCommand SetAdminInfo(2, std::string(
+    NAMEOF(
+            SetAdminInfo)), (uint8_t) UserManagerCommandCode::SetAdminInfoCode,
+            [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                UserManager::SetAdmin(data, connection);
+            });
 
-    const DeviceCommand Login(2, "Login", (uint8_t) UserManagerCommandCode::LoginCode,
-                              [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                                  UserManager::Login(data, connection);
-                              });
+    const DeviceCommand Login(2, std::string(NAMEOF(Login)), (uint8_t) UserManagerCommandCode::LoginCode,
+            [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                UserManager::Login(data, connection);
+            });
 
-    const DeviceCommand Logoff(0, "Logoff", (uint8_t) UserManagerCommandCode::LogoffCode,
-                               [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                                   UserManager::Logoff(connection);
-                               });
+    const DeviceCommand Logoff(0, std::string(NAMEOF(Logoff)), (uint8_t) UserManagerCommandCode::LogoffCode,
+            [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                UserManager::Logoff(connection);
+            });
 
-    const DeviceCommand SignUp(1, "SignUp", (uint8_t) UserManagerCommandCode::SignUpCode,
-                               [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                                   UserManager::SignUp(data[0], connection);
-                               });
+    const DeviceCommand SignUp(1, std::string(NAMEOF(SignUp)), (uint8_t) UserManagerCommandCode::SignUpCode,
+            [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                UserManager::SignUp(data[0], connection);
+            });
 
-    const DeviceCommand GetUsersWaiting(0, "GetUsersWaiting", (uint8_t) UserManagerCommandCode::GetUsersWaitingCode,
-                                        [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                                            UserManager::GetUsersWaitingForApproval(connection);
-                                        });
+    const DeviceCommand GetUsersWaiting(0, std::string(
+    NAMEOF(
+            GetUsersWaiting)), (uint8_t) UserManagerCommandCode::GetUsersWaitingCode,
+            [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                UserManager::GetUsersWaitingForApproval(connection);
+            });
 
-    const DeviceCommand ApproveUser(1, "ApproveUser", (uint8_t) UserManagerCommandCode::ApproveUserCode,
-                                    [](const std::vector<std::string> &data,
-                                       BluetoothConnection *connection) {
-                                        UserManager::ApproveUser(data[0]);
-                                    });
+    const DeviceCommand ApproveUser(1, std::string(
+    NAMEOF(
+            ApproveUser)), (uint8_t) UserManagerCommandCode::ApproveUserCode,
+            [](const std::vector<std::string> &data,
+               BluetoothConnection *connection) {
+                UserManager::ApproveUser(data[0]);
+            });
 
     Commander::AddCommand(SetAdminInfo);
     Commander::AddCommand(Login);
@@ -62,7 +71,7 @@ void UserManager::Init() {
 
 auto UserManager::GetAdminInfoJson() -> std::string {
     nlohmann::json j;
-    std::string admin = SdCard::LoadConfig(AdminUserKey);
+    std::string admin = Storage::LoadConfig(AdminUserKey);
     j["IsFirstLogin"] = admin.empty();
     return j.dump();
 }
@@ -81,67 +90,51 @@ void UserManager::SetAdmin(const std::vector<std::string> &data, BluetoothConnec
     std::string user = data[0];
     std::string pw = data[1];
 
-    auto res = SdCard::StoreConfig(AdminUserKey, user, false);
-    if (res == StoreResult::Exist) {
+    auto res = Storage::StoreConfig(AdminUserKey, user, false);
+    if (res == ErrorCodes::Exist) {
         ESP_LOGE(__FUNCTION__, "Erro, ja existe um administrador cadastrado");
         return;
     }
 
-    auto result = SdCard::StoreConfig(AdminPasswordKey, pw, false);
-    auto json = UserManager::GetSignUpResultJson(result);
-    connection->SendJsonData(json);
+    auto result = Storage::StoreConfig(AdminPasswordKey, pw, false);
+    connection->SendError<JsonModels::BaseJsonDataError>(result);
 }
 
-auto UserManager::LoadUser(const string &userName) -> JsonData::User {
-    using json = nlohmann::json;
-    auto jsonStr = SdCard::LoadUserJson(userName);
-    JsonData::User user = {};
-    if (jsonStr.empty())
-        return user;
-    json j = json::parse(jsonStr);
-#ifdef DEBUG_INFO
-    ESP_LOGI(__FUNCTION__, "Tentando desserializar %s", j.dump().c_str());
-#endif
-    using JsonData::from_json;
-    try {
-        user = j;
-    } catch (json::exception &e) {
-        ESP_LOGE(__FUNCTION__, "Exception: %s", e.what());
-        return user;
+auto UserManager::LoadUser(const string &userName) -> JsonModels::User {
+    JsonModels::User user = {};
+    auto result = Storage::LoadUser(userName, user);
+    if (result != ErrorCodes::None) {
+        ESP_LOGE(__FUNCTION__, "Erro carregando usuario, codigo: %d", (uint8_t) result);
     }
-#ifdef DEBUG_INFO
-    ESP_LOGI(__FUNCTION__, "Usuario desserializado");
-#endif
     if (user.Name.empty()) {
-        ESP_LOGE(__FUNCTION__, "Erro carregando usuario");
+        ESP_LOGE(__FUNCTION__, "Erro carregando usuario, nome vazio");
     }
 
     return user;
 }
 
-auto UserManager::SaveUser(JsonData::User user) -> StoreResult {
-    using json = nlohmann::json;
-    using JsonData::to_json;
-    json j = user;
-#ifdef DEBUG_INFO
-    ESP_LOGI(__FUNCTION__, "Usuario serializado");
-#endif
+auto UserManager::SaveUser(const JsonModels::User &user) -> ErrorCode {
     if (user.Name.empty()) {
         ESP_LOGE(__FUNCTION__, "Usuario invalido");
-        return StoreResult::Error;
+        return ErrorCodes::Error;
     }
-    auto result = SdCard::StoreUserJson(user.Name, j.dump(), false);
-    switch (result) {
-        case StoreResult::Ok:
+
+    auto result = Storage::StoreUser(user, false);
+    switch ((uint8_t) result) {
+        case ErrorCodes::None:
 #ifdef DEBUG_INFO
             ESP_LOGI(__FUNCTION__, "Usuario %s salvo", user.Name.c_str());
 #endif
             break;
-        case StoreResult::Exist:
+        case ErrorCodes::Exist:
             ESP_LOGW(__FUNCTION__, "Usuario %s existe", user.Name.c_str());
             break;
-        case StoreResult::Error:
+        case ErrorCodes::Error:
             ESP_LOGE(__FUNCTION__, "Erro ao salvar o usuario %s", user.Name.c_str());
+            break;
+        case ErrorCodes::FileNotFound:
+        case ErrorCodes::KeyNotFound:
+        case ErrorCodes::FindError:
             break;
     }
 
@@ -154,87 +147,43 @@ void UserManager::SignUp(const string &jsonStr, BluetoothConnection *connection)
 #ifdef DEBUG_INFO
     ESP_LOGI(__FUNCTION__, "Tentando desserializar %s", j.dump().c_str());
 #endif
-    using JsonData::from_json;
-    JsonData::User user;
-    try {
-        user = j;
-    } catch (json::exception &e) {
-        ESP_LOGE(__FUNCTION__, "Exception: %s", e.what());
-        return;
-    } catch (...) {
-        ESP_LOGE(__FUNCTION__, "Erro");
-        return;
-    }
 
     auto *connectedUser = connection->GetUser();
-    connectedUser->User = user.Name;
-    auto result = SaveUser(user);
-    auto resultJson = UserManager::GetSignUpResultJson(result);
-    connection->SendJsonData(resultJson);
-}
-
-auto UserManager::GetSignUpResultJson(StoreResult result) -> string {
-
-    string resultStr;
-    switch (result) {
-        case StoreResult::Ok:
-            resultStr = "Ok";
-            break;
-        case StoreResult::Exist:
-            resultStr = "Exist";
-            break;
-        case StoreResult::Error:
-            resultStr = "Error";
-            break;
+    JsonModels::User user{};
+    if (!user.FromString(jsonStr)) {
+        ESP_LOGE(__FUNCTION__, "Erro tentando desserializar %s como usuario", jsonStr.c_str());
     }
 
-    nlohmann::json j;
-    j["Result"] = result;
-    return j.dump();
+    connectedUser->User = user.Name;
+    auto result = SaveUser(user);
+    connection->SendError<JsonModels::BaseJsonDataError>(result);
 }
 
 void UserManager::GetUsersWaitingForApproval(BluetoothConnection *connection) {
-    std::list<JsonData::User> usersWaiting;
+    std::map<std::string, JsonModels::User> usersWaiting;
 
-    usersWaiting = SdCard::GetUserListWithFilter(
-            [](const JsonData::User &user) { return !user.IsConfirmed; });
+    auto result = Storage::GetEntriesWithFilter(StorageConst::UsersFilename, usersWaiting,
+                                                Utility::FFL([](std::string userName, JsonModels::User user) {
+                                                    return !user.IsConfirmed;
+                                                }));
 
-    for (auto waiting:usersWaiting) {
-        nlohmann::json j;
-        j = waiting;
-
-        auto json_str = j.dump();
-//                ESP_LOGI(__FUNCTION__, "Sending %s", json_str.c_str());
-        connection->SendJsonData(json_str);
+    if (result != ErrorCodes::None) {
+        connection->SendError<JsonModels::UserListJsonData>(ErrorCodes::StoreError);
+        return;
     }
 
-    nlohmann::json j;
-    j["End"] = true;
-    auto json_str = j.dump();
-    connection->SendJsonData(json_str);
+    connection->SendList<JsonModels::UserListJsonData>(usersWaiting);
 }
 
+//todo: Gerenciar melhor os erros
 void UserManager::ApproveUser(const std::string &userName) {
-    using json = nlohmann::json;
     auto userLoaded = LoadUser(userName);
     userLoaded.IsConfirmed = true;
-    json j;
-    try {
-        JsonData::to_json(j, userLoaded);
-    } catch (json::exception &e) {
-        ESP_LOGE(__FUNCTION__, "Exception: %s", e.what());
-        return;
-    } catch (...) {
-        ESP_LOGE(__FUNCTION__, "Erro");
-        return;
+    if (Storage::StoreUser(userLoaded, true) != ErrorCodes::None) {
+        ESP_LOGE(__FUNCTION__, "Erro aprovando o usuario %s", userLoaded.Name.c_str());
     }
 
-#ifdef DEBUG_INFO
-    ESP_LOGI(__FUNCTION__, "Usuario Serializado");
-#endif
-    auto json_str = j.dump();
-    SdCard::StoreUserJson(userName, json_str, true);
-
 }
+
 #endif
 

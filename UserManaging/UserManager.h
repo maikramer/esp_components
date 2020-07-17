@@ -13,10 +13,11 @@
 #include <list>
 #include <map>
 #include "BluetoothServer.h"
-#include <JsonData.h>
+#include <JsonModels.h>
 #include <Enums.h>
 #include <Storage.h>
 #include <SafeList.h>
+#include "ErrorCode.h"
 
 #define NUMERO_DE_SLOTS 4
 
@@ -39,11 +40,9 @@ public:
 
     static void Logoff(BluetoothConnection *connection);
 
-    static auto GetSignUpResultJson(StoreResult result) -> string;
+    static auto SaveUser(const JsonModels::User& user) -> ErrorCode;
 
-    static auto SaveUser(JsonData::User user) -> StoreResult;
-
-    static auto LoadUser(const string &userName) -> JsonData::User;
+    static auto LoadUser(const string &userName) -> JsonModels::User;
 
     static void SignUp(const string &jsonStr, BluetoothConnection *connection);
 

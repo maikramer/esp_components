@@ -3,11 +3,13 @@
 #include <Utility.h>
 #include <sstream>
 #include <esp_log.h>
-#include <nlohmann/json.hpp>
-#include <utility>
 #include <ConnectedUser.h>
 #include "ConnectionManager.h"
 #include "JsonModels.h"
+
+#ifndef USER_MANAGEMENT_ENABLED
+#include <utility>
+#endif
 
 //#define LOG_SENT
 #ifdef USER_MANAGEMENT_ENABLED
@@ -34,9 +36,9 @@ auto BluetoothConnection::GetNotificationNeeds() -> NotificationNeeds {
 #endif
 
 void BluetoothConnection::Init() {
-    WriteCharacteristic = BluetoothServer::GetInstance()->CreatePrivateWriteCharacteristic();
+    WriteCharacteristic = BluetoothServer::instance().CreatePrivateWriteCharacteristic();
     WriteCharacteristic->setCallbacks(this);
-    NotifyCharacteristic = BluetoothServer::GetInstance()->CreatePrivateNotifyCharacteristic();
+    NotifyCharacteristic = BluetoothServer::instance().CreatePrivateNotifyCharacteristic();
     NotifyCharacteristic->setCallbacks(this);
 }
 
@@ -53,18 +55,11 @@ void BluetoothConnection::onWrite(BLECharacteristic *pCharacteristic, uint16_t c
 }
 
 auto BluetoothConnection::GetConnectionInfoJson() const -> std::string {
-    nlohmann::json j;
-    j["ServiceUUID"] = BluetoothServer::GetInstance()->GetPrivateServiceUUID();
-    j["WriteUUID"] = GetWriteUUID();
-    j["NotifyUUID"] = GetNotifyUUID();
-    return j.dump();
-}
-
-void BluetoothConnection::SendSimpleResult(uint8_t errorCode) {
-    JsonModels::BaseJsonDataError errorData;
-    errorData.ErrorCode = errorCode;
-    auto jsonStr = errorData.ToBaseJson();
-    SendJsonData(jsonStr);
+    JsonModels::UuidInfoJsonData jsonData{};
+    jsonData.ServiceUUID = BluetoothServer::instance().GetPrivateServiceUUID();
+    jsonData.WriteUUID = GetWriteUUID();
+    jsonData.NotifyUUID = GetNotifyUUID();
+    return jsonData.ToJson();
 }
 
 void BluetoothConnection::SendNotifyData(bool isNotification) {
@@ -177,9 +172,11 @@ auto BluetoothConnection::GetNotifyUUID() const -> std::string {
 void BluetoothConnection::Free() {
     _isFree = true;
     _conn_ID = -1;
-    _getDataFunction = nullptr;
+
 #ifdef USER_MANAGEMENT_ENABLED
     _user->Clear();
+#else
+    _getDataFunction = nullptr;
 #endif
 }
 

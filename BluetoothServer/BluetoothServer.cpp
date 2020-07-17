@@ -29,9 +29,7 @@ static void SendDataTask(void *arg __unused) {
     }
 }
 
-BluetoothServer::BluetoothServer() : xSendDataSemaphore(xSemaphoreCreateMutex()) {
-    instance = this;
-}
+BluetoothServer::BluetoothServer(token) : xSendDataSemaphore(xSemaphoreCreateMutex()) {}
 
 //Cuidado, se usar mais de uma vez pode haver conflito.
 auto BluetoothServer::CreatePrivateService() -> BLEService * {
@@ -92,18 +90,9 @@ auto BluetoothServer::GetUniqueId(bool isCharacteristic) -> std::string {
     return uuidStr;
 }
 
-BluetoothServer *BluetoothServer::instance = nullptr;
-
-auto BluetoothServer::GetInstance() -> BluetoothServer * {
-    if (instance == nullptr) {
-        printf("\nBluetoothServer nao existe ou nao foi inicializado\n");
-        return nullptr;
-    }
-    return instance;
-}
-
 #ifdef USER_MANAGEMENT_ENABLED
-void BluetoothServer::SetupBt(ConnectedUser* userType, std::string deviceName) {
+
+void BluetoothServer::SetupBt(ConnectedUser *userType, std::string deviceName) {
 #else
     void BluetoothServer::SetupBt(std::string deviceName) {
 #endif

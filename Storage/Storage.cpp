@@ -40,7 +40,7 @@ auto Storage::EraseData() -> bool {
     return true;
 }
 
-auto Storage::GetStorageStatus(StorageStatus &status) -> StoreResult {
+auto Storage::GetStorageStatus(StorageStatus &status) -> ErrorCode {
     FATFS *fs = nullptr;
     uint32_t fre_clust = 0;
     uint64_t freeSectors = 0;
@@ -50,7 +50,7 @@ auto Storage::GetStorageStatus(StorageStatus &status) -> StoreResult {
     auto res = f_getfree("0:", &fre_clust, &fs);
     if (res != FR_OK) {
         ESP_LOGE(__FUNCTION__, "Erro obtendo informacoes do disco");
-        return StoreResult::Error;
+        return ErrorCode(ErrorCodes::Error);
     }
     /* Get total sectors and free sectors */
     totalSectors = (fs->n_fatent - 2) * fs->csize;
@@ -59,5 +59,5 @@ auto Storage::GetStorageStatus(StorageStatus &status) -> StoreResult {
     status.FreeSpace = freeSectors * _sectorSize;
     status.TotalSpace = totalSectors * _sectorSize;
     ESP_LOGI(__FUNCTION__, "%llu bytes livres do total de %llu", status.FreeSpace, status.TotalSpace);
-    return StoreResult::Ok;
+    return ErrorCode(ErrorCodes::None);
 }

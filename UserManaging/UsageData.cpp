@@ -2,6 +2,7 @@
 // Created by maikeu on 20/08/2019.
 //
 #include "projectConfig.h"
+
 #ifdef USER_MANAGEMENT_ENABLED
 
 #include <cstring>
@@ -15,9 +16,9 @@ UsageData::UsageData(uint32_t totalAccumulatedEnergy, uint32_t accumulatedEnergy
     strcpy(User, user);
 }
 
-auto UsageData::ToJson() -> std::string {
+auto UsageData::ToJson() const -> std::string {
 
-    nlohmann::json j;
+    nlohmann::json j = GetPartialUpdateJson();
     j["TotalAccumulatedEnergy"] = TotalAccumulatedEnergy;
     j["AccumulatedEnergy"] = AccumulatedEnergy;
     j["InstantPower"] = InstantPower;
@@ -31,7 +32,7 @@ auto UsageData::ToJson() -> std::string {
     return j.dump();
 }
 
-auto UsageData::ToJsonChanged(UsageData lastUsage) -> std::string {
+auto UsageData::ToJsonChanged(const UsageData &lastUsage) -> std::string {
 
     nlohmann::json j;
     if (lastUsage.TotalAccumulatedEnergy != TotalAccumulatedEnergy) {

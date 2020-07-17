@@ -10,13 +10,14 @@
 
 #include <cstdint>
 #include <string>
+#include <JsonModels.h>
 
 enum class UsageErrorCode : uint8_t {
     None = 0,
     CurrentLimit = 1
 };
 
-class UsageData {
+class UsageData : public JsonModels::UpdateDataJson{
 public:
     uint32_t TotalAccumulatedEnergy;
     uint32_t AccumulatedEnergy;
@@ -28,9 +29,9 @@ public:
     UsageData(uint32_t totalAccumulatedEnergy, uint32_t accumulatedEnergy, uint32_t instantPower, const char *user,
               uint8_t plugStatus, UsageErrorCode errorCode);
 
-    auto ToJson() -> std::string;
+    [[nodiscard]] std::string ToJson() const override;
 
-    auto ToJsonChanged(UsageData lastUsage) -> std::string;
+    auto ToJsonChanged(const UsageData& lastUsage) -> std::string;
 };
 
 //void to_json(json &j, const UsageData &usageData);

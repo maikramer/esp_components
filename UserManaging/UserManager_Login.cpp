@@ -14,7 +14,7 @@ void UserManager::Login(const std::vector<std::string> &data, BluetoothConnectio
 
     //Verifica admin
     bool isFirstAdminLogin = false;
-    auto adminUser = SdCard::LoadConfig(AdminUserKey);
+    auto adminUser = Storage::LoadConfig(AdminUserKey);
     if (adminUser.empty()) {
         adminUser = "Admin";
         isFirstAdminLogin = true;
@@ -36,7 +36,7 @@ void UserManager::Login(const std::vector<std::string> &data, BluetoothConnectio
 
     //Verifica usuario
     if (user == adminUser) {
-        if (isFirstAdminLogin || pw == SdCard::LoadConfig(AdminPasswordKey)) {
+        if (isFirstAdminLogin || pw == Storage::LoadConfig(AdminPasswordKey)) {
             connectedUser->IsAdmin = true;
             connectedUser->IsLogged = true;
             connectedUser->User = user;

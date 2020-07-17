@@ -22,20 +22,20 @@ class NVS {
 public:
     static void Init();
 
-    static auto StoreConfig(const std::string &key, std::string &value, bool overwrite) -> StoreResult;
+    static auto StoreConfig(const std::string &key, std::string &value, bool overwrite) -> ErrorCode;
 
-    static auto LoadConfig(const std::string &key, std::string &config) -> StoreResult;
+    static auto LoadConfig(const std::string &key, std::string &config) -> ErrorCode;
 
     template<typename T>
-    static auto GetAllKeysFromFile(const std::string &filename, std::map<std::string, T> &valueMap) -> StoreResult;
+    static auto GetAllKeysFromFile(const std::string &filename, std::map<std::string, T> &valueMap) -> ErrorCode;
 
 
     template<typename T>
     static auto
-    StoreKeyValue(const std::string &key, T value, const std::string &fileName, bool overwrite) -> StoreResult;
+    StoreKeyValue(const std::string &key, T value, const std::string &fileName, bool overwrite) -> ErrorCode;
 
     template<typename T>
-    static auto ReadKeyValue(const std::string &key, T &out, const std::string &fileName) -> StoreResult;
+    static auto ReadKeyValue(const std::string &key, T &out, const std::string &fileName) -> ErrorCode;
 
     static auto EraseData() -> bool;
 
@@ -45,7 +45,7 @@ private:
 };
 
 template<typename T>
-auto NVS::GetAllKeysFromFile(const std::string &filename, std::map<std::string, T> &valueMap) -> StoreResult {
+auto NVS::GetAllKeysFromFile(const std::string &filename, std::map<std::string, T> &valueMap) -> ErrorCode {
     nvs_type_t type;//NOLINT
     if (std::is_same<T, std::string>()) {
         type = NVS_TYPE_STR;
@@ -59,14 +59,14 @@ auto NVS::GetAllKeysFromFile(const std::string &filename, std::map<std::string, 
         type = NVS_TYPE_U64;
     } else {
         ESP_LOGE(__FUNCTION__, "Tipo invalido ou nao suportado");
-        return StoreResult::Error;
+        return ErrorCode(ErrorCodes::Error);
     }
 
     auto *it = nvs_entry_find(FlashConsts::PARTITION_NAME, filename.c_str(), type);
 
     if (it == nullptr) {
         ESP_LOGW(__FUNCTION__, "Nenhuma chave do tipo especificado foi encontrada");
-        return StoreResult::FindError;
+        return ErrorCode(ErrorCodes::FindError);
     }
     while (it != nullptr) {
         nvs_entry_info_t info;
@@ -75,7 +75,7 @@ auto NVS::GetAllKeysFromFile(const std::string &filename, std::map<std::string, 
         std::string key = info.key;
         auto result = ReadKeyValue(key, value, filename);
 
-        if (result != StoreResult::Ok) {
+        if (result != ErrorCodes::None) {
             ESP_LOGE(__FUNCTION__, "Erro lendo chaves e valores do arquivo");
             return result;
         }
@@ -85,15 +85,15 @@ auto NVS::GetAllKeysFromFile(const std::string &filename, std::map<std::string, 
     }
     ESP_LOGI(__FUNCTION__ , "%d valores lidos", valueMap.size());
 
-    return StoreResult::Ok;
+    return ErrorCode(ErrorCodes::None);
 }
 
 #endif //ROCKET_TESTER_FLASH_H
 
 
 template<typename T>
-auto NVS::StoreKeyValue(const std::string &key, T value, const std::string &fileName, bool overwrite) -> StoreResult {
-    StoreResult result;
+auto NVS::StoreKeyValue(const std::string &key, T value, const std::string &fileName, bool overwrite) -> ErrorCode {
+    ErrorCode result;
     error_t err;//NOLINT
 
     char outputStr[256];
@@ -107,7 +107,7 @@ auto NVS::StoreKeyValue(const std::string &key, T value, const std::string &file
     err = nvs_open_from_partition(FlashConsts::PARTITION_NAME, fileName.c_str(), NVS_READWRITE, &file_handle);
     if (err != ESP_OK) {
         ESP_LOGE(__FUNCTION__, "Erro (%s) abrindo NVS handle", esp_err_to_name(err));
-        return StoreResult::FileNotFound;
+        return ErrorCode(ErrorCodes::FileNotFound);
     }
 
     if (!overwrite) {
@@ -126,10 +126,10 @@ auto NVS::StoreKeyValue(const std::string &key, T value, const std::string &file
         }
         if (err == ESP_OK) {
             ESP_LOGE(__FUNCTION__, "Chave existe");
-            return StoreResult::Exist;
+            return ErrorCode(ErrorCodes::Exist);
         } else if (err != ESP_ERR_NVS_NOT_FOUND) {
             ESP_LOGE(__FUNCTION__, "Erro (%s) na busca pela chave", esp_err_to_name(err));
-            result = StoreResult::Error;
+            result = ErrorCode(ErrorCodes::Error);
             goto end;
         }
     }
@@ -152,14 +152,14 @@ auto NVS::StoreKeyValue(const std::string &key, T value, const std::string &file
 
     if (err != ESP_OK) {
         ESP_LOGE(__FUNCTION__, "Erro (%s) gravando dado", esp_err_to_name(err));
-        result = StoreResult::Error;
+        result = ErrorCode(ErrorCodes::Error);
         goto end;
     } else {
         nvs_commit(file_handle);
 #ifdef LOG
         ESP_LOGI(__FUNCTION__, "Sucesso salvando chave/valor");
 #endif
-        result = StoreResult::Ok;
+        result = ErrorCode(ErrorCodes::None);
     }
 
     end:
@@ -170,8 +170,8 @@ auto NVS::StoreKeyValue(const std::string &key, T value, const std::string &file
 
 template<typename T>
 auto
-NVS::ReadKeyValue(const std::string &key, T &out, const std::string &fileName) -> StoreResult {
-    StoreResult result;
+NVS::ReadKeyValue(const std::string &key, T &out, const std::string &fileName) -> ErrorCode {
+    ErrorCode result;
     error_t err;//NOLINT
     size_t outputSize = 0;
     nvs_handle_t file_handle = 0;
@@ -181,10 +181,10 @@ NVS::ReadKeyValue(const std::string &key, T &out, const std::string &fileName) -
 #endif
     err = nvs_open_from_partition(FlashConsts::PARTITION_NAME, fileName.c_str(), NVS_READONLY, &file_handle);
     if (err == ESP_ERR_NVS_NOT_FOUND) {
-        return StoreResult::FileNotFound;
+        return ErrorCode(ErrorCodes::FileNotFound);
     } else if (err != ESP_OK) {
         ESP_LOGE(__FUNCTION__, "Erro (%s) abrindo NVS handle", esp_err_to_name(err));
-        return StoreResult::Error;
+        return ErrorCode(ErrorCodes::Error);
     }
 
     char outputStr[256];
@@ -205,9 +205,9 @@ NVS::ReadKeyValue(const std::string &key, T &out, const std::string &fileName) -
 
     if (err != ESP_OK) {
         if (err == ESP_ERR_NVS_NOT_FOUND) {
-            result = StoreResult::KeyNotFound;
+            result = ErrorCode(ErrorCodes::KeyNotFound);
         } else {
-            result = StoreResult::Error;
+            result = ErrorCode(ErrorCodes::Error);
         }
         ESP_LOGE(__FUNCTION__, "Erro (%s) lendo dados", esp_err_to_name(err));
 
@@ -217,7 +217,7 @@ NVS::ReadKeyValue(const std::string &key, T &out, const std::string &fileName) -
 #ifdef LOG
         ESP_LOGI(__FUNCTION__, "Sucesso lendo chave/valor");
 #endif
-        result = StoreResult::Ok;
+        result = ErrorCode(ErrorCodes::None);
     }
 
     end:
