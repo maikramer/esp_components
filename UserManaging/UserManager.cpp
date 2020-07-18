@@ -168,7 +168,7 @@ void UserManager::GetUsersWaitingForApproval(BluetoothConnection *connection) {
                                                 }));
 
     if (result != ErrorCodes::None) {
-        connection->SendError<JsonModels::UserListJsonData>(ErrorCodes::StoreError);
+        connection->SendError<JsonModels::UserListJsonData>(ErrorCodes::StorageError);
         return;
     }
 

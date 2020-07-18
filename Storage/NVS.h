@@ -83,7 +83,7 @@ auto NVS::GetAllKeysFromFile(const std::string &filename, std::map<std::string, 
         valueMap.emplace(key, value);
         it = nvs_entry_next(it);
     }
-    ESP_LOGI(__FUNCTION__ , "%d valores lidos", valueMap.size());
+    ESP_LOGI(__FUNCTION__, "%d valores lidos", valueMap.size());
 
     return ErrorCode(ErrorCodes::None);
 }
@@ -93,7 +93,7 @@ auto NVS::GetAllKeysFromFile(const std::string &filename, std::map<std::string, 
 
 template<typename T>
 auto NVS::StoreKeyValue(const std::string &key, T value, const std::string &fileName, bool overwrite) -> ErrorCode {
-    ErrorCode result;
+    ErrorCode result = ErrorCodes::None;
     error_t err;//NOLINT
 
     char outputStr[256];
@@ -171,7 +171,7 @@ auto NVS::StoreKeyValue(const std::string &key, T value, const std::string &file
 template<typename T>
 auto
 NVS::ReadKeyValue(const std::string &key, T &out, const std::string &fileName) -> ErrorCode {
-    ErrorCode result;
+    ErrorCode result = ErrorCodes::None;
     error_t err;//NOLINT
     size_t outputSize = 0;
     nvs_handle_t file_handle = 0;

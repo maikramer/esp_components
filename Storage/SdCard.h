@@ -5,6 +5,9 @@
 #ifndef ROCKET_TESTER_SDCARD_H
 #define ROCKET_TESTER_SDCARD_H
 
+#include "projectConfig.h"
+
+#ifdef USE_SDCARD
 #include <Storage.h>
 #include <custom/FreeRTOS.h>
 #include <freertos/semphr.h>
@@ -16,5 +19,6 @@ public:
 
     static auto Init() -> bool;
 };
+#endif
 
 #endif //ROCKET_TESTER_SDCARD_H

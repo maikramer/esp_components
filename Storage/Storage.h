@@ -24,6 +24,19 @@ namespace StorageConst {
     constexpr char UsersFilename[] = "users";
 }
 
+namespace ErrorCodes {
+    const ErrorCodeItem StorageError{"StorageError", "Erro na Memória do Dispositivo"};
+    const ErrorCodeItem ListIsEmpty{"ListIsEmpty", "Nenhum Item Encontrado"};
+    const ErrorCodeItem Exist{"Exist", "Chave já existe e não deve ser atualizada"};
+    const ErrorCodeItem FileNotFound{"FileNotFound", "Arquivo não encontrado"};
+    const ErrorCodeItem KeyNotFound{"KeyNotFound", "Chave não encontrada"};
+    const ErrorCodeItem FindError{"FindError", "Nenhuma chave do tipo especificado foi encontrada"};
+    const ErrorCodeItem PartitionNotFound{"PartitionNotFound", "Partição não Encontrada"};
+    const ErrorCodeItem AlreadyMounted{"AlreadyMounted", "Armazenamento já Montado"};
+    const ErrorCodeItem NoFreeMemory{"NoFreeMemory", "Sem Memória Livre no Dispositivo"};
+}
+
+
 struct StorageStatus {
     uint64_t FreeSpace;
     uint64_t TotalSpace;
@@ -32,7 +45,19 @@ struct StorageStatus {
 class Storage {
 
 public:
-    static auto EraseData() -> bool;
+    static void InitErrors() {
+        ErrorCode::AddErrorItem(ErrorCodes::StorageError);
+        ErrorCode::AddErrorItem(ErrorCodes::ListIsEmpty);
+        ErrorCode::AddErrorItem(ErrorCodes::Exist);
+        ErrorCode::AddErrorItem(ErrorCodes::FileNotFound);
+        ErrorCode::AddErrorItem(ErrorCodes::KeyNotFound);
+        ErrorCode::AddErrorItem(ErrorCodes::FindError);
+        ErrorCode::AddErrorItem(ErrorCodes::PartitionNotFound);
+        ErrorCode::AddErrorItem(ErrorCodes::AlreadyMounted);
+        ErrorCode::AddErrorItem(ErrorCodes::NoFreeMemory);
+    }
+
+    static auto EraseData() -> ErrorCode;
 
     template<typename Tkey, typename Tvalue>
     static auto
@@ -64,13 +89,13 @@ public:
 
     static ErrorCode LoadUser(const std::string &userName, JsonModels::User &user);
 
+    static ErrorCode GetAllUsers(std::map<std::string, JsonModels::User> &usersMap);
+
 #endif
 
     static std::string LoadConfig(const std::string &key);
 
     static ErrorCode StoreConfig(const std::string &key, const std::string &value, bool overwrite);
-
-    static ErrorCode GetAllUsers(std::map<std::string, JsonModels::User> &usersMap);
 
 protected:
     static uint32_t _sectorSize;
@@ -87,7 +112,7 @@ auto Storage::GetEntriesWithFilter(const std::string &fileName, std::map<Tkey, T
     str << StorageConst::BasePath << "/" << fileName << ".txt";
     auto path = str.str();
     std::ifstream ifs(path, std::ifstream::in);
-    ErrorCode res{};
+    ErrorCode res = ErrorCodes::None;
     std::string line{};
     Tkey outKey;
     Tvalue outValue;
@@ -117,7 +142,7 @@ auto Storage::GetEntriesWithFilter(const std::string &fileName, std::map<Tkey, T
         try {
             outKey = Utility::GetConvertedFromString<Tkey>(keyValue[0]);
             outValue = Utility::GetConvertedFromString<Tvalue>(keyValue[1]);
-        } catch (std::exception &e) {
+        } catch (...) {
             continue;
         }
 
@@ -143,7 +168,7 @@ auto Storage::GetEntriesWithFilter(const std::string &fileName, std::map<Tkey, T
 template<typename Tkey, typename Tvalue>
 auto Storage::StoreKeyValue(Tkey key, Tvalue value, const std::string &fileName,
                             bool overwrite) -> ErrorCode {
-    ErrorCode result{};
+    ErrorCode result = ErrorCodes::None;
     std::stringstream str{};
     std::stringstream keyStrStr;
     keyStrStr << key;
@@ -167,7 +192,7 @@ auto Storage::StoreKeyValue(Tkey key, Tvalue value, const std::string &fileName,
         std::ofstream ofs(tempStr.str(), std::ofstream::app);
         if (!ofs) {
             ESP_LOGE(__FUNCTION__, "Erro Abrindo arquivos");
-            result = ErrorCode(ErrorCodes::StoreError);
+            result = ErrorCode(ErrorCodes::StorageError);
             goto error;
         }
 
@@ -222,7 +247,7 @@ auto Storage::StoreKeyValue(Tkey key, Tvalue value, const std::string &fileName,
         } else {
             if (remove(path.c_str()) != 0) {
                 ESP_LOGE(__FUNCTION__, "Erro Apagando arquivo Antigo");
-                result = ErrorCode(ErrorCodes::StoreError);
+                result = ErrorCode(ErrorCodes::StorageError);
                 goto error;
             } else {
 #ifdef LOG_STORAGE
@@ -232,7 +257,7 @@ auto Storage::StoreKeyValue(Tkey key, Tvalue value, const std::string &fileName,
 
             if (rename(tempPath.c_str(), path.c_str()) != 0) {
                 ESP_LOGE(__FUNCTION__, "Erro Renomeando Temp");
-                result = ErrorCode(ErrorCodes::StoreError);
+                result = ErrorCode(ErrorCodes::StorageError);
             } else {
 #ifdef LOG_STORAGE
                 ESP_LOGI(__FUNCTION__, "Temp renomeado para %s", tempPath.c_str());
@@ -251,7 +276,7 @@ auto Storage::StoreKeyValue(Tkey key, Tvalue value, const std::string &fileName,
 template<typename Tkey, typename Tvalue>
 auto Storage::ReadKeyFromFile(Tkey key, Tvalue &out, const std::string &fileName) -> ErrorCode {
     std::stringstream pathStr{};
-    ErrorCode res{};
+    ErrorCode res = ErrorCodes::None;
     pathStr << StorageConst::BasePath << "/" << fileName << ".txt";
     auto path = pathStr.str();
 #ifdef LOG_STORAGE
@@ -314,7 +339,7 @@ auto Storage::FastStoreKeyValue(Tkey key, Tvalue value,
     std::ofstream ofs(path, std::ofstream::app);
     if (!ofs) {
         ESP_LOGE(TAG, "Erro abrindo ou criando arquivo");
-        return ErrorCode(ErrorCodes::StoreError);
+        return ErrorCode(ErrorCodes::StorageError);
     }
 
     ofs << key << '=' << value << std::endl;

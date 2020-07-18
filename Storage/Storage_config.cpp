@@ -10,22 +10,14 @@ auto Storage::StoreConfig(const std::string &key, const std::string &value, bool
     ESP_LOGI(TAG, "Opening config file");
 
     auto res = StoreKeyValue(key, value, "config", overwrite);
-    switch ((uint8_t) res) {
-
-        case ErrorCodes::None:
-            ESP_LOGI(TAG, "Configuracao salva");
-            break;
-        case ErrorCodes::Exist:
-            ESP_LOGW(TAG, "Configuracao ja existe");
-            break;
-        case ErrorCodes::FileNotFound:
-        case ErrorCodes::KeyNotFound:
-        case ErrorCodes::FindError:
-        case ErrorCodes::Error:
-            ESP_LOGE(TAG, "Erro salvando configuracao");
-            break;
+    if (res == ErrorCodes::None) {
+        ESP_LOGI(TAG, "Configuracao salva");
+    } else if (res == ErrorCodes::Exist) {
+        ESP_LOGW(TAG, "Configuracao ja existe");
+    } else {
+        ESP_LOGE(TAG, "Erro salvando configuracao");
     }
-
+    
     return res;
 }
 

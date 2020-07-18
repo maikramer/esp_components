@@ -7,15 +7,13 @@
 
 #include <string>
 #include <nlohmann/json.hpp>
+#include <ErrorCode.h>
 #include "projectConfig.h"
 #include "esp_log.h"
 
-namespace JsonModels {
-    enum class SimpleErrorCode : uint8_t {
-        None = 0,
-        Error = 1
-    };
+class ErrorCode;
 
+namespace JsonModels {
     class BaseJsonData {
     public:
         [[nodiscard]] virtual std::string ToJson() const = 0;
@@ -56,7 +54,7 @@ namespace JsonModels {
 
     class BaseJsonDataError : public BaseJsonData {
     public:
-        uint8_t ErrorCode = 0;
+        ErrorCode ErrorMessage = ErrorCodes::None;
 
         [[nodiscard]] std::string ToJson() const override {
             auto j = GetPartialJson(true);
@@ -64,14 +62,7 @@ namespace JsonModels {
         }
 
     protected:
-        [[nodiscard]] auto GetPartialJson(bool force) const -> nlohmann::json {
-            nlohmann::json j;
-            if (ErrorCode != 0 || force) {
-                j["Error"] = ErrorCode != 0;
-                j["ErrorCode"] = ErrorCode;
-            }
-            return j;
-        }
+        [[nodiscard]] auto GetPartialJson(bool force) const -> nlohmann::json;
 
     };
 

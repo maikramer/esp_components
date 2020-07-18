@@ -9,3 +9,12 @@ std::ostream &JsonModels::operator<<(std::ostream &Str, const JsonModels::BaseJs
     Str << v.ToJson();
     return Str;
 }
+
+auto JsonModels::BaseJsonDataError::GetPartialJson(bool force) const -> nlohmann::json {
+    nlohmann::json j;
+    if (ErrorMessage != ErrorCodes::None || force) {
+        j["Error"] = ErrorMessage != ErrorCodes::None;
+        j["ErrorMessage"] =  ErrorMessage.ToString();
+    }
+    return j;
+}

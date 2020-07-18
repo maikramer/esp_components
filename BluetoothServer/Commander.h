@@ -47,13 +47,17 @@ public:
 
 class Commander {
 public:
-    Commander();
+    Commander() = delete;
 
     static void CheckForCommand(const std::string &rxValue, BluetoothConnection *connection);
-    static void AddCommand(const DeviceCommand& command);
+
+    static void AddCommand(const DeviceCommand &command);
+
+    static void Init();
 
 private:
     static std::list<DeviceCommand> _commands;
+
 };
 
 

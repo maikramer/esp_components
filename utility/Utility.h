@@ -13,9 +13,9 @@
 #include "string"
 #include <hal/gpio_types.h>
 #include <driver/gpio.h>
+#include <JsonModels.h>
 #include "esp_log.h"
 #include "stdexcept"
-#include "JsonModels.h"
 #include "sstream"
 
 class Utility {
@@ -39,29 +39,17 @@ public:
     template<typename T>
     static auto GetConvertedFromString(std::string str) -> T {
         T out;
-        try {
-            if (std::is_same<T, std::string>()) {
-                out = *reinterpret_cast<T *>(&str);
-            } else if (std::is_same<T, std::int32_t>()) {
-                out = *reinterpret_cast<T *>(stoi(str));
-            } else if (std::is_same<T, std::uint32_t>()) {
-                out = *reinterpret_cast<T *>(stoul(str));
-            } else if (std::is_same<T, std::int64_t>()) {
-                out = *reinterpret_cast<T *>(stoll(str));
-            } else if (std::is_same<T, std::uint64_t>()) {
-                out = *reinterpret_cast<T *>(stoull(str));
-            } else if (std::is_base_of<JsonModels::BaseJsonData, T>()) {
-                reinterpret_cast<JsonModels::BaseJsonData *>(&out)->FromString(str);
-            } else {
-                ESP_LOGE(__FUNCTION__, "Tipo invalido ou nao suportado");
-            }
-        } catch (std::invalid_argument &e) {
-            ESP_LOGE(__FUNCTION__, "Excessao: %s", e.what());
-            throw std::exception();
-        } catch (std::out_of_range &e) {
-            ESP_LOGE(__FUNCTION__, "Excessao: %s", e.what());
-            throw std::exception();
+        if (str.empty()) {
+            ESP_LOGE(__FUNCTION__, "String vazia");
         }
+        ESP_LOGI(__FUNCTION__, "Tentando converter %s", str.c_str());
+        if (std::is_base_of<JsonModels::BaseJsonData, T>::value) {
+            reinterpret_cast<JsonModels::BaseJsonData *>(&out)->FromString(str);
+        } else {
+            std::stringstream convert(str);
+            convert >> out;
+        }
+
         return out;
     }
 

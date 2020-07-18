@@ -1,18 +1,20 @@
 //
 // Created by maikeu on 23/09/2019.
 //
+#include <projectConfig.h>
+
+#ifdef USE_SDCARD
 #include "SdCard.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_vfs_fat.h"
 #include "driver/sdspi_host.h"
 #include "sdmmc_cmd.h"
-#include <projectConfig.h>
 
 #define SPI_DMA_CHAN    1
 
 auto SdCard::Init() -> bool {
-
+    Storage::InitErrors();
     // Options for mounting the filesystem.
     // If format_if_mount_failed is set to true, SD card will be partitioned and
     // formatted in case when mounting fails.
@@ -64,3 +66,4 @@ auto SdCard::Init() -> bool {
     }
 
 }
+#endif

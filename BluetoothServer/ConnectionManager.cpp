@@ -22,7 +22,7 @@ SafeList<BluetoothConnection *> ConnectionManager::_connectionPool;//NOLINT
 void ConnectionManager::Init(ConnectedUser *userType, int noOfConnections) {
 #else
 
-    void ConnectionManager::Init(int noOfConnections) {
+void ConnectionManager::Init(int noOfConnections) {
 #endif
     for (auto i = 0; i < noOfConnections; i++) {
 #ifdef USER_MANAGEMENT_ENABLED
@@ -117,17 +117,17 @@ void ConnectionManager::SendNotifications() {
             if (isLogged) {
                 auto state = user->GetNotificationNeeds();
 #else
-                auto state = connection->GetNotificationNeeds();
+            auto state = connection->GetNotificationNeeds();
 #endif
-                if (state != NotificationNeeds::NoSend) {
+            if (state != NotificationNeeds::NoSend) {
 
 #ifdef USER_MANAGEMENT_ENABLED
-                    ESP_LOGI(__FUNCTION__, "Enviando para %s", user->User.c_str());
+                ESP_LOGI(__FUNCTION__, "Enviando para %s", user->User.c_str());
 #else
-                    //                ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
+                //                ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
 #endif
-                    connection->SendNotifyData(state != NotificationNeeds::SendImportant);
-                }
+                connection->SendNotifyData(state != NotificationNeeds::SendImportant);
+            }
 #ifdef USER_MANAGEMENT_ENABLED
             }
 #endif
@@ -138,6 +138,7 @@ void ConnectionManager::SendNotifications() {
 }
 
 #ifndef USER_MANAGEMENT_ENABLED
+
 void ConnectionManager::NotifyAll(bool isImportant) {
     if (!_connectionPool.Empty()) {
         for (auto *connection : _connectionPool.ReadList()) {
@@ -147,4 +148,5 @@ void ConnectionManager::NotifyAll(bool isImportant) {
         _connectionPool.EndReadList();
     }
 }
+
 #endif

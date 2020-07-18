@@ -7,6 +7,7 @@
 wl_handle_t Flash::_wearHandle = WL_INVALID_HANDLE;
 
 auto Flash::Init() -> ErrorCode {
+    Storage::InitErrors();
     const esp_vfs_fat_mount_config_t mount_config = {
             .format_if_mount_failed = true,
             .max_files = 4,

@@ -28,7 +28,7 @@ static void CommandExecuterTask(void *arg __unused) {
     }
 }
 
-Commander::Commander() {
+void Commander::Init() {
     Utility::CreateAndProfile("CommandExecuterTask", CommandExecuterTask, 4096, HIGH_PRIORITY, 0, nullptr);
 }
 

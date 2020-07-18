@@ -7,119 +7,68 @@
 
 
 #include <cstdint>
-#include <list>
-#include <Utility.h>
+#include <map>
 #include <esp_log.h>
+#include "cstring"
 #include "string"
-#include "nameof.hpp"
+#include <functional>
 
-namespace ErrorCodes {
-    constexpr uint8_t None = 0;
-    constexpr uint8_t Error = 1;
-    constexpr uint8_t StoreError = 2;
-    constexpr uint8_t ListIsEmpty = 3;
-    constexpr uint8_t Exist = 4;
-    constexpr uint8_t FileNotFound = 5;
-    constexpr uint8_t KeyNotFound = 6;
-    constexpr uint8_t FindError = 7;
-    constexpr uint8_t PartitionNotFound = 8;
-    constexpr uint8_t AlreadyMounted = 9;
-    constexpr uint8_t NoFreeMemory = 10;
-}
-
-class ErrorCodeItem {
+struct StrCompare : public std::binary_function<const char *, const char *, bool> {
 public:
-    static const ErrorCodeItem Invalid;
-    uint8_t _code;
-    std::string _name;
-
-    ErrorCodeItem(uint8_t code, std::string name) : _code(code) {
-        _name = Utility::CamelCaseToTitleCase(name);
-        ESP_LOGI(__FUNCTION__, "Adicionado erro: %s", _name.c_str());
-    }
+    bool operator()(const char *str1, const char *str2) const { return std::strcmp(str1, str2) < 0; }
 };
 
+struct ErrorCodeItem {
+    const char *Name;
+    const char *Description;
+};
+namespace ErrorCodes {
+    const ErrorCodeItem Invalid{"Invalid", "Erro Invalido"};
+    const ErrorCodeItem None{"None", "Nenhum Erro Ocorreu"};
+    const ErrorCodeItem Error{"Error", "Erro Inesperado Ocorreu"};
+    const ErrorCodeItem ExceptionError{"ExceptionError", "Erro de Programa"};
+}
 class ErrorCode {
 private:
-    static std::list<ErrorCodeItem> items;
-    static bool _init;
-
-    static void Init() {
-        AddErrorItem(ErrorCodeItem(ErrorCodes::None, std::string(NAMEOF(ErrorCodes::None))));
-        AddErrorItem(ErrorCodeItem(ErrorCodes::Error, std::string(NAMEOF(ErrorCodes::Error))));
-        AddErrorItem(ErrorCodeItem(ErrorCodes::StoreError, std::string(NAMEOF(ErrorCodes::StoreError))));
-        AddErrorItem(ErrorCodeItem(ErrorCodes::ListIsEmpty, std::string(NAMEOF(ErrorCodes::ListIsEmpty))));
-        AddErrorItem(ErrorCodeItem(ErrorCodes::Exist, std::string(NAMEOF(ErrorCodes::Exist))));
-        AddErrorItem(ErrorCodeItem(ErrorCodes::FileNotFound, std::string(NAMEOF(ErrorCodes::FileNotFound))));
-        AddErrorItem(ErrorCodeItem(ErrorCodes::KeyNotFound, std::string(NAMEOF(ErrorCodes::KeyNotFound))));
-        AddErrorItem(ErrorCodeItem(ErrorCodes::FindError, std::string(NAMEOF(ErrorCodes::FindError))));
-        AddErrorItem(ErrorCodeItem(ErrorCodes::PartitionNotFound, std::string(NAMEOF(ErrorCodes::PartitionNotFound))));
-        AddErrorItem(ErrorCodeItem(ErrorCodes::AlreadyMounted, std::string(NAMEOF(ErrorCodes::AlreadyMounted))));
-        AddErrorItem(ErrorCodeItem(ErrorCodes::NoFreeMemory, std::string(NAMEOF(ErrorCodes::NoFreeMemory))));
-    }
+    static std::map<const char *, const ErrorCodeItem *, StrCompare> items;
 
 protected:
-    ErrorCodeItem *Error = nullptr;
-
-    explicit ErrorCode(ErrorCodeItem *item) {
-        Error = item;
-    }
+    const ErrorCodeItem *_error = nullptr;
 
 public:
-    std::string ToString() {
-        return Error->_name;
+    [[nodiscard]] const char *ToString() const {
+        return _error->Description;
     }
 
     static bool AddErrorItem(const ErrorCodeItem &item) {
-        for (const auto &it:items) {
-            if (it._name == item._name || it._code == item._code) {
-                ESP_LOGE(__FUNCTION__, "Tentando adicionar codigo de erro ja existente");
-                return false;
-            }
+        if (items.find(item.Name) != items.end()) {
+            ESP_LOGE(__FUNCTION__, "Tentando adicionar erro ja existente");
+            return false;
         }
-        items.push_back(item);
+        items[item.Name] = &item;
+        return true;
     }
 
-    bool operator==(uint8_t value) const {
-        return value == Error->_code;
+    bool operator==(const ErrorCodeItem item) const {
+        ESP_LOGI(__FUNCTION__, "Comparando %s == %s", _error->Name, item.Name);
+        return strcmp(_error->Name, item.Name) == 0;
     }
 
-    bool operator!=(uint8_t value) const {
-        return value != Error->_code;
+    bool operator!=(const ErrorCodeItem item) const {
+        ESP_LOGI(__FUNCTION__, "Comparando %s != %s", _error->Name, item.Name);
+        return strcmp(_error->Name, item.Name) != 0;
     }
 
-    explicit operator uint8_t() { return Error->_code; }
+    explicit operator char *() { return const_cast<char *>(_error->Description); }
 
-    static bool IsValid(uint8_t code) {
-        for (auto &item:items) {
-            if (item._code == code) {
-                return true;
-            }
-        }
-        ESP_LOGE(__FUNCTION__, "Codigo de erro invalido");
-        return false;
+    static void Init() {
+        AddErrorItem(ErrorCodes::Invalid);
+        AddErrorItem(ErrorCodes::None);
+        AddErrorItem(ErrorCodes::Error);
+        AddErrorItem(ErrorCodes::ExceptionError);
     }
 
-    static ErrorCodeItem *GetByCode(uint8_t code) {
-        if (items.size() < code) {
-            ESP_LOGE(__FUNCTION__, "Codigo invalido %d", code);
-        }
-        for (auto &item:items) {
-            if (item._code == code) {
-                return &item;
-            }
-        }
-        ESP_LOGE(__FUNCTION__, "Codigo %d nao encontrado", code);
-        return const_cast<ErrorCodeItem *>(&ErrorCodeItem::Invalid);
-    }
-
-    ErrorCode(uint8_t code) {
-        Error = GetByCode(code);
-    }
-
-    ErrorCode() {
-        Error = GetByCode(ErrorCodes::None);
-    }
+    ErrorCode(ErrorCodeItem codeItem);//NOLINT
 };
 
 #endif //TOMADA_SMART_CONDO_ERRORCODE_H

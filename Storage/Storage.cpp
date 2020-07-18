@@ -35,9 +35,9 @@ void remove_dir(const char *path) {
 
 }
 
-auto Storage::EraseData() -> bool {
+auto Storage::EraseData() -> ErrorCode {
     remove_dir(StorageConst::BasePath);
-    return true;
+    return ErrorCodes::None;
 }
 
 auto Storage::GetStorageStatus(StorageStatus &status) -> ErrorCode {

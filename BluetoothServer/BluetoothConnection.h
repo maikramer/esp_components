@@ -40,32 +40,40 @@ public:
 
     template<typename Tmodel>
     void SendError(ErrorCode errorCode) {
-        static_assert(std::is_base_of<JsonModels::BaseJsonData, Tmodel>::value,
+        static_assert(std::is_base_of<JsonModels::BaseJsonDataError, Tmodel>::value,
                       "Lista deve ter como base BaseListJsonData");
         nlohmann::json j;
 
         Tmodel jsonData;
-        jsonData.ErrorCode = (uint8_t) errorCode;
+        jsonData.ErrorMessage = errorCode;
         if (std::is_base_of<JsonModels::BaseListJsonDataBasic, Tmodel>()) {
             reinterpret_cast<JsonModels::BaseListJsonDataBasic *>(&jsonData)->End = true;
         }
 
         auto json_str = jsonData.ToJson();
         SendJsonData(json_str);
-        ESP_LOGW(__FUNCTION__, "Erro lendo lista");
     }
 
     template<typename Tmodel, typename T1, typename T2>
-    void SendList(const std::map<T1, T2> &map) {
+    void SendList(const std::map<T1, T2> &map, Tmodel *firstItem = nullptr, Tmodel *lastItem = nullptr) {
         static_assert(std::is_base_of<JsonModels::BaseListJsonDataBasic, Tmodel>::value,
                       "Lista deve ter como base BaseListJsonData");
 
         if (map.empty()) {
-            SendError<Tmodel>(ErrorCode(ErrorCodes::ListIsEmpty));
+            ErrorCode error = ErrorCodes::ListIsEmpty;
+            SendError<Tmodel>(error);
             return;
         }
 
         for (auto it = map.begin(); it != map.end(); ++it) {
+            if (it == map.begin() && firstItem != nullptr) {
+                SendJsonData(firstItem->ToJson());
+                continue;
+            } else if (std::next(it) == map.end() && lastItem != nullptr) {
+                SendJsonData(lastItem->ToJson());
+                continue;
+            }
+
             Tmodel jsonData;
             if (it == map.begin()) {
                 jsonData.Begin = true;
@@ -103,10 +111,13 @@ public:
     ConnectedUser *GetUser() { return _user; }
 
 #else
+
     NotificationNeeds GetNotificationNeeds();
+
     void SetGetDataFunction(std::function<std::list<uint8_t>()> callback);
 
     void SetNotificationNeeds(NotificationNeeds needs);
+
 #endif
 
     void SendNotifyData(bool isNotification);
@@ -121,7 +132,7 @@ private:
 #ifdef USER_MANAGEMENT_ENABLED
     ConnectedUser *_user;
 #else
-    std::function<std::list<uint8_t> ()> _getDataFunction;
+    std::function<std::list<uint8_t>()> _getDataFunction;
 #endif
 
     void SendJson(const std::string &json) const;
