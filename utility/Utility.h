@@ -43,12 +43,8 @@ public:
             ESP_LOGE(__FUNCTION__, "String vazia");
         }
         ESP_LOGI(__FUNCTION__, "Tentando converter %s", str.c_str());
-        if (std::is_base_of<JsonModels::BaseJsonData, T>::value) {
-            reinterpret_cast<JsonModels::BaseJsonData *>(&out)->FromString(str);
-        } else {
-            std::stringstream convert(str);
-            convert >> out;
-        }
+        std::stringstream convert(str);
+        convert >> out;
 
         return out;
     }

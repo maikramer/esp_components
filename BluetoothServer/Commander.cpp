@@ -29,7 +29,7 @@ static void CommandExecuterTask(void *arg __unused) {
 }
 
 void Commander::Init() {
-    Utility::CreateAndProfile("CommandExecuterTask", CommandExecuterTask, 4096, HIGH_PRIORITY, 0, nullptr);
+    Utility::CreateAndProfile("CommandExecuterTask", CommandExecuterTask, 8192, HIGH_PRIORITY, 0, nullptr);
 }
 
 void Commander::AddCommand(const DeviceCommand& command) {

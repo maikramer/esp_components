@@ -15,7 +15,6 @@
 #include "ConnectionManager.h"
 #include <sstream>
 #include <Utility.h>
-#include <nlohmann/json.hpp>
 #include <utility>
 #include <ConnectedUser.h>
 
@@ -136,13 +135,6 @@ void BluetoothServer::SetupBt(ConnectedUser *userType, std::string deviceName) {
     Utility::CreateAndProfile("SendDataTask", SendDataTask, 8192, HIGH_PRIORITY, 1, nullptr);
 }
 
-void BluetoothServer::SendStatus(BLECharacteristic *pCharacteristic, bool isOk) {
-    nlohmann::json j;
-    j["Ok"] = isOk;
-    auto json_str = j.dump();
-    BluetoothServer::SendJson(pCharacteristic, json_str);
-}
-
 void BluetoothServer::SendJsonData(BLECharacteristic *pCharacteristic, const string &json) {
     if (!json.empty()) {
         SendJson(pCharacteristic, json);
@@ -168,6 +160,7 @@ void BluetoothServer::ServerCallbacks::onConnect(BLEServer *server __unused, esp
 
 void BluetoothServer::ServerCallbacks::onDisconnect(BLEServer *server __unused, esp_ble_gatts_cb_param_t *param) {
     auto conn_id = param->disconnect.conn_id;
+    ESP_LOGI(__FUNCTION__ , "Disconnect");
     ConnectionManager::Disconnect(conn_id);
 }
 

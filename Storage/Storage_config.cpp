@@ -9,7 +9,7 @@ auto Storage::StoreConfig(const std::string &key, const std::string &value, bool
 
     ESP_LOGI(TAG, "Opening config file");
 
-    auto res = StoreKeyValue(key, value, "config", overwrite);
+    auto res = StoreKeyValueWithoutCheck(key, value, StorageConst::ConfigFilename, overwrite);
     if (res == ErrorCodes::None) {
         ESP_LOGI(TAG, "Configuracao salva");
     } else if (res == ErrorCodes::Exist) {
@@ -17,20 +17,14 @@ auto Storage::StoreConfig(const std::string &key, const std::string &value, bool
     } else {
         ESP_LOGE(TAG, "Erro salvando configuracao");
     }
-    
+
     return res;
 }
 
-auto Storage::LoadConfig(const std::string &key) -> std::string {
+ErrorCode Storage::LoadConfig(const std::string &key, std::string &value) {
     const char *TAG = __FUNCTION__;
-
     ESP_LOGI(TAG, "Opening config file");
-    std::string ret;
-    auto result = ReadKeyFromFile(key, ret, "config.txt");
+    auto result = ReadKeyFromFile(key, value, StorageConst::ConfigFilename);
 
-    if (result != ErrorCodes::None || ret.empty()) {
-        ESP_LOGE(TAG, "Erro lendo a chave %s da configuracao", key.c_str());
-    }
-
-    return ret;
+    return result;
 }

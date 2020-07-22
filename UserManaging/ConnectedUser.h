@@ -22,7 +22,6 @@ public:
     std::string User;
     bool IsLogged = false;
     bool IsAdmin = false;
-    bool IsFirstAdminLogin = false;
     bool IsContinuingToUse = false;
 
     auto operator==(const ConnectedUser &other) -> bool {

@@ -10,6 +10,8 @@
 #include <ErrorCode.h>
 #include "projectConfig.h"
 #include "esp_log.h"
+#include "sstream"
+#include "Enums.h"
 
 class ErrorCode;
 
@@ -22,6 +24,8 @@ namespace JsonModels {
     };
 
     std::ostream &operator<<(std::ostream &Str, JsonModels::BaseJsonData const &v);
+
+    std::istream &operator>>(std::istream &Str, JsonModels::BaseJsonData &v);
 
     class UuidInfoJsonData : public BaseJsonData {
 
@@ -39,31 +43,32 @@ namespace JsonModels {
         }
     };
 
-    class UpdateDataJson : BaseJsonData {
-    protected:
-        UpdateDataJson() = default;
-
-        bool IsUpdate = true;
-
-        [[nodiscard]] auto GetPartialUpdateJson() const -> nlohmann::json {
-            nlohmann::json j;
-            j["IsUpdate"] = IsUpdate;
-            return j;
-        }
-    };
 
     class BaseJsonDataError : public BaseJsonData {
     public:
         ErrorCode ErrorMessage = ErrorCodes::None;
 
         [[nodiscard]] std::string ToJson() const override {
-            auto j = GetPartialJson(true);
+            auto j = GetPartialJson(false);
             return j.dump();
         }
 
     protected:
         [[nodiscard]] auto GetPartialJson(bool force) const -> nlohmann::json;
 
+    };
+
+    class UpdateDataJson : public BaseJsonDataError {
+    protected:
+        UpdateDataJson() = default;
+
+        bool IsUpdate = true;
+
+        [[nodiscard]] auto GetPartialUpdateJson(bool force) const -> nlohmann::json {
+            auto j = GetPartialJson(force);
+            j["IsUpdate"] = IsUpdate;
+            return j;
+        }
     };
 
     class BaseListJsonDataBasic : public BaseJsonDataError {
@@ -75,7 +80,8 @@ namespace JsonModels {
             auto j = GetPartialJson(false);
             if (Begin) {
                 j["Begin"] = Begin;
-            } else if (End) {
+            }
+            if (End) {
                 j["End"] = End;
             }
             return j;
@@ -104,6 +110,17 @@ namespace JsonModels {
 
         [[nodiscard]] std::string ToJson() const override {
             return ToPureJson().dump();
+        }
+
+        [[nodiscard]] bool IsValid() const {
+            return !Name.empty() && !Password.empty() && !Email.empty();
+        }
+
+        [[nodiscard]] std::string ToString() const {
+            std::stringstream stream;
+            stream << "Name: " << Name << "| Password: " << Password << "| Email: " << Email << "| IsConfirmed: "
+                   << IsConfirmed;
+            return stream.str();
         }
 
         [[nodiscard]] nlohmann::json ToPureJson() const {
@@ -152,6 +169,13 @@ namespace JsonModels {
             UserName = userName;
             UserJson = userJson;
         }
+    };
+
+    class LoginTryResultJson : public JsonModels::BaseJsonDataError {
+    public:
+        bool IsAdmin = false;
+
+        [[nodiscard]] std::string ToJson() const override;
     };
 
 #endif

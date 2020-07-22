@@ -14,10 +14,6 @@
 #define SPI_DMA_CHAN    1
 
 auto SdCard::Init() -> bool {
-    Storage::InitErrors();
-    // Options for mounting the filesystem.
-    // If format_if_mount_failed is set to true, SD card will be partitioned and
-    // formatted in case when mounting fails.
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
             .format_if_mount_failed = false,
             .max_files = MAX_OPEN_FILES,
@@ -62,6 +58,7 @@ auto SdCard::Init() -> bool {
         return false;
     } else {
         sdmmc_card_print_info(stdout, card);
+        Storage::InitErrors();
         return true;
     }
 

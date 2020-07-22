@@ -13,7 +13,7 @@
 
 #endif
 
-#define DEBUG_INFO
+//#define DEBUG_INFO
 
 SafeList<BluetoothConnection *> ConnectionManager::_connectionPool;//NOLINT
 
@@ -22,7 +22,7 @@ SafeList<BluetoothConnection *> ConnectionManager::_connectionPool;//NOLINT
 void ConnectionManager::Init(ConnectedUser *userType, int noOfConnections) {
 #else
 
-void ConnectionManager::Init(int noOfConnections) {
+    void ConnectionManager::Init(int noOfConnections) {
 #endif
     for (auto i = 0; i < noOfConnections; i++) {
 #ifdef USER_MANAGEMENT_ENABLED
@@ -46,17 +46,16 @@ void ConnectionManager::Connect(uint16_t conn_id) {
 
 void ConnectionManager::Disconnect(uint16_t id) {
     auto *conn = GetConnectionById(id);
+    if (conn == nullptr) return;
 #ifdef USER_MANAGEMENT_ENABLED
     auto *user = conn->GetUser();
     if (user != nullptr) {
         user->Clear();
-#ifdef DEBUG_INFO
-        ESP_LOGI(__FUNCTION__, "Usuario com id %d desconectado", id);
-#endif
-        return;
     }
+#ifdef DEBUG_INFO
+    ESP_LOGI(__FUNCTION__, "Usuario com id %d desconectado", id);
+#endif
 
-    ESP_LOGE(__FUNCTION__, "Tentando logoff sem haver um login");
 #endif
     conn->Free();
 }
@@ -103,33 +102,34 @@ auto ConnectionManager::GetFreeConnection() -> BluetoothConnection * {
 }
 
 void ConnectionManager::SendNotifications() {
+//    ESP_LOGI(__FUNCTION__, "");
     if (!_connectionPool.Empty()) {
         for (auto *connection : _connectionPool.ReadList()) {
             //                ESP_LOGI(__FUNCTION__, "Tentando Enviar para %s", user.User.c_str());
-            if (connection == nullptr)
+            if (connection == nullptr || connection->IsFree())
                 continue;
 
 #ifdef USER_MANAGEMENT_ENABLED
             auto *user = connection->GetUser();
+            if (user == nullptr) continue;
+
             auto isLogged = user->IsLogged;
+            if (!isLogged) continue;
 
+            auto state = user->GetNotificationNeeds();
+            if (state == NotificationNeeds::NoSend) continue;
 
-            if (isLogged) {
-                auto state = user->GetNotificationNeeds();
-#else
-            auto state = connection->GetNotificationNeeds();
-#endif
-            if (state != NotificationNeeds::NoSend) {
-
+#ifdef DEBUG_INFO
 #ifdef USER_MANAGEMENT_ENABLED
-                ESP_LOGI(__FUNCTION__, "Enviando para %s", user->User.c_str());
+
+            ESP_LOGI(__FUNCTION__, "Enviando para %s", user->User.c_str());
+
 #else
-                //                ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
+            ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
 #endif
-                connection->SendNotifyData(state != NotificationNeeds::SendImportant);
-            }
-#ifdef USER_MANAGEMENT_ENABLED
-            }
+#endif
+            connection->SendNotifyData(state != NotificationNeeds::SendImportant);
+
 #endif
 
         }

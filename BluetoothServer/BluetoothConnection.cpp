@@ -11,7 +11,7 @@
 #include <utility>
 #endif
 
-//#define LOG_SENT
+#define LOG_SENT
 #ifdef USER_MANAGEMENT_ENABLED
 
 BluetoothConnection::BluetoothConnection(ConnectedUser *user) {
@@ -63,8 +63,10 @@ auto BluetoothConnection::GetConnectionInfoJson() const -> std::string {
 }
 
 void BluetoothConnection::SendNotifyData(bool isNotification) {
+    ESP_LOGI(__FUNCTION__, "1");
 #ifdef USER_MANAGEMENT_ENABLED
     auto list = _user->GetData();
+    ESP_LOGI(__FUNCTION__, "2");
 #else
     if (_getDataFunction == nullptr) {
 //        ESP_LOGE(__FUNCTION__ , "Sem funcoes para envio de dados definidas");
@@ -76,7 +78,9 @@ void BluetoothConnection::SendNotifyData(bool isNotification) {
     std::copy(list.begin(), list.end(), data);
 
     NotifyCharacteristic->setValue(data, list.size());
+    ESP_LOGI(__FUNCTION__, "3");
     NotifyCharacteristic->notify(isNotification);
+    ESP_LOGI(__FUNCTION__, "4");
     _notificationNeeds = NotificationNeeds::NoSend;
 }
 
@@ -93,7 +97,7 @@ void BluetoothConnection::SendJson(const string &json) const {
 
 #ifdef LOG_SENT
     ESP_LOGI(__FUNCTION__, "Sending Json");
-        ESP_LOGI(__FUNCTION__, "Enviando %s", json.c_str());
+    ESP_LOGI(__FUNCTION__, "Enviando %s", json.c_str());
 #endif
     unsigned char bytes[json.length()];
     auto size = Utility::StringToByteArray(json, bytes);

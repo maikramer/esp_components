@@ -4,7 +4,7 @@
 
 #include "ErrorCode.h"
 
-std::map<const char *, const ErrorCodeItem *, StrCompare>ErrorCode::items{};
+std::map<std::string, const ErrorCodeItem *>ErrorCode::items{};
 
 ErrorCode::ErrorCode(const ErrorCodeItem item) {
     if (items.find(item.Name) == items.end()) {

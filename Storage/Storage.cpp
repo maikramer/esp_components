@@ -61,3 +61,12 @@ auto Storage::GetStorageStatus(StorageStatus &status) -> ErrorCode {
     ESP_LOGI(__FUNCTION__, "%llu bytes livres do total de %llu", status.FreeSpace, status.TotalSpace);
     return ErrorCode(ErrorCodes::None);
 }
+
+bool Storage::CheckFileNameForReserved(const std::string &fileName) {
+    if ((std::strcmp(fileName.c_str(), StorageConst::ConfigFilename) == 0) ||
+        (std::strcmp(fileName.c_str(), StorageConst::UsersFilename) == 0)) {
+        ESP_LOGE(__FUNCTION__, "Arquivo com nome %s é reservado", fileName.c_str());
+        return true;
+    }
+    return false;
+}

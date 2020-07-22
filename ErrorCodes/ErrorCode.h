@@ -13,24 +13,27 @@
 #include "string"
 #include <functional>
 
-struct StrCompare : public std::binary_function<const char *, const char *, bool> {
-public:
-    bool operator()(const char *str1, const char *str2) const { return std::strcmp(str1, str2) < 0; }
+//#define LOGGING_ERROR_CODE
+enum class ErrorCodeType {
+    General,
+    User,
+    Storage,
+    Project
 };
-
 struct ErrorCodeItem {
     const char *Name;
     const char *Description;
+    const ErrorCodeType Type;
 };
 namespace ErrorCodes {
-    const ErrorCodeItem Invalid{"Invalid", "Erro Invalido"};
-    const ErrorCodeItem None{"None", "Nenhum Erro Ocorreu"};
-    const ErrorCodeItem Error{"Error", "Erro Inesperado Ocorreu"};
-    const ErrorCodeItem ExceptionError{"ExceptionError", "Erro de Programa"};
+    const ErrorCodeItem Invalid{"Invalid", "Erro Invalido", ErrorCodeType::General};
+    const ErrorCodeItem None{"None", "Nenhum Erro Ocorreu", ErrorCodeType::General};
+    const ErrorCodeItem Error{"Error", "Erro Inesperado Ocorreu", ErrorCodeType::General};
+    const ErrorCodeItem ExceptionError{"ExceptionError", "Erro de Programa", ErrorCodeType::General};
 }
 class ErrorCode {
 private:
-    static std::map<const char *, const ErrorCodeItem *, StrCompare> items;
+    static std::map<std::string, const ErrorCodeItem *> items;
 
 protected:
     const ErrorCodeItem *_error = nullptr;
@@ -40,9 +43,17 @@ public:
         return _error->Description;
     }
 
+    [[nodiscard]] const char *GetDescription() const {
+        return _error->Description;
+    }
+
+    [[nodiscard]] const char *GetName() const {
+        return _error->Name;
+    }
+
     static bool AddErrorItem(const ErrorCodeItem &item) {
         if (items.find(item.Name) != items.end()) {
-            ESP_LOGE(__FUNCTION__, "Tentando adicionar erro ja existente");
+            ESP_LOGE(__FUNCTION__, "Tentando adicionar %s, que já existe", item.Name);
             return false;
         }
         items[item.Name] = &item;
@@ -50,13 +61,31 @@ public:
     }
 
     bool operator==(const ErrorCodeItem item) const {
+#ifdef LOGGING_ERROR_CODE
         ESP_LOGI(__FUNCTION__, "Comparando %s == %s", _error->Name, item.Name);
+#endif
         return strcmp(_error->Name, item.Name) == 0;
     }
 
     bool operator!=(const ErrorCodeItem item) const {
+#ifdef LOGGING_ERROR_CODE
         ESP_LOGI(__FUNCTION__, "Comparando %s != %s", _error->Name, item.Name);
+#endif
         return strcmp(_error->Name, item.Name) != 0;
+    }
+
+    bool operator==(const ErrorCode item) const {
+#ifdef LOGGING_ERROR_CODE
+        ESP_LOGI(__FUNCTION__, "Comparando %s == %s", _error->Name, item._error->Name);
+#endif
+        return strcmp(_error->Name, item._error->Name) == 0;
+    }
+
+    bool operator!=(const ErrorCode item) const {
+#ifdef LOGGING_ERROR_CODE
+        ESP_LOGI(__FUNCTION__, "Comparando %s != %s", _error->Name, item._error->Name);
+#endif
+        return strcmp(_error->Name, item._error->Name) != 0;
     }
 
     explicit operator char *() { return const_cast<char *>(_error->Description); }

@@ -19,9 +19,9 @@ typedef void (*DeviceCommandFunctionPtr)(const std::vector<std::string> &, Bluet
 //enum class CommandCode : uint8_t {
 //    StartCode = 0,
 //    FinalizeCode = 1,
-//    GetUsageCode = 2,
-//    GetAccumCode = 3,
-//    GetUsersAccumulatedUsageMap = 4,
+//    GetConsumeHistoryCode = 2,
+//    GetTotalConsumeInPeriodCode = 3,
+//    GetUsersTotalConsumeMapCode = 4,
 //    SetAdminInfoCode = 5,
 //    LoginCode = 6,
 //    LogoffCode = 7,

@@ -2,6 +2,7 @@
 // Created by maikeu on 23/02/2020.
 //
 #include "projectConfig.h"
+
 #ifdef USER_MANAGEMENT_ENABLED
 
 #include <esp_log.h>
@@ -9,22 +10,19 @@
 #include "UserManager.h"
 #include "ConnectedUser.h"
 
+#define DEBUG_INFO
+
 void UserManager::Login(const std::vector<std::string> &data, BluetoothConnection *connection) {
     auto *connectedUser = connection->GetUser();
 
     //Verifica admin
-    bool isFirstAdminLogin = false;
-    auto adminUser = Storage::LoadConfig(AdminUserKey);
-    if (adminUser.empty()) {
-        adminUser = "Admin";
-        isFirstAdminLogin = true;
-    }
-
-    //Erros
-    auto result = LoginTry::Error;
-    if (!isFirstAdminLogin && data.size() < 2) {
-        ESP_LOGE(__FUNCTION__, "Dados invalidos");
-        SendLoginTryResult(result, connection);
+    std::string adminUser;
+    auto result = Storage::LoadConfig(AdminUserKey, adminUser);
+    if (result == ErrorCodes::KeyNotFound || result == ErrorCodes::FileNotFound) {
+        connection->SendError<JsonModels::LoginTryResultJson>(ErrorCodes::AdminNotRegistered);
+        return;
+    } else if (result != ErrorCodes::None) {
+        connection->SendError<JsonModels::LoginTryResultJson>(result);
         return;
     }
 
@@ -32,84 +30,75 @@ void UserManager::Login(const std::vector<std::string> &data, BluetoothConnectio
     std::string pw;
     if (data.size() > 1) {
         pw = data[1];
+    } else {
+        ESP_LOGE(__FUNCTION__, "Usuário não contem senha");
+        connection->SendError<JsonModels::LoginTryResultJson>(ErrorCodes::Error);
     }
 
+    ESP_LOGI(__FUNCTION__, "User: %s | Admin: %s", user.c_str(), adminUser.c_str());
     //Verifica usuario
     if (user == adminUser) {
-        if (isFirstAdminLogin || pw == Storage::LoadConfig(AdminPasswordKey)) {
+        std::string adminPw;
+        auto pwRes = Storage::LoadConfig(AdminPasswordKey, adminPw);
+        if (pwRes != ErrorCodes::None) {
+            connection->SendError<JsonModels::LoginTryResultJson>(pwRes);
+        }
+
+        if (pw == adminPw) {
             connectedUser->IsAdmin = true;
             connectedUser->IsLogged = true;
             connectedUser->User = user;
-            connectedUser->IsFirstAdminLogin = isFirstAdminLogin;
-            result = LoginTry::Ok;
+            result = ErrorCodes::None;
         } else {
-            result = LoginTry::WrongPassword;
+            result = ErrorCodes::WrongPassword;
         }
     } else {
         result = CheckPassword(user, pw);
-        if (result == LoginTry::Ok) {
+        if (result == ErrorCodes::None) {
             connectedUser->IsLogged = true;
             connectedUser->User = user;
             connectedUser->OnLogin();
-
-
         }
     }
 
+    ESP_LOGI(__FUNCTION__, "Enviando o resultado: %s", result.GetName());
     SendLoginTryResult(result, connection);
 }
 
-void UserManager::SendLoginTryResult(LoginTry loginTry, BluetoothConnection *connection) {
-    nlohmann::json j;
-    string result;
-    switch (loginTry) {
-        case LoginTry::Ok:
-            result = "Ok";
-            break;
-        case LoginTry::NotConfirmed:
-            result = "NotConfirmed";
-            break;
-        case LoginTry::Error:
-            result = "Error";
-            break;
-        case LoginTry::WrongPassword:
-            result = "WrongPassword";
-            break;
-    }
-
-    j["Result"] = result;
+void UserManager::SendLoginTryResult(ErrorCode errorCode, BluetoothConnection *connection) {
     auto *user = connection->GetUser();
-    if (loginTry == LoginTry::Ok) {
-        j["IsAdmin"] = user->IsAdmin;
-        j["IsFirstAdminLogin"] = user->IsFirstAdminLogin;
-    }
+    JsonModels::LoginTryResultJson result{};
+    result.ErrorMessage = errorCode;
+    result.IsAdmin = user->IsAdmin;
 
-    auto json = j.dump();
-    connection->SendJsonData(json);
+    auto json_str = result.ToJson();
+    ESP_LOGI(__FUNCTION__, "Enviando => %s", json_str.c_str());
+    connection->SendJsonData(json_str);
 }
 
 
-auto UserManager::CheckPassword(string &userName, string &pass) -> LoginTry {
+ErrorCode UserManager::CheckPassword(string &userName, string &pass) {
 #ifdef DEBUG_INFO
     ESP_LOGI(__FUNCTION__, "Tentativa User:%s , Senha:%s", userName.c_str(), pass.c_str());
 #endif
-    auto user = LoadUser(userName);
+    JsonModels::User user{};
+    auto result = LoadUser(userName, user);
 #ifdef DEBUG_INFO
-    ESP_LOGI(__FUNCTION__, "Senha Armazenada :%s", user.Password.c_str());
+    ESP_LOGI(__FUNCTION__, "Carregado => %s", user.ToString().c_str());
 #endif
 
-    if (user.Name.empty()) {
-        return LoginTry::Error;
+    if (result != ErrorCodes::None) {
+        return result;
     }
 
     if (!user.IsConfirmed) {
-        return LoginTry::NotConfirmed;
+        return ErrorCodes::NotConfirmed;
     }
 
     if (user.Password != pass) {
-        return LoginTry::WrongPassword;
+        return ErrorCodes::WrongPassword;
     } else {
-        return LoginTry::Ok;
+        return ErrorCodes::None;
     }
 }
 
@@ -117,9 +106,9 @@ void UserManager::Logoff(BluetoothConnection *connection) {
     auto *connectedUser = connection->GetUser();
     connectedUser->Clear();
 
-    nlohmann::json j;
-    j["Ok"] = !connectedUser->IsLogged;
-    auto json = j.dump();
+    JsonModels::BaseJsonDataError error;
+    error.ErrorMessage = !connectedUser->IsLogged ? ErrorCodes::None : ErrorCodes::Error;
+    auto json = error.ToJson();
     connection->SendJsonData(json);
 }
 

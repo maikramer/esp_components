@@ -5,8 +5,5 @@
 #ifndef TOMADA_SMART_CONDO_ENUMS_H
 #define TOMADA_SMART_CONDO_ENUMS_H
 
-enum class LoginTry {
-    Ok, Error, NotConfirmed, WrongPassword
-};
 
 #endif //TOMADA_SMART_CONDO_ENUMS_H

@@ -42,7 +42,6 @@ public:
     void SendError(ErrorCode errorCode) {
         static_assert(std::is_base_of<JsonModels::BaseJsonDataError, Tmodel>::value,
                       "Lista deve ter como base BaseListJsonData");
-        nlohmann::json j;
 
         Tmodel jsonData;
         jsonData.ErrorMessage = errorCode;

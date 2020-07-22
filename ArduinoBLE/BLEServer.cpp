@@ -369,6 +369,12 @@ void BLEServerCallbacks::onDisconnect(BLEServer *pServer) {
     ESP_LOGD("BLEServerCallbacks", "<< onDisconnect()");
 } // onDisconnect
 
+void BLEServerCallbacks::onDisconnect(BLEServer *pServer, esp_ble_gatts_cb_param_t *param) {
+    ESP_LOGD("BLEServerCallbacks", ">> onDisconnect(): Default");
+    ESP_LOGD("BLEServerCallbacks", "Device: %s", BLEDevice::toString().c_str());
+    ESP_LOGD("BLEServerCallbacks", "<< onDisconnect()");
+} // onDisconnect
+
 /* multi connect support */
 /* TODO do some more tweaks */
 void BLEServer::updatePeerMTU(uint16_t conn_id, uint16_t mtu) {
