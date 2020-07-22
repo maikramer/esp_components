@@ -17,7 +17,7 @@
 #include "sstream"
 #include "fstream"
 
-#define LOG_STORAGE
+//#define LOG_STORAGE
 
 namespace StorageConst {
     constexpr char BasePath[] = "/storage";
@@ -370,8 +370,9 @@ auto Storage::ReadKeyFromFile(Tkey key, Tvalue &out, const std::string &fileName
 template<typename Tkey, typename Tvalue>
 auto Storage::FastStoreKeyValue(Tkey key, Tvalue value,
                                 const std::string &fileName) -> ErrorCode {
-#ifdef LOG_STORAGE
     const char *TAG = __FUNCTION__;
+#ifdef LOG_STORAGE
+
     ESP_LOGI(TAG, "Opening file");
 #endif
     std::stringstream str{};

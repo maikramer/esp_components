@@ -8,7 +8,9 @@
 #include "JsonModels.h"
 
 #ifndef USER_MANAGEMENT_ENABLED
+
 #include <utility>
+
 #endif
 
 #define LOG_SENT
@@ -63,7 +65,7 @@ auto BluetoothConnection::GetConnectionInfoJson() const -> std::string {
 }
 
 void BluetoothConnection::SendNotifyData(bool isNotification) {
-    ESP_LOGI(__FUNCTION__, "1");
+    ESP_LOGI(__FUNCTION__, "");
 #ifdef USER_MANAGEMENT_ENABLED
     auto list = _user->GetData();
     ESP_LOGI(__FUNCTION__, "2");
@@ -78,9 +80,7 @@ void BluetoothConnection::SendNotifyData(bool isNotification) {
     std::copy(list.begin(), list.end(), data);
 
     NotifyCharacteristic->setValue(data, list.size());
-    ESP_LOGI(__FUNCTION__, "3");
     NotifyCharacteristic->notify(isNotification);
-    ESP_LOGI(__FUNCTION__, "4");
     _notificationNeeds = NotificationNeeds::NoSend;
 }
 

@@ -27,7 +27,7 @@ auto JsonModels::BaseJsonDataError::GetPartialJson(bool force) const -> nlohmann
     }
     return j;
 }
-
+#ifdef USER_MANAGEMENT_ENABLED
 std::string JsonModels::LoginTryResultJson::ToJson() const {
     auto j = GetPartialJson(false);
     if (IsAdmin) {
@@ -36,3 +36,4 @@ std::string JsonModels::LoginTryResultJson::ToJson() const {
 
     return j.dump();
 }
+#endif

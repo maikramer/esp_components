@@ -22,7 +22,7 @@ SafeList<BluetoothConnection *> ConnectionManager::_connectionPool;//NOLINT
 void ConnectionManager::Init(ConnectedUser *userType, int noOfConnections) {
 #else
 
-    void ConnectionManager::Init(int noOfConnections) {
+void ConnectionManager::Init(int noOfConnections) {
 #endif
     for (auto i = 0; i < noOfConnections; i++) {
 #ifdef USER_MANAGEMENT_ENABLED
@@ -117,7 +117,7 @@ void ConnectionManager::SendNotifications() {
             if (!isLogged) continue;
 
             auto state = user->GetNotificationNeeds();
-            if (state == NotificationNeeds::NoSend) continue;
+#else
 
 #ifdef DEBUG_INFO
 #ifdef USER_MANAGEMENT_ENABLED
@@ -127,10 +127,12 @@ void ConnectionManager::SendNotifications() {
 #else
             ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
 #endif
-#endif
+#endif  //DEBUG_INFO
+            auto state = connection->GetNotificationNeeds();
+#endif //USER_MANAGEMENT_ENABLED
+            if (state == NotificationNeeds::NoSend) continue;
             connection->SendNotifyData(state != NotificationNeeds::SendImportant);
 
-#endif
 
         }
         _connectionPool.EndReadList();
