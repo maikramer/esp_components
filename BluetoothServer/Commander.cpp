@@ -10,8 +10,8 @@
 #include "Commander.h"
 #include "vector"
 
-typedef struct {
-    DeviceCommandFunctionPtr Function{};
+typedef struct {//NOLINT
+    std::function<void(const std::vector<std::string> &, BluetoothConnection *)> Function{};
     std::vector<std::string> Data;
     BluetoothConnection *Connection{};
 } Command_t;
@@ -66,6 +66,7 @@ void Commander::CheckForCommand(const std::string &rxValue, BluetoothConnection 
             if (data.size() != command.DataSize) {
                 ESP_LOGW(__FUNCTION__, "Número de argumentos recebidos %d diferente do esperado %d", data.size(),
                          command.DataSize);
+                return;
             }
             auto *commandToSend = new Command_t;
             commandToSend->Function = command.Function;

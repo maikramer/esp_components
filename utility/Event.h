@@ -2,8 +2,8 @@
 // Created by maikeu on 04/07/2020.
 //
 
-#ifndef ROCKET_TESTER_EVENT_H
-#define ROCKET_TESTER_EVENT_H
+#ifndef EVENT_H
+#define EVENT_H
 
 #include <functional>
 #include "list"

@@ -29,7 +29,7 @@ public:
 
 #ifdef USER_MANAGEMENT_ENABLED
 
-    static void Init(ConnectedUser *userType, int noOfConnections);
+    static void Init(int noOfConnections);
 
 #else
     static void Init(int noOfConnections);

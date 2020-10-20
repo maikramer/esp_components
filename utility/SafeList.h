@@ -50,6 +50,7 @@ public:
     }
 
     auto ReadList() -> std::list<T> {
+//        ESP_LOGI(__FUNCTION__, "Abrindo lista, nao esqueca de fechar");
         if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
             return _list;
         }
@@ -57,13 +58,13 @@ public:
     }
 
     void EndReadList() {
+//        ESP_LOGI(__FUNCTION__, "Fechando lista");
         xSemaphoreGive(xSemaphore);
+
     }
 
     void Remove(T item) {
-
         if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
-            xSemaphoreTake(xSemaphore, TIMEOUT);
             _list.remove(item);
             xSemaphoreGive(xSemaphore);
         }

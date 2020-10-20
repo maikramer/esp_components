@@ -14,13 +14,8 @@
 #endif
 
 #define LOG_SENT
-#ifdef USER_MANAGEMENT_ENABLED
-
-BluetoothConnection::BluetoothConnection(ConnectedUser *user) {
-    _user = user;
-}
-
-#else
+//#define LOG_STATUS_SENT
+#ifndef USER_MANAGEMENT_ENABLED
 
 void BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t>()> callback) {
     _getDataFunction = std::move(callback);
@@ -65,10 +60,8 @@ auto BluetoothConnection::GetConnectionInfoJson() const -> std::string {
 }
 
 void BluetoothConnection::SendNotifyData(bool isNotification) {
-    ESP_LOGI(__FUNCTION__, "");
 #ifdef USER_MANAGEMENT_ENABLED
     auto list = _user->GetData();
-    ESP_LOGI(__FUNCTION__, "2");
 #else
     if (_getDataFunction == nullptr) {
 //        ESP_LOGE(__FUNCTION__ , "Sem funcoes para envio de dados definidas");
@@ -113,7 +106,8 @@ void BluetoothConnection::SendJson(const string &json) const {
 
 void
 BluetoothConnection::onStatus(BLECharacteristic *pCharacteristic, BLECharacteristicCallbacks::Status s, uint32_t code) {
-#ifdef LOG_STATUS_SENT
+    _lastStatus = s;
+
     string str;
     bool error = false;
     switch (s) {
@@ -125,6 +119,7 @@ BluetoothConnection::onStatus(BLECharacteristic *pCharacteristic, BLECharacteris
             break;
         case ERROR_INDICATE_DISABLED:
             str = "ERROR_INDICATE_DISABLED";
+            _indicateFailed = true;
             error = true;
             break;
         case ERROR_NOTIFY_DISABLED:
@@ -141,16 +136,20 @@ BluetoothConnection::onStatus(BLECharacteristic *pCharacteristic, BLECharacteris
             break;
         case ERROR_INDICATE_TIMEOUT:
             str = "ERROR_INDICATE_TIMEOUT";
+            _indicateFailed = true;
             error = true;
             break;
         case ERROR_INDICATE_FAILURE:
             str = "ERROR_INDICATE_FAILURE";
+            _indicateFailed = true;
             error = true;
             break;
     }
     if (error) {
         ESP_LOGE("Status", "%s", str.c_str());
-    } else {
+    }
+#ifdef LOG_STATUS_SENT
+    else {
         ESP_LOGI("Status", "%s", str.c_str());
     }
 #endif
@@ -160,7 +159,7 @@ auto BluetoothConnection::IsFree() const -> bool { return _isFree; }
 
 auto BluetoothConnection::GetId() const -> int { return _conn_ID; }
 
-void BluetoothConnection::Setup(uint16_t conn_id) {
+void BluetoothConnection::Connect(uint16_t conn_id) {
     _conn_ID = conn_id;
     _isFree = false;
 }
@@ -173,14 +172,28 @@ auto BluetoothConnection::GetNotifyUUID() const -> std::string {
     return NotifyCharacteristic->getUUID().toString();
 }
 
-void BluetoothConnection::Free() {
+void BluetoothConnection::Disconnect() {
     _isFree = true;
     _conn_ID = -1;
 
 #ifdef USER_MANAGEMENT_ENABLED
-    _user->Clear();
+    if (_user != nullptr) {
+        _user->Disconnect();
+        _user = nullptr;
+    }
+
 #else
     _getDataFunction = nullptr;
 #endif
+}
+
+ConnectedUser *BluetoothConnection::GetUser(bool canBeNull, bool canBeEmpty) {
+
+    if (_user == nullptr) {
+        if (!canBeNull) ESP_LOGE(__FUNCTION__, "Retornando um usuario nulo!!");
+    } else if (_user->User.empty() && !canBeEmpty) {
+        ESP_LOGE(__FUNCTION__, "Retornando um usuario vazio!!");
+    }
+    return _user;
 }
 

@@ -52,8 +52,6 @@ public:
 
     auto GetPrivateServiceUUID() -> string { return privateServiceUUID; }
 
-    static void SendStatus(BLECharacteristic *pCharacteristic, bool isOk);
-
 private:
     static void SendJson(BLECharacteristic *pCharacteristic, const string &json);
 

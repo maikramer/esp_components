@@ -14,8 +14,6 @@
 
 class BluetoothConnection;
 
-typedef void (*DeviceCommandFunctionPtr)(const std::vector<std::string> &, BluetoothConnection *);
-
 //enum class CommandCode : uint8_t {
 //    StartCode = 0,
 //    FinalizeCode = 1,
@@ -34,15 +32,20 @@ typedef void (*DeviceCommandFunctionPtr)(const std::vector<std::string> &, Bluet
 class DeviceCommand {
 public:
     DeviceCommand(const uint32_t dataSize, std::string internalName, const uint8_t code,
-                  DeviceCommandFunctionPtr functionPtr) : DataSize(dataSize),
-                                                          InternalName(std::move(internalName)),
-                                                          Code(code),
-                                                          Function(functionPtr) {}
+                  std::function<void(const std::vector<std::string> &, BluetoothConnection *)> functionPtr) : DataSize(
+            dataSize),
+                                                                                                              InternalName(
+                                                                                                                      std::move(
+                                                                                                                              internalName)),
+                                                                                                              Code(code),
+                                                                                                              Function(
+                                                                                                                      std::move(
+                                                                                                                              functionPtr)) {}
 
     const uint32_t DataSize;
     std::string InternalName;
     const uint8_t Code;
-    DeviceCommandFunctionPtr Function;
+    std::function<void(const std::vector<std::string> &, BluetoothConnection *)> Function;
 };
 
 class Commander {

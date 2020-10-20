@@ -20,8 +20,6 @@
 #include <SafeList.h>
 #include "ErrorCode.h"
 
-#define NUMERO_DE_SLOTS 4
-
 class BluetoothConnection;
 
 constexpr char AdminUserKey[] = "AdminUser";
@@ -41,14 +39,13 @@ namespace ErrorCodes {
 }
 
 class UserManager {
+    friend ConnectedUser;
     using string = std::string;
 public:
 
     static void SetAdmin(const std::vector<std::string> &data, BluetoothConnection *connection);
 
-    static void Init();
-
-    static void Login(const std::vector<std::string> &data, BluetoothConnection *connection);
+    void Login(const std::vector<std::string> &data, BluetoothConnection *connection);
 
     static void Logoff(BluetoothConnection *connection);
 
@@ -65,6 +62,13 @@ public:
     static ErrorCode CheckPassword(string &user, string &pass);
 
     static void SendLoginTryResult(ErrorCode errorCode, BluetoothConnection *connection);
+
+    void CreateManager();
+
+protected:
+    virtual ConnectedUser *CreateUserInstance();
+
+    static SafeList<ConnectedUser *> _activeUsers;//NOLINT
 };
 
 #endif

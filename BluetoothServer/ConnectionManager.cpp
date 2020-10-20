@@ -17,19 +17,9 @@
 
 SafeList<BluetoothConnection *> ConnectionManager::_connectionPool;//NOLINT
 
-#ifdef USER_MANAGEMENT_ENABLED
-
-void ConnectionManager::Init(ConnectedUser *userType, int noOfConnections) {
-#else
-
 void ConnectionManager::Init(int noOfConnections) {
-#endif
     for (auto i = 0; i < noOfConnections; i++) {
-#ifdef USER_MANAGEMENT_ENABLED
-        auto *connection = new BluetoothConnection(userType->CreateNewInstance());
-#else
         auto *connection = new BluetoothConnection();
-#endif
         connection->Init();
         _connectionPool.Push(connection);
     }
@@ -38,7 +28,7 @@ void ConnectionManager::Init(int noOfConnections) {
 void ConnectionManager::Connect(uint16_t conn_id) {
     auto *connection = GetFreeConnection();
     if (connection != nullptr) {
-        connection->Setup(conn_id);
+        connection->Connect(conn_id);
     } else {
         BluetoothServer::instance().BleServer->disconnect(conn_id);
     }
@@ -48,20 +38,23 @@ void ConnectionManager::Disconnect(uint16_t id) {
     auto *conn = GetConnectionById(id);
     if (conn == nullptr) return;
 #ifdef USER_MANAGEMENT_ENABLED
-    auto *user = conn->GetUser();
-    if (user != nullptr) {
-        user->Clear();
-    }
+
 #ifdef DEBUG_INFO
     ESP_LOGI(__FUNCTION__, "Usuario com id %d desconectado", id);
 #endif
 
 #endif
-    conn->Free();
+    conn->Disconnect();
 }
 
 auto ConnectionManager::GetConnectionById(uint16_t id) -> BluetoothConnection * {
-    for (auto *connection : _connectionPool.ReadList()) {
+    auto list = _connectionPool.ReadList();
+    if (list.empty()) {
+        ESP_LOGE(__FUNCTION__, "Timeout tentando obter semaforo");
+        return nullptr;
+    }
+
+    for (auto *connection : list) {
         if (connection->GetId() == id) {
 #ifdef DEBUG_INFO
             ESP_LOGI(__FUNCTION__, "Connection Id: %d", id);
@@ -77,24 +70,29 @@ auto ConnectionManager::GetConnectionById(uint16_t id) -> BluetoothConnection * 
 }
 
 auto ConnectionManager::GetFreeConnection() -> BluetoothConnection * {
-    const static auto *semaphore = xSemaphoreCreateMutex();
+    static auto *semaphore = xSemaphoreCreateMutex();//NOLINT
     if (xSemaphoreTake(semaphore, 1000) == pdFAIL) {
-        ESP_LOGE(__FUNCTION__, "Estouro ao adquirir semaphoro");
+        ESP_LOGE(__FUNCTION__, "Estouro ao adquirir semaforo");
         return nullptr;
     }
     BluetoothConnection *ret = nullptr;
-    for (auto *conn : _connectionPool.ReadList()) {
+    auto list = _connectionPool.ReadList();
+    if (list.empty()) {
+        ESP_LOGE(__FUNCTION__, "Timeout tentando obter semaforo");
+        return nullptr;
+    }
+
+    for (auto *conn : list) {
         if (conn->IsFree()) {
             ret = conn;
             break;
         }
     }
+    _connectionPool.EndReadList();
 
 
     if (ret == nullptr) {
-        ESP_LOGE(__FUNCTION__, "Sem Conecções livres");
-    } else {
-        _connectionPool.EndReadList();
+        ESP_LOGE(__FUNCTION__, "Sem Conexões livres");
     }
 
     xSemaphoreGive(semaphore);
@@ -104,13 +102,18 @@ auto ConnectionManager::GetFreeConnection() -> BluetoothConnection * {
 void ConnectionManager::SendNotifications() {
 //    ESP_LOGI(__FUNCTION__, "");
     if (!_connectionPool.Empty()) {
-        for (auto *connection : _connectionPool.ReadList()) {
+        auto list = _connectionPool.ReadList();
+        if (list.empty()) {
+            ESP_LOGE(__FUNCTION__, "Timeout tentando obter semaforo");
+            return;
+        }
+        for (auto *connection : list) {
             //                ESP_LOGI(__FUNCTION__, "Tentando Enviar para %s", user.User.c_str());
             if (connection == nullptr || connection->IsFree())
                 continue;
 
 #ifdef USER_MANAGEMENT_ENABLED
-            auto *user = connection->GetUser();
+            auto *user = connection->GetUser(true, true);
             if (user == nullptr) continue;
 
             auto isLogged = user->IsLogged;

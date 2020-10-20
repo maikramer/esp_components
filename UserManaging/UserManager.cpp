@@ -15,7 +15,9 @@
 
 #define DEBUG_INFO
 
-void UserManager::Init() {
+SafeList<ConnectedUser *> UserManager::_activeUsers{};//NOLINT
+
+void UserManager::CreateManager() {
     //Adiciona os Erros
     ErrorCode::AddErrorItem(ErrorCodes::NotConfirmed);
     ErrorCode::AddErrorItem(ErrorCodes::UserNotFound);
@@ -23,43 +25,43 @@ void UserManager::Init() {
     ErrorCode::AddErrorItem(ErrorCodes::AdminNotRegistered);
     ErrorCode::AddErrorItem(ErrorCodes::NoUsersRegistered);
 
-    //Ediciona os comandos
+    //Adiciona os comandos
     const DeviceCommand SetAdminInfo(2, std::string(
-    NAMEOF(
-            SetAdminInfo)), (uint8_t) CommandCode::SetAdminInfoCode,
-            [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                UserManager::SetAdmin(data, connection);
-            });
+                                             NAMEOF(
+                                                     SetAdminInfo)), (uint8_t) CommandCode::SetAdminInfoCode,
+                                     [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                                         UserManager::SetAdmin(data, connection);
+                                     });
 
-    const DeviceCommand Login(2, std::string(NAMEOF(Login)), (uint8_t) CommandCode::LoginCode,
-            [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                UserManager::Login(data, connection);
-            });
+    DeviceCommand Login(2, std::string(NAMEOF(Login)), (uint8_t) CommandCode::LoginCode,
+                        [this](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                            this->Login(data, connection);
+                        });
 
     const DeviceCommand Logoff(0, std::string(NAMEOF(Logoff)), (uint8_t) CommandCode::LogoffCode,
-            [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                UserManager::Logoff(connection);
-            });
+                               [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                                   UserManager::Logoff(connection);
+                               });
 
     const DeviceCommand SignUp(1, std::string(NAMEOF(SignUp)), (uint8_t) CommandCode::SignUpCode,
-            [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                UserManager::SignUp(data[0], connection);
-            });
+                               [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                                   UserManager::SignUp(data[0], connection);
+                               });
 
     const DeviceCommand GetUsersWaiting(0, std::string(
-    NAMEOF(
-            GetUsersWaiting)), (uint8_t) CommandCode::GetUsersWaitingCode,
-            [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                UserManager::GetUsersWaitingForApproval(connection);
-            });
+                                                NAMEOF(
+                                                        GetUsersWaiting)), (uint8_t) CommandCode::GetUsersWaitingCode,
+                                        [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                                            UserManager::GetUsersWaitingForApproval(connection);
+                                        });
 
     const DeviceCommand ApproveUser(1, std::string(
-    NAMEOF(
-            ApproveUser)), (uint8_t) CommandCode::ApproveUserCode,
-            [](const std::vector<std::string> &data,
-               BluetoothConnection *connection) {
-                UserManager::ApproveUser(data[0], connection);
-            });
+                                            NAMEOF(
+                                                    ApproveUser)), (uint8_t) CommandCode::ApproveUserCode,
+                                    [](const std::vector<std::string> &data,
+                                       BluetoothConnection *connection) {
+                                        UserManager::ApproveUser(data[0], connection);
+                                    });
 
     Commander::AddCommand(SetAdminInfo);
     Commander::AddCommand(Login);
@@ -72,12 +74,6 @@ void UserManager::Init() {
 void UserManager::SetAdmin(const std::vector<std::string> &data, BluetoothConnection *connection) {
     if (data.size() < 2) {
         ESP_LOGE(__FUNCTION__, "Dados invalidos");
-    }
-
-    ConnectedUser *connectedUser = connection->GetUser();
-    if (connectedUser == nullptr) {
-        ESP_LOGE(__FUNCTION__, "Usuario invalido");
-        return;
     }
 
     std::string user = data[0];
@@ -131,16 +127,14 @@ auto UserManager::SaveUser(const JsonModels::User &user) -> ErrorCode {
 }
 
 void UserManager::SignUp(const string &jsonStr, BluetoothConnection *connection) {
-
-
-    auto *connectedUser = connection->GetUser();
+    auto *connectedUser = connection->GetUser(false, false);
     JsonModels::User user{};
     if (!user.FromString(jsonStr)) {
-        ESP_LOGE(__FUNCTION__, "Erro tentando desserializar %s como usuario", jsonStr.c_str());
+        ESP_LOGE(__FUNCTION__, "Erro tentando deserializar %s como usuario", jsonStr.c_str());
     }
 
 #ifdef DEBUG_INFO
-    ESP_LOGI(__FUNCTION__, "Disserializado=> %s", user.ToString().c_str());
+    ESP_LOGI(__FUNCTION__, "Deserializado=> %s", user.ToString().c_str());
 #endif
 
     connectedUser->User = user.Name;
@@ -181,6 +175,11 @@ void UserManager::ApproveUser(const string &userName, BluetoothConnection *pConn
         ESP_LOGE(__FUNCTION__, "Erro gravando o usuario %s", user.Name.c_str());
         pConnection->SendError<JsonModels::BaseJsonDataError>(res);
     }
+}
+
+ConnectedUser *UserManager::CreateUserInstance() {
+    ESP_LOGI(__FUNCTION__, "Criando um ConnectedUser");
+    return new ConnectedUser();
 }
 
 #endif

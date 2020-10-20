@@ -25,11 +25,6 @@ enum class NotificationNeeds {
 
 class BluetoothConnection : public BLECharacteristicCallbacks {
 public:
-#ifdef USER_MANAGEMENT_ENABLED
-
-    explicit BluetoothConnection(ConnectedUser *user);
-
-#endif
     BLECharacteristic *WriteCharacteristic = nullptr;
     BLECharacteristic *NotifyCharacteristic = nullptr;
     SemaphoreHandle_t xSendMutex = xSemaphoreCreateMutex();
@@ -91,9 +86,9 @@ public:
         }
     }
 
-    void Free();
+    void Disconnect();
 
-    void Setup(uint16_t conn_id);
+    void Connect(uint16_t conn_id);
 
     [[nodiscard]] bool IsFree() const;
 
@@ -107,7 +102,7 @@ public:
 
 #ifdef USER_MANAGEMENT_ENABLED
 
-    ConnectedUser *GetUser() { return _user; }
+    ConnectedUser *GetUser(bool canBeNull, bool canBeEmpty);
 
 #else
 
@@ -125,6 +120,10 @@ public:
 
     void SendJsonData(const std::string &json);
 
+    void SetUser(ConnectedUser *user) {
+        _user = user;
+    }
+
 private:
     bool _isFree = true;
     int _conn_ID = -1;
@@ -138,6 +137,8 @@ private:
 
 
     NotificationNeeds _notificationNeeds = NotificationNeeds::NoSend;
+    Status _lastStatus = SUCCESS_NOTIFY;
+    bool _indicateFailed = false;
 };
 
 #endif
