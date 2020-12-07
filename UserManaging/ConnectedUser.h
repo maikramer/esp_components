@@ -41,6 +41,7 @@ public:
     virtual ErrorCode Login(bool isAdmin, std::string userName) {
         LoginEvent.FireEvent(this, nullptr);
         IsLogged = true;
+        IsAdmin = isAdmin;
         User = std::move(userName);
         return ErrorCodes::None;
     }

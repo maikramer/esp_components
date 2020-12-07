@@ -22,8 +22,7 @@
 
 class BluetoothConnection;
 
-constexpr char AdminUserKey[] = "AdminUser";
-constexpr char AdminPasswordKey[] = "AdminPassword";
+constexpr char AdminRegistered[] = "AdminRegistered";
 
 namespace ErrorCodes {
     const ErrorCodeItem NotConfirmed{"NotConfirmed",
@@ -43,8 +42,6 @@ class UserManager {
     using string = std::string;
 public:
 
-    static void SetAdmin(const std::vector<std::string> &data, BluetoothConnection *connection);
-
     void Login(const std::vector<std::string> &data, BluetoothConnection *connection);
 
     static void Logoff(BluetoothConnection *connection);
@@ -59,7 +56,7 @@ public:
 
     static void ApproveUser(const string &userName, BluetoothConnection *pConnection);
 
-    static ErrorCode CheckPassword(string &user, string &pass);
+    static ErrorCode CheckPassword(string &userName, string &pass, bool &isAdmin);
 
     static void SendLoginTryResult(ErrorCode errorCode, BluetoothConnection *connection);
 

@@ -26,12 +26,6 @@ void UserManager::CreateManager() {
     ErrorCode::AddErrorItem(ErrorCodes::NoUsersRegistered);
 
     //Adiciona os comandos
-    const DeviceCommand SetAdminInfo(2, std::string(
-                                             NAMEOF(
-                                                     SetAdminInfo)), (uint8_t) CommandCode::SetAdminInfoCode,
-                                     [](const std::vector<std::string> &data, BluetoothConnection *connection) {
-                                         UserManager::SetAdmin(data, connection);
-                                     });
 
     DeviceCommand Login(2, std::string(NAMEOF(Login)), (uint8_t) CommandCode::LoginCode,
                         [this](const std::vector<std::string> &data, BluetoothConnection *connection) {
@@ -63,7 +57,6 @@ void UserManager::CreateManager() {
                                         UserManager::ApproveUser(data[0], connection);
                                     });
 
-    Commander::AddCommand(SetAdminInfo);
     Commander::AddCommand(Login);
     Commander::AddCommand(Logoff);
     Commander::AddCommand(SignUp);
@@ -71,25 +64,7 @@ void UserManager::CreateManager() {
     Commander::AddCommand(ApproveUser);
 }
 
-void UserManager::SetAdmin(const std::vector<std::string> &data, BluetoothConnection *connection) {
-    if (data.size() < 2) {
-        ESP_LOGE(__FUNCTION__, "Dados invalidos");
-    }
-
-    std::string user = data[0];
-    std::string pw = data[1];
-
-    auto res = Storage::StoreConfig(AdminUserKey, user, false);
-    if (res == ErrorCodes::Exist) {
-        ESP_LOGE(__FUNCTION__, "Erro, ja existe um administrador cadastrado");
-        return;
-    }
-
-    auto result = Storage::StoreConfig(AdminPasswordKey, pw, false);
-    connection->SendError<JsonModels::BaseJsonDataError>(result);
-}
-
-ErrorCode UserManager::LoadUser(const string &userName, JsonModels::User &user) {
+ErrorCode UserManager::LoadUser(const string &userName, JsonModels::User &user) {//NOLINT
     auto result = Storage::LoadUser(userName, user);
     if (result == ErrorCodes::FileNotFound or result == ErrorCodes::KeyNotFound) {
         return ErrorCodes::UserNotFound;
@@ -106,7 +81,7 @@ ErrorCode UserManager::LoadUser(const string &userName, JsonModels::User &user) 
     return result;
 }
 
-auto UserManager::SaveUser(const JsonModels::User &user) -> ErrorCode {
+auto UserManager::SaveUser(const JsonModels::User &user) -> ErrorCode {//NOLINT
     if (user.Name.empty()) {
         ESP_LOGE(__FUNCTION__, "Usuario invalido");
         return ErrorCodes::Error;
@@ -126,27 +101,41 @@ auto UserManager::SaveUser(const JsonModels::User &user) -> ErrorCode {
     return result;
 }
 
-void UserManager::SignUp(const string &jsonStr, BluetoothConnection *connection) {
-    auto *connectedUser = connection->GetUser(false, false);
+void UserManager::SignUp(const string &jsonStr, BluetoothConnection *connection) { //NOLINT
     JsonModels::User user{};
     if (!user.FromString(jsonStr)) {
         ESP_LOGE(__FUNCTION__, "Erro tentando deserializar %s como usuario", jsonStr.c_str());
+        return;
     }
 
 #ifdef DEBUG_INFO
     ESP_LOGI(__FUNCTION__, "Deserializado=> %s", user.ToString().c_str());
 #endif
 
-    connectedUser->User = user.Name;
-    auto result = SaveUser(user);
-    connection->SendError<JsonModels::BaseJsonDataError>(result);
+    //Verifica admin
+    std::string isRegistered;
+    auto loadAdminResult = Storage::LoadConfig(AdminRegistered, isRegistered);
+    if (loadAdminResult == ErrorCodes::KeyNotFound || loadAdminResult == ErrorCodes::FileNotFound ||
+        isRegistered == "false") {
+        user.IsAdmin = true;
+    }
+
+    auto saveResult = SaveUser(user);
+    JsonModels::SignUpResultJson result;
+    if (saveResult == ErrorCodes::None && user.IsAdmin) {
+        Storage::StoreConfig(AdminRegistered, "true", true);
+        ESP_LOGI(__FUNCTION__, "Usuario Administrador cadastrado como %s", user.Name.c_str());
+        result.IsAdmin = true;
+    }
+
+    connection->SendJsonData<JsonModels::SignUpResultJson>(result);
 }
 
 void UserManager::GetUsersWaitingForApproval(BluetoothConnection *connection) {
     std::map<std::string, JsonModels::User> usersWaiting;
 
     auto result = Storage::GetEntriesWithFilter(StorageConst::UsersFilename, usersWaiting,
-                                                Utility::FFL([](std::string userName, JsonModels::User user) {
+                                                Utility::FFL([](std::string userName, JsonModels::User user) {//NOLINT
                                                     return !user.IsConfirmed;
                                                 }));
 
@@ -161,7 +150,7 @@ void UserManager::GetUsersWaitingForApproval(BluetoothConnection *connection) {
     connection->SendList<JsonModels::UserListJsonData>(usersWaiting);
 }
 
-void UserManager::ApproveUser(const string &userName, BluetoothConnection *pConnection) {
+void UserManager::ApproveUser(const string &userName, BluetoothConnection *pConnection) {//NOLINT
     JsonModels::User user{};
     auto result = LoadUser(userName, user);
     if (result != ErrorCodes::None) {

@@ -86,6 +86,18 @@ public:
         }
     }
 
+    template<typename Tmodel>
+    void SendJsonData(Tmodel jsonData) {
+        static_assert(std::is_base_of<JsonModels::BaseJsonDataError, Tmodel>::value,
+                      "Lista deve ter como base BaseListJsonData");
+        if (std::is_base_of<JsonModels::BaseListJsonDataBasic, Tmodel>()) {
+            reinterpret_cast<JsonModels::BaseListJsonDataBasic *>(&jsonData)->End = true;
+        }
+
+        auto json_str = jsonData.ToJson();
+        SendJsonData(json_str);
+    }
+
     void Disconnect();
 
     void Connect(uint16_t conn_id);

@@ -107,6 +107,7 @@ namespace JsonModels {
         std::string Password = "";
         std::string Email = "";
         bool IsConfirmed = false;
+        bool IsAdmin = false;
 
         [[nodiscard]] std::string ToJson() const override {
             return ToPureJson().dump();
@@ -119,7 +120,7 @@ namespace JsonModels {
         [[nodiscard]] std::string ToString() const {
             std::stringstream stream;
             stream << "Name: " << Name << "| Password: " << Password << "| Email: " << Email << "| IsConfirmed: "
-                   << IsConfirmed;
+                   << IsConfirmed << "| IsAdmin: " << IsAdmin;
             return stream.str();
         }
 
@@ -129,6 +130,7 @@ namespace JsonModels {
             j["Password"] = Password;
             j["Email"] = Email;
             j["IsConfirmed"] = IsConfirmed;
+            j["IsAdmin"] = IsAdmin;
             return j;
         }
 
@@ -139,6 +141,7 @@ namespace JsonModels {
                 Password = j["Password"];
                 Email = j["Email"];
                 IsConfirmed = j["IsConfirmed"];
+                IsAdmin = j["IsAdmin"];
             } catch (nlohmann::json::exception &e) {
                 ESP_LOGE(__FUNCTION__, "Exception: %s", e.what());
                 return false;
@@ -176,6 +179,9 @@ namespace JsonModels {
         bool IsAdmin = false;
 
         [[nodiscard]] std::string ToJson() const override;
+    };
+
+    class SignUpResultJson : public JsonModels::LoginTryResultJson {
     };
 
 #endif

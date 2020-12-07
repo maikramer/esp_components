@@ -11,12 +11,12 @@
 
 #define DEBUG_INFO
 
-void UserManager::Login(const std::vector<std::string> &data, BluetoothConnection *connection) {
+void UserManager::Login(const std::vector<std::string> &data, BluetoothConnection *connection) {//NOLINT
 
     //Verifica admin
-    std::string adminUser;
-    auto result = Storage::LoadConfig(AdminUserKey, adminUser);
-    if (result == ErrorCodes::KeyNotFound || result == ErrorCodes::FileNotFound) {
+    std::string adminRegistered;
+    auto result = Storage::LoadConfig(AdminRegistered, adminRegistered);
+    if (result == ErrorCodes::KeyNotFound || result == ErrorCodes::FileNotFound || adminRegistered == "false") {
         connection->SendError<JsonModels::LoginTryResultJson>(ErrorCodes::AdminNotRegistered);
         return;
     } else if (result != ErrorCodes::None) {
@@ -33,8 +33,6 @@ void UserManager::Login(const std::vector<std::string> &data, BluetoothConnectio
         connection->SendError<JsonModels::LoginTryResultJson>(ErrorCodes::Error);
     }
 
-    ESP_LOGI(__FUNCTION__, "User: %s | Admin: %s", user.c_str(), adminUser.c_str());
-
     ConnectedUser *connectedUser = nullptr;
     for (auto *active : _activeUsers.ReadList()) {
         if (active != nullptr && !active->User.empty() && active->User == user) {
@@ -50,23 +48,11 @@ void UserManager::Login(const std::vector<std::string> &data, BluetoothConnectio
     }
 
     //Verifica usuario
-    if (user == adminUser) {
-        std::string adminPw;
-        auto pwRes = Storage::LoadConfig(AdminPasswordKey, adminPw);
-        if (pwRes != ErrorCodes::None) {
-            connection->SendError<JsonModels::LoginTryResultJson>(pwRes);
-        }
 
-        if (pw == adminPw) {
-            result = connectedUser->Login(true, user);
-        } else {
-            result = ErrorCodes::WrongPassword;
-        }
-    } else {
-        result = CheckPassword(user, pw);
-        if (result == ErrorCodes::None) {
-            result = connectedUser->Login(false, user);
-        }
+    bool isAdmin = false;
+    result = CheckPassword(user, pw, isAdmin);
+    if (result == ErrorCodes::None) {
+        result = connectedUser->Login(isAdmin, user);
     }
 
     connection->SetUser(connectedUser);
@@ -87,7 +73,7 @@ void UserManager::SendLoginTryResult(ErrorCode errorCode, BluetoothConnection *c
 }
 
 
-ErrorCode UserManager::CheckPassword(string &userName, string &pass) {
+ErrorCode UserManager::CheckPassword(string &userName, string &pass, bool &isAdmin) {
 #ifdef DEBUG_INFO
     ESP_LOGI(__FUNCTION__, "Tentativa User:%s , Senha:%s", userName.c_str(), pass.c_str());
 #endif
@@ -101,15 +87,16 @@ ErrorCode UserManager::CheckPassword(string &userName, string &pass) {
         return result;
     }
 
-    if (!user.IsConfirmed) {
+    if (user.Password != pass) {
+        return ErrorCodes::WrongPassword;
+    }
+
+    if (!user.IsAdmin && !user.IsConfirmed) {
         return ErrorCodes::NotConfirmed;
     }
 
-    if (user.Password != pass) {
-        return ErrorCodes::WrongPassword;
-    } else {
-        return ErrorCodes::None;
-    }
+    isAdmin = user.IsAdmin;
+    return ErrorCodes::None;
 }
 
 void UserManager::Logoff(BluetoothConnection *connection) {
