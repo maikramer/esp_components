@@ -52,8 +52,6 @@ public:
 
     void setByHandle(uint16_t handle, BLEService *service);
 
-    void setByUUID(const char *uuid, BLEService *service);
-
     void setByUUID(BLEUUID uuid, BLEService *service);
 
     std::string toString();
@@ -110,9 +108,7 @@ public:
 
     void addPeerDevice(void *peer, bool is_client, uint16_t conn_id);
 
-    void removePeerDevice(uint16_t conn_id, bool client);
-
-    BLEServer *getServerByConnId(uint16_t conn_id);
+    bool removePeerDevice(uint16_t conn_id, bool client);
 
     void updatePeerMTU(uint16_t connId, uint16_t mtu);
 
