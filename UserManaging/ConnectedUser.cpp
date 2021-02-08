@@ -7,8 +7,6 @@
 
 #include "ConnectedUser.h"
 
-#endif
-
 std::list<uint8_t> ConnectedUser::GetData() {
     return std::list<uint8_t>();
 }
@@ -26,3 +24,7 @@ ConnectedUser::~ConnectedUser() {
     ESP_LOGI(__FUNCTION__, "User removido da lista");
     UserManager::_activeUsers.Remove(this);
 }
+
+#endif
+
+

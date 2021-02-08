@@ -37,6 +37,12 @@ void BluetoothConnection::Init() {
     WriteCharacteristic->setCallbacks(this);
     NotifyCharacteristic = BluetoothServer::instance().CreatePrivateNotifyCharacteristic();
     NotifyCharacteristic->setCallbacks(this);
+    xSendMutex = xSemaphoreCreateMutex();
+    if (xSendMutex == nullptr) {
+        ESP_LOGE(__FUNCTION__, "Erro criando mutex");
+    } else {
+        ESP_LOGI(__FUNCTION__, "Mutex criado");
+    }
 }
 
 void BluetoothConnection::onWrite(BLECharacteristic *pCharacteristic, uint16_t conn_id) {
@@ -85,6 +91,11 @@ void BluetoothConnection::SendJsonData(const string &json) {
     }
 }
 
+void BluetoothConnection::Test() {
+    xSemaphoreTake(xSendMutex, portMAX_DELAY);
+    xSemaphoreGive(xSendMutex);
+}
+
 void BluetoothConnection::SendJson(const string &json) const {
     xSemaphoreTake(xSendMutex, portMAX_DELAY);
 
@@ -92,7 +103,8 @@ void BluetoothConnection::SendJson(const string &json) const {
     ESP_LOGI(__FUNCTION__, "Sending Json");
     ESP_LOGI(__FUNCTION__, "Enviando %s", json.c_str());
 #endif
-    unsigned char bytes[json.length()];
+
+    unsigned char bytes[json.length() + 1];
     auto size = Utility::StringToByteArray(json, bytes);
     NotifyCharacteristic->setValue(bytes, size);
     NotifyCharacteristic->notify();
@@ -100,7 +112,6 @@ void BluetoothConnection::SendJson(const string &json) const {
     ESP_LOGI(__FUNCTION__, "Json Sent : %s", json.c_str());
 #endif
     vTaskDelay(pdMS_TO_TICKS(2 * json.length()));
-
     xSemaphoreGive(xSendMutex);
 }
 
@@ -187,6 +198,7 @@ void BluetoothConnection::Disconnect() {
 #endif
 }
 
+#ifdef USER_MANAGEMENT_ENABLED
 ConnectedUser *BluetoothConnection::GetUser(bool canBeNull, bool canBeEmpty) {
 
     if (_user == nullptr) {
@@ -196,4 +208,5 @@ ConnectedUser *BluetoothConnection::GetUser(bool canBeNull, bool canBeEmpty) {
     }
     return _user;
 }
+#endif
 

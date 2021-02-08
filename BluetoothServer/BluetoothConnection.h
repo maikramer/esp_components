@@ -27,7 +27,7 @@ class BluetoothConnection : public BLECharacteristicCallbacks {
 public:
     BLECharacteristic *WriteCharacteristic = nullptr;
     BLECharacteristic *NotifyCharacteristic = nullptr;
-    SemaphoreHandle_t xSendMutex = xSemaphoreCreateMutex();
+    SemaphoreHandle_t xSendMutex = nullptr;
 
     [[nodiscard]] std::string GetWriteUUID() const;
 
@@ -52,7 +52,6 @@ public:
     void SendList(const std::map<T1, T2> &map, Tmodel *firstItem = nullptr, Tmodel *lastItem = nullptr) {
         static_assert(std::is_base_of<JsonModels::BaseListJsonDataBasic, Tmodel>::value,
                       "Lista deve ter como base BaseListJsonData");
-
         if (map.empty()) {
             ErrorCode error = ErrorCodes::ListIsEmpty;
             SendError<Tmodel>(error);
@@ -116,6 +115,10 @@ public:
 
     ConnectedUser *GetUser(bool canBeNull, bool canBeEmpty);
 
+    void SetUser(ConnectedUser *user) {
+        _user = user;
+    }
+
 #else
 
     NotificationNeeds GetNotificationNeeds();
@@ -132,9 +135,7 @@ public:
 
     void SendJsonData(const std::string &json);
 
-    void SetUser(ConnectedUser *user) {
-        _user = user;
-    }
+    void Test();
 
 private:
     bool _isFree = true;
@@ -151,6 +152,8 @@ private:
     NotificationNeeds _notificationNeeds = NotificationNeeds::NoSend;
     Status _lastStatus = SUCCESS_NOTIFY;
     bool _indicateFailed = false;
+
+
 };
 
 #endif
