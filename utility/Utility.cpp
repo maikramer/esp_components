@@ -42,7 +42,7 @@ auto Utility::CreateAndProfile(const char *taskName, TaskFunction_t function, co
                                int core, void *parameter) -> TaskHandle_t {
     xTaskHandle handle = nullptr;
     auto res = xTaskCreatePinnedToCore(function, taskName, stack, parameter, priority, &handle, core);
-    configASSERT(handle)
+    configASSERT(handle);
     if (res != pdPASS || handle == nullptr) {
         ESP_LOGE(__FUNCTION__, "Falha ao criar a tarefa \"%s\"", taskName);
     } else {
