@@ -18,7 +18,8 @@ enum class ErrorCodeType {
     General,
     User,
     Storage,
-    Project
+    Project,
+    Communication
 };
 struct ErrorCodeItem {
     const char *Name;

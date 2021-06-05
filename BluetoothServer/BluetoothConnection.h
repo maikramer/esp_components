@@ -8,6 +8,7 @@
 #include <Storage.h>
 #include "projectConfig.h"
 #include "ErrorCode.h"
+#include "Event.h"
 
 #ifdef USER_MANAGEMENT_ENABLED
 
@@ -28,6 +29,7 @@ public:
     BLECharacteristic *WriteCharacteristic = nullptr;
     BLECharacteristic *NotifyCharacteristic = nullptr;
     SemaphoreHandle_t xSendMutex = nullptr;
+    Event<BluetoothConnection *, void *> DisconnectEvent;
 
     [[nodiscard]] std::string GetWriteUUID() const;
 
@@ -38,9 +40,14 @@ public:
         static_assert(std::is_base_of<JsonModels::BaseJsonDataError, Tmodel>::value,
                       "Lista deve ter como base BaseListJsonData");
 
+        if (errorCode != ErrorCodes::None) {
+            ESP_LOGE(__FUNCTION__, "Erro \"%s\" -> %s", errorCode.GetName(), errorCode.GetDescription());
+        }
+
         Tmodel jsonData;
         jsonData.ErrorMessage = errorCode;
-        if (std::is_base_of<JsonModels::BaseListJsonDataBasic, Tmodel>()) {
+        if (std::is_base_of<JsonModels::BaseListJsonDataBasic, Tmodel>() ||
+            std::is_same<JsonModels::BaseListJsonDataBasic, Tmodel>()) {
             reinterpret_cast<JsonModels::BaseListJsonDataBasic *>(&jsonData)->End = true;
         }
 

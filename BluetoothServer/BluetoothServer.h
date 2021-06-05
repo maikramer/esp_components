@@ -17,6 +17,7 @@
 #include <list>
 #include <projectConfig.h>
 #include "Singleton.h"
+
 class BluetoothConnection;
 
 #define DELAY500MS (pdMS_TO_TICKS( 500))
@@ -25,7 +26,12 @@ class BluetoothConnection;
 using std::list;
 using std::string;
 
-class BluetoothServer : public Singleton<BluetoothServer>{
+namespace ErrorCodes {
+    const ErrorCodeItem JsonError{"JsonError", "Problema com Dados", ErrorCodeType::Communication};
+    const ErrorCodeItem CommunicationError{"CommunicationError", "Erro de Comunicação", ErrorCodeType::Communication};
+}
+
+class BluetoothServer : public Singleton<BluetoothServer> {
 public:
     BLEServer *BleServer = nullptr;
     explicit BluetoothServer(token);
@@ -33,7 +39,9 @@ public:
 #ifdef USER_MANAGEMENT_ENABLED
     void SetupBt(ConnectedUser* userType, std::string deviceName);
 #else
-        void SetupBt(std::string deviceName);
+
+    void SetupBt(std::string deviceName);
+
 #endif
 
     BLECharacteristic *CreatePrivateWriteCharacteristic() {

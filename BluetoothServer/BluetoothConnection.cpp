@@ -186,6 +186,7 @@ auto BluetoothConnection::GetNotifyUUID() const -> std::string {
 void BluetoothConnection::Disconnect() {
     _isFree = true;
     _conn_ID = -1;
+    DisconnectEvent.FireEvent(this, nullptr);
 
 #ifdef USER_MANAGEMENT_ENABLED
     if (_user != nullptr) {

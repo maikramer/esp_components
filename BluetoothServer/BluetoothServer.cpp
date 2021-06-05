@@ -28,7 +28,10 @@ static void SendDataTask(void *arg __unused) {
     }
 }
 
-BluetoothServer::BluetoothServer(token) : xSendDataSemaphore(xSemaphoreCreateMutex()) {}
+BluetoothServer::BluetoothServer(token) : xSendDataSemaphore(xSemaphoreCreateMutex()) {
+    ErrorCode::AddErrorItem(ErrorCodes::JsonError);
+    ErrorCode::AddErrorItem(ErrorCodes::CommunicationError);
+}
 
 //Cuidado, se usar mais de uma vez pode haver conflito.
 auto BluetoothServer::CreatePrivateService() -> BLEService * {

@@ -18,7 +18,7 @@ typedef struct {//NOLINT
 
 static QueueHandle_t xCommandQueue = xQueueCreate(10, sizeof(void *));//NOLINT
 
-static void CommandExecuterTask(void *arg __unused) {
+static void CommandExecutorTask(void *arg __unused) {
     for (;;) {
         Command_t *command = nullptr;
         if (xQueueReceive(xCommandQueue, &command, portMAX_DELAY) == pdPASS) {
@@ -29,7 +29,7 @@ static void CommandExecuterTask(void *arg __unused) {
 }
 
 void Commander::Init() {
-    Utility::CreateAndProfile("CommandExecuterTask", CommandExecuterTask, 8192, HIGH_PRIORITY, 0, nullptr);
+    Utility::CreateAndProfile("CommandExecutorTask", CommandExecutorTask, 8192, HIGH_PRIORITY, 0, nullptr);
 }
 
 void Commander::AddCommand(const DeviceCommand& command) {
@@ -58,7 +58,6 @@ void Commander::CheckForCommand(const std::string &rxValue, BluetoothConnection 
     if (printData.str().size() > 1) {
         ESP_LOGI(__FUNCTION__, "Data : %s", printData.str().c_str());
     }
-
 
     for (const auto& command : _commands) {
         if (command.Code == commandCode) {

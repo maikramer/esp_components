@@ -104,6 +104,10 @@ public:
 
     static ErrorCode StoreConfig(const std::string &key, const std::string &value, bool overwrite);
 
+    static ErrorCode DeleteFile(const std::string &fileName);
+
+    static ErrorCode CopyFile(const std::string &fileSource, const std::string &fileDest);
+
 protected:
     template<typename Tkey, typename Tvalue>
     static auto
@@ -115,7 +119,6 @@ protected:
     static uint32_t _sectorSize;
 
     friend class Flash;
-
 };
 
 

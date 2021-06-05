@@ -110,6 +110,17 @@ std::string Utility::CamelCaseToTitleCase(const std::string &toConvert) {
     return str.str();
 }
 
+void Utility::ListJsonKeys(const nlohmann::json &j) {
+    int count = 0;
+    for ([[maybe_unused]] auto item : j.items()) {
+        count++;
+    }
+    ESP_LOGI(__FUNCTION__, "Numero de Items:%d", count);
+    for (const auto &item : j.items()) {
+        ESP_LOGI(__FUNCTION__, "Item:%s", item.key().c_str());
+    }
+}
+
 //auto Utility::CreateAndProfileStatic(const char *taskName, TaskFunction_t function, const uint32_t stack,
 //                                     UBaseType_t priority, StackType_t *const pxStackBuffer,
 //                                     StaticTask_t *const pxTaskBuffer,

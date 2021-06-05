@@ -20,7 +20,13 @@ namespace JsonModels {
     public:
         [[nodiscard]] virtual std::string ToJson() const = 0;
 
-        virtual bool FromString(const std::string &str) { return true; };
+        bool FromString(const std::string &jsonStr) {
+            nlohmann::json j = nlohmann::json::parse(jsonStr);
+            if (j.is_null()) return false;
+            return FromJson(j);
+        };
+
+        virtual bool FromJson(const nlohmann::json &j) { return true; };
     };
 
     std::ostream &operator<<(std::ostream &Str, JsonModels::BaseJsonData const &v);
@@ -75,6 +81,7 @@ namespace JsonModels {
     public:
         bool End = false;
         bool Begin = false;
+        int Index = 0;
     protected:
         [[nodiscard]] nlohmann::json GetPartialListJson() const {
             auto j = GetPartialJson(false);
