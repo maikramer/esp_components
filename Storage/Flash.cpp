@@ -5,6 +5,7 @@
 #include "Flash.h"
 
 wl_handle_t Flash::_wearHandle = WL_INVALID_HANDLE;
+bool Flash::_init = false;
 
 auto Flash::Init() -> ErrorCode {
     Storage::InitErrors();
@@ -18,7 +19,10 @@ auto Flash::Init() -> ErrorCode {
     esp_err_t err = esp_vfs_fat_spiflash_mount(StorageConst::BasePath, "storage", &mount_config, &_wearHandle);
     if (err != ESP_OK) {
         ESP_LOGE(__FUNCTION__, "Falha montando sistema de arquivos FATFS: (%s)", esp_err_to_name(err));
+    } else {
+        _init = true;
     }
+
     return ToMountError(err);
 }
 

@@ -17,8 +17,11 @@ public:
 
     static auto ToMountError(esp_err_t error) -> ErrorCode;
 
+    static bool IsInitialized;
+
 private:
     static wl_handle_t _wearHandle;
+    static bool _init;
 };
 
 
