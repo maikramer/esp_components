@@ -18,7 +18,7 @@ class ErrorCode;
 namespace JsonModels {
     class BaseJsonData {
     public:
-        [[nodiscard]] virtual std::string ToJson() const = 0;
+        virtual std::string ToJson() const = 0;
 
         bool FromString(const std::string &jsonStr) {
             nlohmann::json j = nlohmann::json::parse(jsonStr);
