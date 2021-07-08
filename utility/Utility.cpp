@@ -51,8 +51,8 @@ auto Utility::CreateAndProfile(const char *taskName, TaskFunction_t function, co
 
 #ifdef PROFILE_STACK
     vTaskDelay(5);
-    auto stackSize = uxTaskGetStackHighWaterMark(handle);
-    ESP_LOGI(__FUNCTION__, "%s stack: %d\n", taskName, stackSize);
+    auto TaskStackSize = uxTaskGetStackHighWaterMark(handle);
+    ESP_LOGI(__FUNCTION__, "%s stack: %d\n", taskName, TaskStackSize);
     vTaskDelay(5);
 #endif
 
@@ -132,8 +132,8 @@ void Utility::ListJsonKeys(const nlohmann::json &j) {
 //
 //#ifdef PROFILE_STACK
 //    vTaskDelay(5);
-//    auto stackSize = uxTaskGetStackHighWaterMark(handle);
-//    ESP_LOGI(__FUNCTION__, "%s stack: %d\n", taskName, stackSize);
+//    auto TaskStackSize = uxTaskGetStackHighWaterMark(handle);
+//    ESP_LOGI(__FUNCTION__, "%s stack: %d\n", taskName, TaskStackSize);
 //    vTaskDelay(5);
 //#endif
 //

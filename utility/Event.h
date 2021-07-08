@@ -8,9 +8,18 @@
 #include <functional>
 #include "list"
 #include "map"
+
+#ifdef STM32L1
+#include <FreeRTOS.h>
+#include <task.h>
+#include <semphr.h>
+#elif defined(ESP_PLATFORM)
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+
+#endif
 
 //C - Caller e A o argumento
 template<class C, class A>
