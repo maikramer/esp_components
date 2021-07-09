@@ -2,8 +2,8 @@
 //
 // Created by maikeu on 14/08/2019.
 //
-#include <custom/BLECharacteristic.h>
-#include <custom/BLEServer.h>
+#include <BLECharacteristic.h>
+#include <BLEServer.h>
 
 #include <cstdint>
 #include <cstdio>
@@ -96,7 +96,8 @@ auto BluetoothServer::GetUniqueId(bool isCharacteristic) -> std::string {
 
 void BluetoothServer::SetupBt(ConnectedUser *userType, std::string deviceName) {
 #else
-    void BluetoothServer::SetupBt(std::string deviceName) {
+
+void BluetoothServer::SetupBt(std::string deviceName) {
 #endif
     // Create the BLE Device
     BLEDevice::init(std::move(deviceName));
@@ -161,14 +162,15 @@ void BluetoothServer::ServerCallbacks::onConnect(BLEServer *server __unused, esp
     ConnectionManager::Connect(conn_id);
 }
 
-void BluetoothServer::ServerCallbacks::onDisconnect(BLEServer *server __unused, esp_ble_gatts_cb_param_t *param) {
-    auto conn_id = param->disconnect.conn_id;
-    ESP_LOGI(__FUNCTION__ , "Disconnect");
+void BluetoothServer::ServerCallbacks::onDisconnect(BLEServer *server) {
+    auto conn_id = server->getConnId();
+    ESP_LOGI(__FUNCTION__, "Disconnect");
     ConnectionManager::Disconnect(conn_id);
 }
 
 
-void BluetoothServer::SendDataCallbacks::onRead(BLECharacteristic *pCharacteristic, uint16_t conn_id) {
+void BluetoothServer::SendDataCallbacks::onRead(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
+    auto conn_id = param->read.conn_id;
     ESP_LOGI(__FUNCTION__, "Connection ID:%i", conn_id);
     auto *conn = ConnectionManager::GetConnectionById(conn_id);
     auto json = conn->GetConnectionInfoJson();

@@ -5,10 +5,6 @@
 #ifndef TOMADA_SMART_CONDO_BLUETOOTHSERVER_H
 #define TOMADA_SMART_CONDO_BLUETOOTHSERVER_H
 
-#include <custom/BLECharacteristic.h>
-#include <custom/BLEServer.h>
-#include <custom/FreeRTOS.h>
-
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
@@ -71,12 +67,12 @@ private:
     class ServerCallbacks : public BLEServerCallbacks {
         void onConnect(BLEServer *server, esp_ble_gatts_cb_param_t *param) override;
 
-        void onDisconnect(BLEServer *server, esp_ble_gatts_cb_param_t *param) override;
+        void onDisconnect(BLEServer *server) override;
     };
 
     class SendDataCallbacks : public BLECharacteristicCallbacks {
     public:
-        void onRead(BLECharacteristic *pCharacteristic, uint16_t conn_id) override;
+        void onRead(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) override;
     };
 
     BLEService *publicService = nullptr;

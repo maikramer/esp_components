@@ -21,10 +21,10 @@ set(srcs
         ../submodules/arduino-esp32/libraries/BLE/src/BLEValue.cpp
         ../submodules/arduino-esp32/libraries/BLE/src/GeneralUtils.cpp
         ../submodules/arduino-esp32/cores/esp32/esp32-hal-log.h
-        FreeRTOS.cpp
-        BLECharacteristic.cpp
-        BLEServer.cpp
-        BLEDevice.cpp
+        ../submodules/arduino-esp32/libraries/BLE/src/FreeRTOS.cpp
+        ../submodules/arduino-esp32/libraries/BLE/src/BLECharacteristic.cpp
+        ../submodules/arduino-esp32/libraries/BLE/src/BLEServer.cpp
+        ../submodules/arduino-esp32/libraries/BLE/src/BLEDevice.cpp
         )
 
 set(requires bt nvs_flash utility esp_ringbuf)

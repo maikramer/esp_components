@@ -45,8 +45,9 @@ void BluetoothConnection::Init() {
     }
 }
 
-void BluetoothConnection::onWrite(BLECharacteristic *pCharacteristic, uint16_t conn_id) {
+void BluetoothConnection::onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
     std::string rxValue = pCharacteristic->getValue();
+    auto conn_id = param->write.conn_id;
     ESP_LOGI(__FUNCTION__, "Connection ID:%i", conn_id);
 
     if (rxValue.length() > 0) {

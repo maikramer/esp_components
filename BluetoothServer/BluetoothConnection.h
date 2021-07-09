@@ -2,7 +2,7 @@
 #define TOMADA_SMART_CONDO_BLUETOOTHCONNECTION_H
 
 #include <string>
-#include <custom/BLECharacteristic.h>
+#include <BLECharacteristic.h>
 #include <functional>
 #include <JsonModels.h>
 #include <Storage.h>
@@ -114,7 +114,7 @@ public:
 
     void Init();
 
-    void onWrite(BLECharacteristic *pCharacteristic, uint16_t conn_id) override;
+    void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) override;
 
     void onStatus(BLECharacteristic *pCharacteristic, Status s, uint32_t code) override;
 
