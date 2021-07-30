@@ -2,14 +2,24 @@
 // Created by maikeu on 13/02/2020.
 //
 
-#ifndef TOMADA_SMART_CONDO_SAFELIST_H
-#define TOMADA_SMART_CONDO_SAFELIST_H
+#ifndef SAFELIST_H
+#define SAFELIST_H
 
-#include <list>
+#ifdef STM32L1
+
+#include <FreeRTOS.h>
+#include <semphr.h>
+
+#define MEDIUM_PRIORITY 4
+#elif defined(ESP_PLATFORM)
+
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
-#include <freertos/task.h>
 
+#define DIO1_Pin GPIO_NUM_34
+#endif
+
+#include <list>
 
 template<class T>
 class SafeList {
@@ -69,7 +79,6 @@ public:
             xSemaphoreGive(xSemaphore);
         }
 
-
     }
 
     auto Size() -> uint32_t {
@@ -87,5 +96,4 @@ private:
     SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
 };
 
-
-#endif //TOMADA_SMART_CONDO_SAFELIST_H
+#endif //SAFELIST_H
