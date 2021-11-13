@@ -1,4 +1,4 @@
-set(srcs Singleton.cpp Utility.cpp SafeList.cpp)
+set(srcs Utility.cpp CrossPlatformUtility.cpp)
 set(include_dirs . ../submodules/nameof/include)
 set(requires nvs_flash ArduinoBLE JsonModels ErrorCodes)
 

@@ -48,24 +48,22 @@ void ConnectionManager::Disconnect(uint16_t id) {
 }
 
 auto ConnectionManager::GetConnectionById(uint16_t id) -> BluetoothConnection * {
-    auto list = _connectionPool.ReadList();
-    if (list.empty()) {
-        ESP_LOGE(__FUNCTION__, "Timeout tentando obter semaforo");
+    if (_connectionPool.IsLocked()) {
+        ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
         return nullptr;
     }
-
-    for (auto *connection : list) {
+    for (auto connection : _connectionPool) {
         if (connection->GetId() == id) {
 #ifdef DEBUG_INFO
             ESP_LOGI(__FUNCTION__, "Connection Id: %d", id);
 #endif
-            _connectionPool.EndReadList();
+            _connectionPool.EndIteration();
             return connection;
         }
     }
 
-    ESP_LOGE(__FUNCTION__, "Conecção com Id %d nao encontrado", id);
-    _connectionPool.EndReadList();
+    ESP_LOGE(__FUNCTION__, "Conexão com Id %d nao encontrado", id);
+    _connectionPool.EndIteration();
     return nullptr;
 }
 
@@ -76,19 +74,19 @@ auto ConnectionManager::GetFreeConnection() -> BluetoothConnection * {
         return nullptr;
     }
     BluetoothConnection *ret = nullptr;
-    auto list = _connectionPool.ReadList();
-    if (list.empty()) {
-        ESP_LOGE(__FUNCTION__, "Timeout tentando obter semaforo");
+
+    if (_connectionPool.IsLocked()) {
+        ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
         return nullptr;
     }
 
-    for (auto *conn : list) {
+    for (auto *conn : _connectionPool) {
         if (conn->IsFree()) {
             ret = conn;
             break;
         }
     }
-    _connectionPool.EndReadList();
+    _connectionPool.EndIteration();
 
 
     if (ret == nullptr) {
@@ -100,14 +98,12 @@ auto ConnectionManager::GetFreeConnection() -> BluetoothConnection * {
 }
 
 void ConnectionManager::SendNotifications() {
-//    ESP_LOGI(__FUNCTION__, "");
     if (!_connectionPool.Empty()) {
-        auto list = _connectionPool.ReadList();
-        if (list.empty()) {
-            ESP_LOGE(__FUNCTION__, "Timeout tentando obter semaforo");
+        if (_connectionPool.IsLocked()) {
+            ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
             return;
         }
-        for (auto *connection : list) {
+        for (auto *connection : _connectionPool) {
             //                ESP_LOGI(__FUNCTION__, "Tentando Enviar para %s", user.User.c_str());
             if (connection == nullptr || connection->IsFree())
                 continue;
@@ -138,7 +134,7 @@ void ConnectionManager::SendNotifications() {
 
 
         }
-        _connectionPool.EndReadList();
+        _connectionPool.EndIteration();
     }
 }
 
@@ -146,11 +142,15 @@ void ConnectionManager::SendNotifications() {
 
 void ConnectionManager::NotifyAll(bool isImportant) {
     if (!_connectionPool.Empty()) {
-        for (auto *connection : _connectionPool.ReadList()) {
+        if (_connectionPool.IsLocked()) {
+            ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
+            return;
+        }
+        for (auto *connection : _connectionPool) {
             connection->SetNotificationNeeds(
                     isImportant ? NotificationNeeds::SendImportant : NotificationNeeds::SendNormal);
         }
-        _connectionPool.EndReadList();
+        _connectionPool.EndIteration();
     }
 }
 

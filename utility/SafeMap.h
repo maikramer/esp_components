@@ -5,29 +5,15 @@
 #ifndef LOCKABLEMAP_H
 #define LOCKABLEMAP_H
 
+#include<LockableContainer.h>
+
 template<class TKey, class TValue>
-class SafeMap {
+class SafeMap : public LockableContainer{
+private:
     std::map<TKey, TValue> _internalMap{};
     std::map<TKey, TValue> _emptyMap{};
-    SemaphoreHandle_t _mutex = xSemaphoreCreateMutex();
-    bool _isLocked = false;
+
 public:
-    bool Lock() {
-        auto res = xSemaphoreTake(_mutex, 1000) == pdPASS;
-        if (res) {
-            _isLocked = true;
-        } else {
-            ESP_LOGE(__FUNCTION__, "Falha Obtendo Trava");
-        }
-
-        return (res);
-    }
-
-    void Unlock() {
-        if (!_isLocked) return;
-        xSemaphoreGive(_mutex);
-    }
-
     bool HasKey(TKey key) {
         if (!Lock()) return false;
         auto res = _internalMap.find(key);
@@ -63,6 +49,13 @@ public:
         _internalMap[key] = value;
         Unlock();
         return true;
+    }
+
+    bool Remove(TKey key) {
+        if (!Lock()) return false;
+        bool erased = _internalMap.erase(key);
+        Unlock();
+        return (erased > 0);
     }
 };
 

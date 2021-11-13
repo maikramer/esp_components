@@ -16,84 +16,106 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 
-#define DIO1_Pin GPIO_NUM_34
 #endif
 
 #include <list>
+#include "functional"
+#include "LockableContainer.h"
+#include "CrossPlatformUtility.h"
 
 template<class T>
-class SafeList {
+class SafeList : public LockableContainer {
 public:
     SafeList() = default;
 
     auto Empty() -> bool {
-        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
+        if (Lock()) {
             bool empty = _list.empty();
-            xSemaphoreGive(xSemaphore);
+            Unlock();
             return empty;
         }
         return true;
 
     }
 
-    void PopFront() {
-        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
+    T PopFront() {
+        T result{};
+        if (_isIterating) {
+            log_device(true, __FUNCTION__, "Nao pode modificar a lista enquanto a itera");
+            return result;
+        }
+
+        if (Lock()) {
+            result = _list.front();
             _list.pop_front();
-            xSemaphoreGive(xSemaphore);
+            Unlock();
         }
-    }
-
-    auto CheckBusy() -> bool {
-        bool busy = (xSemaphoreTake(xSemaphore, TIMEOUT) != pdTRUE);
-        if (!busy) {
-            xSemaphoreGive(xSemaphore);
-        }
-
-        return busy;
+        return result;
     }
 
     void Push(T item) {
-        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
+        if (_isIterating) {
+            log_device(true, __FUNCTION__, "Nao pode modificar a lista enquanto a itera");
+            return;
+        }
+        if (Lock()) {
             _list.push_back(item);
-            xSemaphoreGive(xSemaphore);
+            Unlock();
         }
     }
 
-    auto ReadList() -> std::list<T> {
-//        ESP_LOGI(__FUNCTION__, "Abrindo lista, nao esqueca de fechar");
-        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
-            return _list;
+    typename std::list<T>::iterator begin() {
+        if (Lock()) {
+            _isIterating = true;
+            return _list.begin();
         }
-        return std::list<T>();
+        return _list.end();
     }
 
-    void EndReadList() {
-//        ESP_LOGI(__FUNCTION__, "Fechando lista");
-        xSemaphoreGive(xSemaphore);
-
+    typename std::list<T>::iterator end() {
+        return _list.end();
     }
 
-    void Remove(T item) {
-        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
-            _list.remove(item);
-            xSemaphoreGive(xSemaphore);
+    void EndIteration() {
+        Unlock();
+        _isIterating = false;
+    }
+
+    void Remove(T item, std::function<bool(T, T)> compareFunction) {
+        if (_isIterating) {
+            log_device(true, __FUNCTION__, "Nao pode modificar a lista enquanto a itera");
+            return;
         }
+        if (Lock()) {
+            for (auto it = _list.begin(); it != _list.end(); ++it) {
+                _list.erase(it);
+            }
+            Unlock();
+        }
+        EndIteration();
 
     }
 
     auto Size() -> uint32_t {
-        if (xSemaphoreTake(xSemaphore, TIMEOUT) == pdTRUE) {
+        if (Lock()) {
             uint32_t size = _list.size();
-            xSemaphoreGive(xSemaphore);
+            Unlock();
             return size;
         }
         return 0;
     }
 
+    void Sort(std::function<bool(const T &, const T &)> compare) {
+        if (Lock()) {
+            _list.sort(compare);
+            Unlock();
+        }
+    }
+
 private:
-    const int TIMEOUT = 100;
+    bool _isIterating = false;
     std::list<T> _list = std::list<T>();
-    SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
 };
+
 
 #endif //SAFELIST_H

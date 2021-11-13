@@ -121,6 +121,10 @@ void Utility::ListJsonKeys(const nlohmann::json &j) {
     }
 }
 
+uint32_t Utility::ReadOutput(gpio_num_t gpio) {
+    return (GPIO_REG_READ(gpio < 31 ? GPIO_OUT_REG : GPIO_OUT1_REG) >> gpio & 0x1F) & 1U;
+}
+
 //auto Utility::CreateAndProfileStatic(const char *taskName, TaskFunction_t function, const uint32_t stack,
 //                                     UBaseType_t priority, StackType_t *const pxStackBuffer,
 //                                     StaticTask_t *const pxTaskBuffer,
