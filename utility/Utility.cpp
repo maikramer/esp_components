@@ -8,7 +8,6 @@
 #include "freertos/task.h"
 #include <esp_log.h>
 #include "Utility.h"
-#include <GeneralUtils.h>
 
 
 //#define PROFILE_STACK
@@ -26,7 +25,7 @@ auto Utility::split(const std::string &source, char delimiter) -> std::vector<st
     }
 
     while (std::getline(iss, s, delimiter)) {
-        strings.push_back(GeneralUtils::trim(s));
+        strings.push_back(trim(s));
     }
 
     return strings;
@@ -125,6 +124,16 @@ uint32_t Utility::ReadOutput(gpio_num_t gpio) {
     return (GPIO_REG_READ(gpio < 31 ? GPIO_OUT_REG : GPIO_OUT1_REG) >> gpio & 0x1F) & 1U;
 }
 
+
+/**
+ * @brief Remove white space from a string.
+ */
+std::string Utility::trim(const std::string& str) {
+    size_t first = str.find_first_not_of(' ');
+    if (std::string::npos == first) return str;
+    size_t last = str.find_last_not_of(' ');
+    return str.substr(first, (last - first + 1));
+} // trim
 //auto Utility::CreateAndProfileStatic(const char *taskName, TaskFunction_t function, const uint32_t stack,
 //                                     UBaseType_t priority, StackType_t *const pxStackBuffer,
 //                                     StaticTask_t *const pxTaskBuffer,

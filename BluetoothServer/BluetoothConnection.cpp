@@ -45,16 +45,17 @@ void BluetoothConnection::Init() {
     }
 }
 
-void BluetoothConnection::onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) {
+void BluetoothConnection::onWrite(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc* desc) {
     std::string rxValue = pCharacteristic->getValue();
-    auto conn_id = param->write.conn_id;
-    ESP_LOGI(__FUNCTION__, "Connection ID:%i", conn_id);
+    ESP_LOGI(__FUNCTION__, "Peer %d:%d:%d:%d:%d:%d", desc->peer_id_addr.val[0],
+             desc->peer_id_addr.val[1], desc->peer_id_addr.val[2], desc->peer_id_addr.val[3],
+             desc->peer_id_addr.val[4], desc->peer_id_addr.val[5]);
 
     if (rxValue.length() > 0) {
         printf("\nReceived Value: %s\n", rxValue.c_str());
     }
 
-    auto *connection = ConnectionManager::GetConnectionById(conn_id);
+    auto *connection = ConnectionManager::GetConnectionById(desc->peer_id_addr.val[5]);
     Commander::CheckForCommand(rxValue, connection);
 }
 
@@ -117,7 +118,7 @@ void BluetoothConnection::SendJson(const string &json) const {
 }
 
 void
-BluetoothConnection::onStatus(BLECharacteristic *pCharacteristic, BLECharacteristicCallbacks::Status s, uint32_t code) {
+BluetoothConnection::onStatus(NimBLECharacteristic *pCharacteristic, Status s, int code) {
     _lastStatus = s;
 
     string str;

@@ -30,6 +30,7 @@ void ConnectionManager::Connect(uint16_t conn_id) {
     if (connection != nullptr) {
         connection->Connect(conn_id);
     } else {
+        ESP_LOGE(__FUNCTION__ , "Sem conexões livres");
         BluetoothServer::instance().BleServer->disconnect(conn_id);
     }
 }

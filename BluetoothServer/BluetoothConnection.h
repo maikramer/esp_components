@@ -2,7 +2,7 @@
 #define TOMADA_SMART_CONDO_BLUETOOTHCONNECTION_H
 
 #include <string>
-#include <BLECharacteristic.h>
+#include <NimBLECharacteristic.h>
 #include <functional>
 #include <JsonModels.h>
 #include <Storage.h>
@@ -24,10 +24,10 @@ enum class NotificationNeeds {
     SendImportant
 };
 
-class BluetoothConnection : public BLECharacteristicCallbacks {
+class BluetoothConnection : public NimBLECharacteristicCallbacks {
 public:
-    BLECharacteristic *WriteCharacteristic = nullptr;
-    BLECharacteristic *NotifyCharacteristic = nullptr;
+    NimBLECharacteristic *WriteCharacteristic = nullptr;
+    NimBLECharacteristic *NotifyCharacteristic = nullptr;
     SemaphoreHandle_t xSendMutex = nullptr;
     Event<BluetoothConnection *, void *> DisconnectEvent;
 
@@ -114,9 +114,9 @@ public:
 
     void Init();
 
-    void onWrite(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) override;
+    void onWrite(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc* desc) override;
 
-    void onStatus(BLECharacteristic *pCharacteristic, Status s, uint32_t code) override;
+    void onStatus(NimBLECharacteristic *pCharacteristic, Status s, int code) override;
 
 #ifdef USER_MANAGEMENT_ENABLED
 

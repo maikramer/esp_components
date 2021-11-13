@@ -10,7 +10,6 @@
 #include <map>
 #include <list>
 #include <JsonModels.h>
-#include <GeneralUtils.h>
 #include <ErrorCode.h>
 #include "functional"
 #include "Utility.h"
@@ -27,18 +26,26 @@ namespace StorageConst {
 
 
 namespace ErrorCodes {
-    const ErrorCodeItem StorageError{"StorageError", "Erro na Memória do Dispositivo", ErrorCodeType::Storage};
-    const ErrorCodeItem ListIsEmpty{"ListIsEmpty", "Nenhum Item Encontrado", ErrorCodeType::Storage};
+    const ErrorCodeItem StorageError{"StorageError", "Erro na Memória do Dispositivo",
+                                     ErrorCodeType::Storage};
+    const ErrorCodeItem ListIsEmpty{"ListIsEmpty", "Nenhum Item Encontrado",
+                                    ErrorCodeType::Storage};
     const ErrorCodeItem FileIsEmpty{"FileIsEmpty", "Arquivo está vazio", ErrorCodeType::Storage};
-    const ErrorCodeItem Exist{"Exist", "Chave já existe e não deve ser atualizada", ErrorCodeType::Storage};
-    const ErrorCodeItem FileNotFound{"FileNotFound", "Arquivo não encontrado", ErrorCodeType::Storage};
+    const ErrorCodeItem Exist{"Exist", "Chave já existe e não deve ser atualizada",
+                              ErrorCodeType::Storage};
+    const ErrorCodeItem FileNotFound{"FileNotFound", "Arquivo não encontrado",
+                                     ErrorCodeType::Storage};
     const ErrorCodeItem KeyNotFound{"KeyNotFound", "Chave não encontrada", ErrorCodeType::Storage};
     const ErrorCodeItem FindError{"FindError", "Nenhuma chave do tipo especificado foi encontrada",
                                   ErrorCodeType::Storage};
-    const ErrorCodeItem PartitionNotFound{"PartitionNotFound", "Partição não Encontrada", ErrorCodeType::Storage};
-    const ErrorCodeItem AlreadyMounted{"AlreadyMounted", "Armazenamento já Montado", ErrorCodeType::Storage};
-    const ErrorCodeItem NoFreeMemory{"NoFreeMemory", "Sem Memória Livre no Dispositivo", ErrorCodeType::Storage};
-    const ErrorCodeItem ReservedFileName{"ReservedFileName", "Nome Reservado para o Sistema", ErrorCodeType::Storage};
+    const ErrorCodeItem PartitionNotFound{"PartitionNotFound", "Partição não Encontrada",
+                                          ErrorCodeType::Storage};
+    const ErrorCodeItem AlreadyMounted{"AlreadyMounted", "Armazenamento já Montado",
+                                       ErrorCodeType::Storage};
+    const ErrorCodeItem NoFreeMemory{"NoFreeMemory", "Sem Memória Livre no Dispositivo",
+                                     ErrorCodeType::Storage};
+    const ErrorCodeItem ReservedFileName{"ReservedFileName", "Nome Reservado para o Sistema",
+                                         ErrorCodeType::Storage};
 }
 
 
@@ -76,10 +83,12 @@ public:
 
     template<typename Tkey, typename Tvalue>
     static auto GetEntriesWithFilter(const std::string &fileName, std::map<Tkey, Tvalue> &map,
-                                     std::function<bool(Tkey key, Tvalue value)> filter) -> ErrorCode;
+                                     std::function<bool(Tkey key,
+                                                        Tvalue value)> filter) -> ErrorCode;
 
     template<typename Tkey, typename Tvalue>
-    static auto GetEntriesFromFile(const std::string &fileName, std::map<Tkey, Tvalue> &map) -> ErrorCode;
+    static auto
+    GetEntriesFromFile(const std::string &fileName, std::map<Tkey, Tvalue> &map) -> ErrorCode;
 
     template<typename Tkey, typename Tvalue>
     static auto
@@ -152,7 +161,7 @@ auto Storage::GetEntriesWithFilter(const std::string &fileName, std::map<Tkey, T
         ESP_LOGI(__FUNCTION__, "Linha >> %s", line.c_str());
 #endif
 
-        auto keyValue = GeneralUtils::split(line, '=');
+        auto keyValue = Utility::split(line, '=');
         if (keyValue.empty()) {
             ESP_LOGW(__FUNCTION__, "Erro na linha");
             continue;
@@ -246,7 +255,7 @@ auto Storage::StoreKeyValueWithoutCheck(Tkey key, Tvalue value, const std::strin
             ESP_LOGI(__FUNCTION__, "Linha >> %s", line.c_str());
 #endif
             if (!found) {
-                auto findKeyRes = GeneralUtils::split(line, '=');
+                auto findKeyRes = Utility::split(line, '=');
                 if (!findKeyRes.empty() && findKeyRes[0] == keyStrStr.str()) {
                     found = true;
                 }
@@ -344,7 +353,7 @@ auto Storage::ReadKeyFromFile(Tkey key, Tvalue &out, const std::string &fileName
 #ifdef LOG_STORAGE
         ESP_LOGI(__FUNCTION__, "Linha >> %s", line.c_str());
 #endif
-        auto findKeyRes = GeneralUtils::split(line, '=');
+        auto findKeyRes = Utility::split(line, '=');
         if (findKeyRes.size() < 2) {
             ESP_LOGE(__FUNCTION__, "Linha com formato invalido >> %s", line.c_str());
             continue;
@@ -405,7 +414,8 @@ auto Storage::FastStoreKeyValue(Tkey key, Tvalue value,
 }
 
 template<typename Tkey, typename Tvalue>
-auto Storage::GetEntriesFromFile(const std::string &fileName, std::map<Tkey, Tvalue> &map) -> ErrorCode {
+auto
+Storage::GetEntriesFromFile(const std::string &fileName, std::map<Tkey, Tvalue> &map) -> ErrorCode {
     return GetEntriesWithFilter(fileName, map, Utility::FFL([](Tkey k, Tvalue v) { return true; }));
 }
 

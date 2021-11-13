@@ -5,9 +5,7 @@
 #ifndef TOMADA_SMART_CONDO_BLUETOOTHSERVER_H
 #define TOMADA_SMART_CONDO_BLUETOOTHSERVER_H
 
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLE2902.h>
+#include <NimBLEDevice.h>
 #include "Commander.h"
 #include <Enums.h>
 #include <list>
@@ -29,7 +27,7 @@ namespace ErrorCodes {
 
 class BluetoothServer : public Singleton<BluetoothServer> {
 public:
-    BLEServer *BleServer = nullptr;
+    NimBLEServer *BleServer = nullptr;
     explicit BluetoothServer(token);
 
 #ifdef USER_MANAGEMENT_ENABLED
@@ -40,45 +38,44 @@ public:
 
 #endif
 
-    BLECharacteristic *CreatePrivateWriteCharacteristic() {
+    NimBLECharacteristic *CreatePrivateWriteCharacteristic() {
         return CreateWriteCharacteristic(privateService);
     }
 
-    BLECharacteristic *CreatePrivateNotifyCharacteristic() {
+    NimBLECharacteristic *CreatePrivateNotifyCharacteristic() {
         return CreateNotifyCharacteristic(privateService);
     }
 
-    auto CreateWriteCharacteristic(BLEService *service) -> BLECharacteristic *;
+    auto CreateWriteCharacteristic(NimBLEService *service) -> NimBLECharacteristic *;
 
-    auto CreateNotifyCharacteristic(BLEService *service) -> BLECharacteristic *;
+    auto CreateNotifyCharacteristic(NimBLEService *service) -> NimBLECharacteristic *;
 
-    auto CreatePrivateService() -> BLEService *;
+    auto CreatePrivateService() -> NimBLEService *;
 
     auto GetPrivateServiceUUID() -> string { return privateServiceUUID; }
 
 private:
-    static void SendJson(BLECharacteristic *pCharacteristic, const string &json);
+    static void SendJson(NimBLECharacteristic *pCharacteristic, const string &json);
 
-    static void SendJsonData(BLECharacteristic *pCharacteristic, const string &json);
+    static void SendJsonData(NimBLECharacteristic *pCharacteristic, const string &json);
 
     string privateServiceUUID;
     std::list<std::string> uuidList;
 
-    class ServerCallbacks : public BLEServerCallbacks {
-        void onConnect(BLEServer *server, esp_ble_gatts_cb_param_t *param) override;
+    class ServerCallbacks : public NimBLEServerCallbacks {
+        void onConnect(NimBLEServer *server, ble_gap_conn_desc* desc) override;
 
-        void onDisconnect(BLEServer *server) override;
+        void onDisconnect(NimBLEServer *server, ble_gap_conn_desc* desc) override;
     };
 
-    class SendDataCallbacks : public BLECharacteristicCallbacks {
+    class SendDataCallbacks : public NimBLECharacteristicCallbacks {
     public:
-        void onRead(BLECharacteristic *pCharacteristic, esp_ble_gatts_cb_param_t *param) override;
+        void onRead(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc* desc) override;
     };
 
-    BLEService *publicService = nullptr;
-    BLEService *privateService = nullptr;
-    BLECharacteristic *publicTxCharacteristic = nullptr;
-    SemaphoreHandle_t xSendDataSemaphore = nullptr;
+    NimBLEService *publicService = nullptr;
+    NimBLEService *privateService = nullptr;
+    NimBLECharacteristic *publicTxCharacteristic = nullptr;
 
     string GetUniqueId(bool isCharacteristic);
 

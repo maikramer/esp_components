@@ -1,9 +1,10 @@
-[submodule "submodules/arduino-esp32"]
-	path = submodules/arduino-esp32
-	url = https://github.com/espressif/arduino-esp32.git
+
 [submodule "submodules/json"]
 	path = submodules/json
 	url = https://github.com/nlohmann/json.git
 [submodule "submodules/nameof"]
 	path = submodules/nameof
 	url = https://github.com/Neargye/nameof.git
+[submodule "submodules/NimBLE-Arduino"]
+	path = submodules/NimBLE-Arduino
+	url = https://github.com/h2zero/NimBLE-Arduino.git

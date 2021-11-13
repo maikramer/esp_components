@@ -70,6 +70,8 @@ public:
     static FFL(F const &func) { // Function from lambda !
         return func;
     }
+
+    static std::string trim(const std::string &str);
 };
 
 
