@@ -100,6 +100,9 @@ void BluetoothServer::SetupBt(std::string deviceName) {
     // Create the BLE Device
     NimBLEDevice::init(std::move(deviceName));
 
+    // Set power to 9DB
+    NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+
     // Create the BLE Server
     BleServer = NimBLEDevice::createServer();
 
@@ -130,7 +133,7 @@ void BluetoothServer::SetupBt(std::string deviceName) {
     // Start advertising
     NimBLEAdvertising *pAdvertising = NimBLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(PUBLIC_SERVICE_UUID);
-    pAdvertising->setScanResponse(false);
+    pAdvertising->setScanResponse(true);
     pAdvertising->setMinPreferred(0x0);
     NimBLEDevice::startAdvertising();
 

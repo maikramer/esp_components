@@ -16,6 +16,7 @@
 //#define DEBUG_INFO
 
 SafeList<BluetoothConnection *> ConnectionManager::_connectionPool;//NOLINT
+Event<ConnectionManager *, BluetoothConnection *> ConnectionManager::OnConnect;
 
 void ConnectionManager::Init(int noOfConnections) {
     for (auto i = 0; i < noOfConnections; i++) {
@@ -29,8 +30,9 @@ void ConnectionManager::Connect(uint16_t conn_id) {
     auto *connection = GetFreeConnection();
     if (connection != nullptr) {
         connection->Connect(conn_id);
+        OnConnect.FireEvent(nullptr, connection);
     } else {
-        ESP_LOGE(__FUNCTION__ , "Sem conexões livres");
+        ESP_LOGE(__FUNCTION__, "Sem conexões livres");
         BluetoothServer::instance().BleServer->disconnect(conn_id);
     }
 }
@@ -53,7 +55,7 @@ auto ConnectionManager::GetConnectionById(uint16_t id) -> BluetoothConnection * 
         ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
         return nullptr;
     }
-    for (auto connection : _connectionPool) {
+    for (auto connection: _connectionPool) {
         if (connection->GetId() == id) {
 #ifdef DEBUG_INFO
             ESP_LOGI(__FUNCTION__, "Connection Id: %d", id);
@@ -81,7 +83,7 @@ auto ConnectionManager::GetFreeConnection() -> BluetoothConnection * {
         return nullptr;
     }
 
-    for (auto *conn : _connectionPool) {
+    for (auto *conn: _connectionPool) {
         if (conn->IsFree()) {
             ret = conn;
             break;
@@ -104,7 +106,7 @@ void ConnectionManager::SendNotifications() {
             ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
             return;
         }
-        for (auto *connection : _connectionPool) {
+        for (auto *connection: _connectionPool) {
             //                ESP_LOGI(__FUNCTION__, "Tentando Enviar para %s", user.User.c_str());
             if (connection == nullptr || connection->IsFree())
                 continue;
@@ -125,7 +127,7 @@ void ConnectionManager::SendNotifications() {
             ESP_LOGI(__FUNCTION__, "Enviando para %s", user->User.c_str());
 
 #else
-            ESP_LOGI(__FUNCTION__, "Enviando para a coneccao %u", connection->GetId());
+            ESP_LOGI(__FUNCTION__, "Enviando para a conexao %u", connection->GetId());
 #endif
 #endif  //DEBUG_INFO
             auto state = connection->GetNotificationNeeds();
@@ -147,7 +149,7 @@ void ConnectionManager::NotifyAll(bool isImportant) {
             ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
             return;
         }
-        for (auto *connection : _connectionPool) {
+        for (auto *connection: _connectionPool) {
             connection->SetNotificationNeeds(
                     isImportant ? NotificationNeeds::SendImportant : NotificationNeeds::SendNormal);
         }

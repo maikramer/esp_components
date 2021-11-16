@@ -41,7 +41,8 @@ public:
                       "Lista deve ter como base BaseListJsonData");
 
         if (errorCode != ErrorCodes::None) {
-            ESP_LOGE(__FUNCTION__, "Erro \"%s\" -> %s", errorCode.GetName(), errorCode.GetDescription());
+            ESP_LOGE(__FUNCTION__, "Erro \"%s\" -> %s", errorCode.GetName(),
+                     errorCode.GetDescription());
         }
 
         Tmodel jsonData;
@@ -56,7 +57,8 @@ public:
     }
 
     template<typename Tmodel, typename T1, typename T2>
-    void SendList(const std::map<T1, T2> &map, Tmodel *firstItem = nullptr, Tmodel *lastItem = nullptr) {
+    void
+    SendList(const std::map<T1, T2> &map, Tmodel *firstItem = nullptr, Tmodel *lastItem = nullptr) {
         static_assert(std::is_base_of<JsonModels::BaseListJsonDataBasic, Tmodel>::value,
                       "Lista deve ter como base BaseListJsonData");
         if (map.empty()) {
@@ -114,7 +116,7 @@ public:
 
     void Init();
 
-    void onWrite(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc* desc) override;
+    void onWrite(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc) override;
 
     void onStatus(NimBLECharacteristic *pCharacteristic, Status s, int code) override;
 

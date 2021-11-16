@@ -13,22 +13,6 @@
 #include "BluetoothConnection.h"
 
 class BluetoothConnection;
-
-//enum class CommandCode : uint8_t {
-//    StartCode = 0,
-//    FinalizeCode = 1,
-//    GetConsumeHistoryCode = 2,
-//    GetTotalConsumeInPeriodCode = 3,
-//    GetUsersTotalConsumeMapCode = 4,
-//    SetAdminInfoCode = 5,
-//    LoginCode = 6,
-//    LogoffCode = 7,
-//    SignUpCode = 8,
-//    GetUsersWaitingCode = 9,
-//    ApproveUserCode = 10,
-//    UserCommand = 11
-//};
-
 class DeviceCommand {
 public:
     DeviceCommand(const uint32_t dataSize, std::string internalName, const uint8_t code,

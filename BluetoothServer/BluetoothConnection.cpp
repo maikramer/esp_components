@@ -17,13 +17,13 @@
 //#define LOG_STATUS_SENT
 #ifndef USER_MANAGEMENT_ENABLED
 
-void BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t>()> callback) {
+[[maybe_unused]] void
+BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t>()> callback) {
     _getDataFunction = std::move(callback);
 }
 
 void BluetoothConnection::SetNotificationNeeds(NotificationNeeds needs) {
     _notificationNeeds = needs;
-
 }
 
 auto BluetoothConnection::GetNotificationNeeds() -> NotificationNeeds {
@@ -45,7 +45,7 @@ void BluetoothConnection::Init() {
     }
 }
 
-void BluetoothConnection::onWrite(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc* desc) {
+void BluetoothConnection::onWrite(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc) {
     std::string rxValue = pCharacteristic->getValue();
     ESP_LOGI(__FUNCTION__, "Peer %d:%d:%d:%d:%d:%d", desc->peer_id_addr.val[0],
              desc->peer_id_addr.val[1], desc->peer_id_addr.val[2], desc->peer_id_addr.val[3],
@@ -72,14 +72,15 @@ void BluetoothConnection::SendNotifyData(bool isNotification) {
     auto list = _user->GetData();
 #else
     if (_getDataFunction == nullptr) {
-//        ESP_LOGE(__FUNCTION__ , "Sem funcoes para envio de dados definidas");
+        ESP_LOGE(__FUNCTION__, "Sem funcoes para envio de dados definidas");
         return;
     }
     auto list = _getDataFunction();
+    if (list.empty()) return;
 #endif
     uint8_t data[list.size()];
-    std::copy(list.begin(), list.end(), data);
 
+    std::copy(list.begin(), list.end(), data);
     NotifyCharacteristic->setValue(data, list.size());
     NotifyCharacteristic->notify(isNotification);
     _notificationNeeds = NotificationNeeds::NoSend;
