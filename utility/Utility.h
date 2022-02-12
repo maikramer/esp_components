@@ -17,6 +17,7 @@
 #include "esp_log.h"
 #include "stdexcept"
 #include "sstream"
+#include <list>
 
 class Utility {
 
@@ -72,6 +73,8 @@ public:
     }
 
     static std::string trim(const std::string &str);
+
+    static std::list<uint8_t> StringToByteList(const std::string &input);
 };
 
 

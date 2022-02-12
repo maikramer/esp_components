@@ -7,6 +7,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <esp_log.h>
+#include <soc/gpio_reg.h>
+#include <rom/gpio.h>
 #include "Utility.h"
 
 
@@ -36,11 +38,22 @@ auto Utility::StringToByteArray(const std::string &input, uint8_t *output) -> ui
     return input.size();
 }
 
+std::list<uint8_t> Utility::StringToByteList(const std::string &input) {
+    unsigned char bytes[input.length()];
+    std::list<uint8_t> list;
+    auto size = StringToByteArray(input, bytes);
+    for (int i = 0; i < size; ++i) {
+        list.push_back(bytes[i]);
+    }
+    return list;
+}
+
 auto Utility::CreateAndProfile(const char *taskName, TaskFunction_t function, const uint32_t stack,
                                UBaseType_t priority,
                                int core, void *parameter) -> TaskHandle_t {
     xTaskHandle handle = nullptr;
-    auto res = xTaskCreatePinnedToCore(function, taskName, stack, parameter, priority, &handle, core);
+    auto res = xTaskCreatePinnedToCore(function, taskName, stack, parameter, priority, &handle,
+                                       core);
     configASSERT(handle);
     if (res != pdPASS || handle == nullptr) {
         ESP_LOGE(__FUNCTION__, "Falha ao criar a tarefa \"%s\"", taskName);
@@ -65,13 +78,11 @@ void Utility::SetOutput(gpio_num_t gpioNum, bool openDrain, uint32_t initial_lev
     //set as output mode
     if (openDrain) {
         io_conf.mode = GPIO_MODE_OUTPUT_OD;
-    }
-    else
-    {
+    } else {
         io_conf.mode = GPIO_MODE_OUTPUT;
     }
     //bit mask of the pins that you want to set.
-    io_conf.pin_bit_mask = ((uint64_t)1) << gpioNum;
+    io_conf.pin_bit_mask = ((uint64_t) 1) << gpioNum;
     //disable pull-down mode
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
     //disable pull-up mode
@@ -99,7 +110,7 @@ void Utility::SetInput(gpio_num_t gpioNum, gpio_pullup_t pullUp, gpio_int_type_t
 
 std::string Utility::CamelCaseToTitleCase(const std::string &toConvert) {
     std::stringstream str{};
-    for (auto ch:toConvert) {
+    for (auto ch: toConvert) {
         if (ch >= 'A' && ch <= 'Z') {
             str << " " << ch;
         } else {
@@ -111,11 +122,11 @@ std::string Utility::CamelCaseToTitleCase(const std::string &toConvert) {
 
 void Utility::ListJsonKeys(const nlohmann::json &j) {
     int count = 0;
-    for ([[maybe_unused]] auto item : j.items()) {
+    for ([[maybe_unused]] auto item: j.items()) {
         count++;
     }
     ESP_LOGI(__FUNCTION__, "Numero de Items:%d", count);
-    for (const auto &item : j.items()) {
+    for (const auto &item: j.items()) {
         ESP_LOGI(__FUNCTION__, "Item:%s", item.key().c_str());
     }
 }
@@ -128,7 +139,7 @@ uint32_t Utility::ReadOutput(gpio_num_t gpio) {
 /**
  * @brief Remove white space from a string.
  */
-std::string Utility::trim(const std::string& str) {
+std::string Utility::trim(const std::string &str) {
     size_t first = str.find_first_not_of(' ');
     if (std::string::npos == first) return str;
     size_t last = str.find_last_not_of(' ');

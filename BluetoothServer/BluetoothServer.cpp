@@ -163,7 +163,7 @@ void BluetoothServer::ServerCallbacks::onConnect(NimBLEServer *server __unused,
     ESP_LOGI(__FUNCTION__, "Conectado ao Peer %d:%d:%d:%d:%d:%d", desc->peer_id_addr.val[0],
              desc->peer_id_addr.val[1], desc->peer_id_addr.val[2], desc->peer_id_addr.val[3],
              desc->peer_id_addr.val[4], desc->peer_id_addr.val[5]);
-    //todo: Resolver a questao da multiconexao
+    //todo: Resolver a questao da multi conexão
     ConnectionManager::Connect(desc->peer_id_addr.val[5]);
 }
 

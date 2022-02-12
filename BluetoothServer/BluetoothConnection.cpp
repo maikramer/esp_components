@@ -47,12 +47,10 @@ void BluetoothConnection::Init() {
 
 void BluetoothConnection::onWrite(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc) {
     std::string rxValue = pCharacteristic->getValue();
-    ESP_LOGI(__FUNCTION__, "Peer %d:%d:%d:%d:%d:%d", desc->peer_id_addr.val[0],
-             desc->peer_id_addr.val[1], desc->peer_id_addr.val[2], desc->peer_id_addr.val[3],
-             desc->peer_id_addr.val[4], desc->peer_id_addr.val[5]);
-
     if (rxValue.length() > 0) {
-        printf("\nReceived Value: %s\n", rxValue.c_str());
+        ESP_LOGI(__FUNCTION__, "From Peer %d:%d:%d:%d:%d:%d : %s", desc->peer_id_addr.val[0],
+                 desc->peer_id_addr.val[1], desc->peer_id_addr.val[2], desc->peer_id_addr.val[3],
+                 desc->peer_id_addr.val[4], desc->peer_id_addr.val[5], rxValue.c_str());
     }
 
     auto *connection = ConnectionManager::GetConnectionById(desc->peer_id_addr.val[5]);
