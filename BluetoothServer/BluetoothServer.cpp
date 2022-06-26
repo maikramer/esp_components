@@ -15,6 +15,7 @@
 #include <Utility.h>
 #include <utility>
 #include <ConnectedUser.h>
+#include <esp_random.h>
 
 static void SendDataTask(void *arg __unused) {
     TickType_t xLastWakeTime = 0;

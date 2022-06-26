@@ -134,8 +134,6 @@ void ConnectionManager::SendNotifications() {
 #endif //USER_MANAGEMENT_ENABLED
             if (state == NotificationNeeds::NoSend) continue;
             connection->SendNotifyData(state != NotificationNeeds::SendImportant);
-
-
         }
         _connectionPool.EndIteration();
     }

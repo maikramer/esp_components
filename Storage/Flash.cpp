@@ -12,11 +12,12 @@ auto Flash::Init() -> ErrorCode {
     const esp_vfs_fat_mount_config_t mount_config = {
             .format_if_mount_failed = true,
             .max_files = 4,
-            .allocation_unit_size = CONFIG_WL_SECTOR_SIZE
+            .allocation_unit_size = CONFIG_WL_SECTOR_SIZE,
+            .disk_status_check_enable = true,
     };
     Storage::_sectorSize = CONFIG_WL_SECTOR_SIZE;
 
-    esp_err_t err = esp_vfs_fat_spiflash_mount(StorageConst::BasePath, "storage", &mount_config, &_wearHandle);
+    esp_err_t err = esp_vfs_fat_spiflash_mount_rw_wl(StorageConst::BasePath, "storage", &mount_config, &_wearHandle);
     if (err != ESP_OK) {
         ESP_LOGE(__FUNCTION__, "Falha montando sistema de arquivos FATFS: (%s)", esp_err_to_name(err));
     } else {

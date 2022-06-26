@@ -35,6 +35,7 @@ namespace ErrorCodes {
 class ErrorCode {
 private:
     static std::map<std::string, const ErrorCodeItem *> items;
+    static bool _initialized;
 
 protected:
     const ErrorCodeItem *_error = nullptr;
@@ -52,14 +53,7 @@ public:
         return _error->Name;
     }
 
-    static bool AddErrorItem(const ErrorCodeItem &item) {
-        if (items.find(item.Name) != items.end()) {
-            ESP_LOGE(__FUNCTION__, "Tentando adicionar %s, que já existe", item.Name);
-            return false;
-        }
-        items[item.Name] = &item;
-        return true;
-    }
+    static bool AddErrorItem(const ErrorCodeItem &item);
 
     bool operator==(const ErrorCodeItem item) const {
 #ifdef LOGGING_ERROR_CODE
@@ -91,12 +85,7 @@ public:
 
     explicit operator char *() { return const_cast<char *>(_error->Description); }
 
-    static void Init() {
-        AddErrorItem(ErrorCodes::Invalid);
-        AddErrorItem(ErrorCodes::None);
-        AddErrorItem(ErrorCodes::Error);
-        AddErrorItem(ErrorCodes::ExceptionError);
-    }
+    static void Init();
 
     ErrorCode(ErrorCodeItem codeItem);//NOLINT
 };

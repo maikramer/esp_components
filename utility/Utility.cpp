@@ -51,7 +51,7 @@ std::list<uint8_t> Utility::StringToByteList(const std::string &input) {
 auto Utility::CreateAndProfile(const char *taskName, TaskFunction_t function, const uint32_t stack,
                                UBaseType_t priority,
                                int core, void *parameter) -> TaskHandle_t {
-    xTaskHandle handle = nullptr;
+    TaskHandle_t handle = nullptr;
     auto res = xTaskCreatePinnedToCore(function, taskName, stack, parameter, priority, &handle,
                                        core);
     configASSERT(handle);

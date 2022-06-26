@@ -8,3 +8,6 @@
 [submodule "submodules/NimBLE-Arduino"]
 	path = submodules/NimBLE-Arduino
 	url = https://github.com/h2zero/NimBLE-Arduino.git
+[submodule "submodules/libtelnet"]
+	path = submodules/libtelnet
+	url = https://github.com/seanmiddleditch/libtelnet.git

@@ -2,8 +2,8 @@
 // Created by maikeu on 07/07/2020.
 //
 
-#ifndef ROCKET_TESTER_FLASH_H
-#define ROCKET_TESTER_FLASH_H
+#ifndef NVS_H
+#define NVS_H
 
 #include <esp_vfs_fat.h>
 #include "Storage.h"
@@ -25,4 +25,4 @@ private:
 };
 
 
-#endif //ROCKET_TESTER_FLASH_H
+#endif //NVS_H

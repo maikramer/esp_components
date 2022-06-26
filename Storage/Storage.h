@@ -2,8 +2,8 @@
 // Created by maikeu on 23/09/2019.
 //
 
-#ifndef ROCKET_TESTER_STORAGE_H
-#define ROCKET_TESTER_STORAGE_H
+#ifndef STORAGE_H
+#define STORAGE_H
 
 
 #include <cstdint>
@@ -419,4 +419,4 @@ Storage::GetEntriesFromFile(const std::string &fileName, std::map<Tkey, Tvalue> 
     return GetEntriesWithFilter(fileName, map, Utility::FFL([](Tkey k, Tvalue v) { return true; }));
 }
 
-#endif //ROCKET_TESTER_STORAGE_H
+#endif //STORAGE_H

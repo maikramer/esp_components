@@ -2,8 +2,8 @@
 // Created by maikeu on 23/09/2019.
 //
 
-#ifndef ROCKET_TESTER_SDCARD_H
-#define ROCKET_TESTER_SDCARD_H
+#ifndef SDCARD_H
+#define SDCARD_H
 
 #include "projectConfig.h"
 
@@ -21,4 +21,4 @@ public:
 };
 #endif
 
-#endif //ROCKET_TESTER_SDCARD_H
+#endif //SDCARD_H

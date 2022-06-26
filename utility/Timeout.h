@@ -2,8 +2,8 @@
 // Created by maikeu on 08/07/2021.
 //
 
-#ifndef PROJETO_ALPHA_TIMEOUT_H
-#define PROJETO_ALPHA_TIMEOUT_H
+#ifndef TIMEOUT_H
+#define TIMEOUT_H
 
 #ifdef STM32L1
 #include <FreeRTOS.h>
@@ -61,4 +61,4 @@ private:
     TickType_t _start = 0;
 };
 
-#endif //PROJETO_ALPHA_TIMEOUT_H
+#endif //TIMEOUT_H

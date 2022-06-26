@@ -23,5 +23,4 @@ set(include_dirs . ../submodules/NimBLE-Arduino/src/)
 
 
 idf_component_register(SRCS "${srcs}" INCLUDE_DIRS "${include_dirs}" REQUIRES "${requires}")
-target_compile_options(${COMPONENT_LIB} PRIVATE -std=c++17 -Wno-format-truncation)
-target_compile_definitions(${COMPONENT_LIB} PRIVATE ringbuf_type_t=RingbufferType_t)
+target_compile_definitions(${COMPONENT_LIB} PRIVATE CONFIG_NIMBLE_CPP_IDF)
