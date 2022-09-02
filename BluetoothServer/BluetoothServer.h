@@ -2,8 +2,8 @@
 // Created by maikeu on 14/08/2019.
 //
 
-#ifndef TOMADA_SMART_CONDO_BLUETOOTHSERVER_H
-#define TOMADA_SMART_CONDO_BLUETOOTHSERVER_H
+#ifndef BLUETOOTHSERVER_H
+#define BLUETOOTHSERVER_H
 
 #include <NimBLEDevice.h>
 #include "Commander.h"
@@ -82,4 +82,4 @@ private:
 
 };
 
-#endif //TOMADA_SMART_CONDO_BLUETOOTHSERVER_H
+#endif //BLUETOOTHSERVER_H

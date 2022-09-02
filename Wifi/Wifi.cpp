@@ -7,6 +7,8 @@
 
 int  MK::Wifi::_retry_num = 0;
 int  MK::Wifi::_maxRetries = 5;
+std::string MK::Wifi::_ssid;
+std::string MK::Wifi::_password;
 NakedEvent MK::Wifi::OnConnected{};
 NakedEvent MK::Wifi::OnDisconnected{};
 NakedEvent MK::Wifi::OnGotIp{};
@@ -17,18 +19,20 @@ void MK::Wifi::Wifi_event_handler(void *arg, esp_event_base_t event_base,
                                   int32_t event_id, void *event_data) {
     const char *TAG = __FUNCTION__;
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        ESP_LOGI(TAG, "Tentativa %d de conexão ao SSID: %s", _retry_num, _ssid.c_str());
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         if (_state == WifiState::Connected) {
+            ESP_LOGI(TAG, "Conectado ao SSID: %s", _ssid.c_str());
             OnDisconnected.FireEvent();
             _state = WifiState::Disconnected;
         } else if (_retry_num < _maxRetries) {
             esp_wifi_connect();
             _retry_num++;
-            ESP_LOGI(TAG, "retry to connect to the AP");
+            ESP_LOGI(TAG, "Falha ao conectar ao SSID: %s, tentando novamente...", _ssid.c_str());
         } else {
             xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-            ESP_LOGI(TAG, "connect to the AP fail");
+            ESP_LOGI(TAG, "Falha ao conectar ao SSID: %s", _ssid.c_str());
         }
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
         OnConnected.FireEvent();
@@ -44,13 +48,9 @@ void MK::Wifi::Wifi_event_handler(void *arg, esp_event_base_t event_base,
 }
 
 void MK::Wifi::Start(std::string ssid, std::string password) {
-    //Initialize NVS
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
+    _retry_num = 0;
+    _ssid = ssid;
+    _password = password;
     const char *TAG = __FUNCTION__;
     if (ssid.length() >= 32) {
         ESP_LOGE(TAG, "SSID não deve ter mais que 32 caracteres!!");
@@ -60,11 +60,6 @@ void MK::Wifi::Start(std::string ssid, std::string password) {
         ESP_LOGE(TAG, "Senha não deve ter mais que 64 caracteres!!");
         return;
     }
-
-    ESP_ERROR_CHECK(esp_netif_init());
-
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_sta();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -108,8 +103,8 @@ void MK::Wifi::Start(std::string ssid, std::string password) {
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "Wifi Inicializado, Heap: %d", xPortGetFreeHeapSize());
-    ESP_LOGI(TAG, "Minimum Available Heap: %u", xPortGetMinimumEverFreeHeapSize());
+    ESP_LOGI(TAG, "Wifi Inicializado, Heap: %ld", xPortGetFreeHeapSize());
+    ESP_LOGI(TAG, "Minimum Available Heap: %lu", xPortGetMinimumEverFreeHeapSize());
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
@@ -122,9 +117,9 @@ void MK::Wifi::Start(std::string ssid, std::string password) {
     /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
      * happened. */
     if (bits & WIFI_CONNECTED_BIT) {
-        ESP_LOGI(TAG, "Conectado ao SSID: %s", ssid.c_str());
+
     } else if (bits & WIFI_FAIL_BIT) {
-        ESP_LOGI(TAG, "Falha ao conectar ao SSID: %s", ssid.c_str());
+
     } else {
         ESP_LOGE(TAG, "Evento Inesperado ao tentar conectar");
     }

@@ -2,8 +2,8 @@
 // Created by maikeu on 25/09/2019.
 //
 
-#ifndef TOMADA_SMART_CONDO_USERMANAGER_H
-#define TOMADA_SMART_CONDO_USERMANAGER_H
+#ifndef USERMANAGER_H
+#define USERMANAGER_H
 
 #include "projectConfig.h"
 
@@ -70,4 +70,4 @@ protected:
 
 #endif
 
-#endif //TOMADA_SMART_CONDO_USERMANAGER_H
+#endif //USERMANAGER_H

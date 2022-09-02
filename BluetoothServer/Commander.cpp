@@ -10,7 +10,7 @@
 #include "Commander.h"
 #include "vector"
 
-typedef struct {//NOLINT
+typedef struct Command_s {//NOLINT
     std::function<void(const std::vector<std::string> &, BluetoothConnection *)> Function{};
     std::vector<std::string> Data;
     BluetoothConnection *Connection{};
@@ -63,7 +63,8 @@ void Commander::CheckForCommand(const std::string &rxValue, BluetoothConnection 
         if (command.Code == commandCode) {
             ESP_LOGI(__FUNCTION__, "Comando encontrado: %s", command.InternalName.c_str());
             if (data.size() != command.DataSize) {
-                ESP_LOGW(__FUNCTION__, "Número de argumentos recebidos %d diferente do esperado %d", data.size(),
+                ESP_LOGW(__FUNCTION__,
+                         "Número de argumentos recebidos %d diferente do esperado %ld", data.size(),
                          command.DataSize);
                 return;
             }

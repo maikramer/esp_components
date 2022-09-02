@@ -2,8 +2,8 @@
 // Created by maikeu on 18/08/2019.
 //
 
-#ifndef TOMADA_SMART_CONDO_SINGLETON_H
-#define TOMADA_SMART_CONDO_SINGLETON_H
+#ifndef SINGLETON_H
+#define SINGLETON_H
 
 #include "esp_log.h"
 
@@ -27,4 +27,4 @@ protected:
     Singleton() = default;
 };
 
-#endif //TOMADA_SMART_CONDO_SINGLETON_H
+#endif //SINGLETON_H

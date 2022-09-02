@@ -2,8 +2,8 @@
 // Created by maikeu on 25/09/2019.
 //
 
-#ifndef TOMADA_SMART_CONDO_CONNECTEDUSER_H
-#define TOMADA_SMART_CONDO_CONNECTEDUSER_H
+#ifndef CONNECTEDUSER_H
+#define CONNECTEDUSER_H
 
 #include "projectConfig.h"
 #include "Event.h"
@@ -113,4 +113,4 @@ protected:
 
 #endif //USER_MANAGEMENT_ENABLED
 
-#endif //TOMADA_SMART_CONDO_CONNECTEDUSER_H
+#endif //CONNECTEDUSER_H

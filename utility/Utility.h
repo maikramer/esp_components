@@ -2,8 +2,8 @@
 // Created by maikeu on 02/02/2020.
 //
 
-#ifndef TOMADA_SMART_CONDO_UTILITY_H
-#define TOMADA_SMART_CONDO_UTILITY_H
+#ifndef UTILITY_H
+#define UTILITY_H
 
 
 #include <freertos/projdefs.h>
@@ -78,4 +78,4 @@ public:
 };
 
 
-#endif //TOMADA_SMART_CONDO_UTILITY_H
+#endif //UTILITY_H

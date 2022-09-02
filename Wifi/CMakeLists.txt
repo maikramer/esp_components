@@ -1,4 +1,4 @@
-set(srcs Wifi.cpp Telnet.cpp IPAddress.cpp ../submodules/libtelnet/libtelnet.c)
+set(srcs Wifi.cpp Telnet.cpp IPAddress.cpp WirelessDevice.cpp ../submodules/libtelnet/libtelnet.c)
 set(include_dirs . ../submodules/libtelnet/)
 set(requires esp_wifi nvs_flash utility)
 

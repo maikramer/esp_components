@@ -2,8 +2,8 @@
 // Created by maikeu on 25/09/2019.
 //
 
-#ifndef TOMADA_SMART_CONDO_ENUMS_H
-#define TOMADA_SMART_CONDO_ENUMS_H
+#ifndef ENUMS_H
+#define ENUMS_H
 
 
-#endif //TOMADA_SMART_CONDO_ENUMS_H
+#endif //ENUMS_H

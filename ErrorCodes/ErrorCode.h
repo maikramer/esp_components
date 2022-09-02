@@ -2,12 +2,13 @@
 // Created by maikeu on 17/07/2020.
 //
 
-#ifndef TOMADA_SMART_CONDO_ERRORCODE_H
-#define TOMADA_SMART_CONDO_ERRORCODE_H
+#ifndef ERRORCODE_H
+#define ERRORCODE_H
 
 
 #include <cstdint>
 #include <map>
+#include <inttypes.h>
 #include <esp_log.h>
 #include "cstring"
 #include "string"
@@ -90,4 +91,4 @@ public:
     ErrorCode(ErrorCodeItem codeItem);//NOLINT
 };
 
-#endif //TOMADA_SMART_CONDO_ERRORCODE_H
+#endif //ERRORCODE_H

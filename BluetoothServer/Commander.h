@@ -2,8 +2,8 @@
 // Created by maikeu on 18/08/2019.
 //
 
-#ifndef TOMADA_SMART_CONDO_COMMANDER_H
-#define TOMADA_SMART_CONDO_COMMANDER_H
+#ifndef COMMANDER_H
+#define COMMANDER_H
 
 #include <string>
 #include <utility>
@@ -12,12 +12,26 @@
 #include <nameof.hpp>
 #include "BluetoothConnection.h"
 
+enum class ReservedCodes : uint8_t {
+    SetAdminInfoCode = 100,
+    LoginCode = 101,
+    LogoffCode = 102,
+    SignUpCode = 103,
+    GetUsersWaitingCode = 104,
+    ApproveUserCode = 105,
+    UserCommand = 106,
+    ScanForWifi = 107
+};
+
 class BluetoothConnection;
+
 class DeviceCommand {
 public:
     DeviceCommand(const uint32_t dataSize, std::string internalName, const uint8_t code,
-                  std::function<void(const std::vector<std::string> &, BluetoothConnection *)> functionPtr) : DataSize(
-            dataSize), InternalName(std::move(internalName)), Code(code), Function(std::move(functionPtr)) {}
+                  std::function<void(const std::vector<std::string> &,
+                                     BluetoothConnection *)> functionPtr) : DataSize(
+            dataSize), InternalName(std::move(internalName)), Code(code), Function(
+            std::move(functionPtr)) {}
 
     const uint32_t DataSize;
     std::string InternalName;
@@ -41,4 +55,4 @@ private:
 };
 
 
-#endif //TOMADA_SMART_CONDO_COMMANDER_H
+#endif //COMMANDER_H
