@@ -16,7 +16,7 @@
 #include "sstream"
 #include "fstream"
 
-//#define LOG_STORAGE
+#define LOG_STORAGE
 
 namespace StorageConst {
     constexpr char BasePath[] = "/storage";

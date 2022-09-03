@@ -22,7 +22,7 @@ ConnectedUser::ConnectedUser() {
 
 ConnectedUser::~ConnectedUser() {
     ESP_LOGI(__FUNCTION__, "User removido da lista");
-    UserManager::_activeUsers.Remove(this);
+    UserManager::_activeUsers.Remove(this, [](auto a, auto b) { return a->User == b->User; });
 }
 
 #endif

@@ -23,21 +23,9 @@ public:
 
     static void Disconnect(uint16_t id);
 
-#ifndef USER_MANAGEMENT_ENABLED
-
     static void NotifyAll(bool isImportant);
 
-#endif
-
-#ifdef USER_MANAGEMENT_ENABLED
-
     static void Init(int noOfConnections);
-
-#else
-
-    static void Init(int noOfConnections);
-
-#endif
 
     static Event<ConnectionManager *, BluetoothConnection *> OnConnect;
 

@@ -139,8 +139,6 @@ void ConnectionManager::SendNotifications() {
     }
 }
 
-#ifndef USER_MANAGEMENT_ENABLED
-
 void ConnectionManager::NotifyAll(bool isImportant) {
     if (!_connectionPool.Empty()) {
         if (_connectionPool.IsLocked()) {
@@ -154,5 +152,3 @@ void ConnectionManager::NotifyAll(bool isImportant) {
         _connectionPool.EndIteration();
     }
 }
-
-#endif

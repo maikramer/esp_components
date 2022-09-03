@@ -128,15 +128,13 @@ public:
         _user = user;
     }
 
-#else
+#endif
 
     NotificationNeeds GetNotificationNeeds();
 
     void SetGetDataFunction(std::function<std::list<uint8_t>()> callback);
 
     void SetNotificationNeeds(NotificationNeeds needs);
-
-#endif
 
     void SendNotifyData(bool isNotification);
 
@@ -151,9 +149,8 @@ private:
     int _conn_ID = -1;
 #ifdef USER_MANAGEMENT_ENABLED
     ConnectedUser *_user;
-#else
-    std::function<std::list<uint8_t>()> _getDataFunction;
 #endif
+    std::function<std::list<uint8_t>()> _getDataFunction;
 
     void SendJson(const std::string &json) const;
 

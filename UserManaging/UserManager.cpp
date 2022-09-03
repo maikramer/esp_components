@@ -6,7 +6,6 @@
 #ifdef USER_MANAGEMENT_ENABLED
 
 #include <esp_log.h>
-#include <GeneralUtils.h>
 #include "UserManager.h"
 #include "ConnectedUser.h"
 #include "nameof.hpp"

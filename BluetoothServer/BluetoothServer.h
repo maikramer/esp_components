@@ -22,7 +22,8 @@ using std::string;
 
 namespace ErrorCodes {
     const ErrorCodeItem JsonError{"JsonError", "Problema com Dados", ErrorCodeType::Communication};
-    const ErrorCodeItem CommunicationError{"CommunicationError", "Erro de Comunicação", ErrorCodeType::Communication};
+    const ErrorCodeItem CommunicationError{"CommunicationError", "Erro de Comunicação",
+                                           ErrorCodeType::Communication};
 }
 
 class BluetoothServer : public Singleton<BluetoothServer> {
@@ -30,13 +31,7 @@ public:
     NimBLEServer *BleServer = nullptr;
     explicit BluetoothServer(token);
 
-#ifdef USER_MANAGEMENT_ENABLED
-    void SetupBt(ConnectedUser* userType, std::string deviceName);
-#else
-
     void SetupBt(std::string deviceName);
-
-#endif
 
     NimBLECharacteristic *CreatePrivateWriteCharacteristic() {
         return CreateWriteCharacteristic(privateService);
@@ -63,14 +58,14 @@ private:
     std::list<std::string> uuidList;
 
     class ServerCallbacks : public NimBLEServerCallbacks {
-        void onConnect(NimBLEServer *server, ble_gap_conn_desc* desc) override;
+        void onConnect(NimBLEServer *server, ble_gap_conn_desc *desc) override;
 
-        void onDisconnect(NimBLEServer *server, ble_gap_conn_desc* desc) override;
+        void onDisconnect(NimBLEServer *server, ble_gap_conn_desc *desc) override;
     };
 
     class SendDataCallbacks : public NimBLECharacteristicCallbacks {
     public:
-        void onRead(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc* desc) override;
+        void onRead(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc) override;
     };
 
     NimBLEService *publicService = nullptr;

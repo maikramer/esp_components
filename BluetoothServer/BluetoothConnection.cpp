@@ -15,7 +15,6 @@
 
 #define LOG_SENT
 //#define LOG_STATUS_SENT
-#ifndef USER_MANAGEMENT_ENABLED
 
 [[maybe_unused]] void
 BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t>()> callback) {
@@ -29,8 +28,6 @@ void BluetoothConnection::SetNotificationNeeds(NotificationNeeds needs) {
 auto BluetoothConnection::GetNotificationNeeds() -> NotificationNeeds {
     return _notificationNeeds;
 }
-
-#endif
 
 void BluetoothConnection::Init() {
     WriteCharacteristic = BluetoothServer::instance().CreatePrivateWriteCharacteristic();

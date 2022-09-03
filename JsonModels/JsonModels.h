@@ -20,7 +20,7 @@ namespace JsonModels {
     public:
         virtual std::string ToJson() const = 0;
 
-        bool FromString(const std::string &jsonStr) {
+        virtual bool FromString(const std::string &jsonStr) {
             nlohmann::json j = nlohmann::json::parse(jsonStr);
             if (j.is_null()) return false;
             return FromJson(j);
@@ -131,16 +131,6 @@ namespace JsonModels {
             return stream.str();
         }
 
-        [[nodiscard]] nlohmann::json ToPureJson() const {
-            nlohmann::json j;
-            j["Name"] = Name;
-            j["Password"] = Password;
-            j["Email"] = Email;
-            j["IsConfirmed"] = IsConfirmed;
-            j["IsAdmin"] = IsAdmin;
-            return j;
-        }
-
         bool FromString(const std::string &jsonStr) override {
             try {
                 nlohmann::json j = nlohmann::json::parse(jsonStr);
@@ -158,6 +148,8 @@ namespace JsonModels {
 
             return true;
         }
+
+        [[nodiscard]] nlohmann::json ToPureJson() const;
     };
 
     class UserListJsonData : public BaseListJsonData<std::string, User> {

@@ -88,7 +88,9 @@ public:
         }
         if (Lock()) {
             for (auto it = _list.begin(); it != _list.end(); ++it) {
-                _list.erase(it);
+                if (compareFunction(*it, item)) {
+                    _list.erase(it);
+                }
             }
             Unlock();
         }

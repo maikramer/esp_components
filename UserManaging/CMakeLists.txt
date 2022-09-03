@@ -1,4 +1,4 @@
-set(srcs UserManager.cpp UserManager_Login.cpp ConnectedUser.cpp)
+set(srcs UserManager.cpp UserManager_Login.cpp ConnectedUser.cpp SimpleUser.cpp SimpleUserManager.cpp)
 set(include_dirs .)
 set(requires Storage BluetoothServer JsonModels)
 

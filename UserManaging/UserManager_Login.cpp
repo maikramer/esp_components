@@ -11,12 +11,14 @@
 
 #define DEBUG_INFO
 
-void UserManager::Login(const std::vector<std::string> &data, BluetoothConnection *connection) {//NOLINT
+void
+UserManager::Login(const std::vector<std::string> &data, BluetoothConnection *connection) {//NOLINT
 
     //Verifica admin
     std::string adminRegistered;
     auto result = Storage::LoadConfig(AdminRegistered, adminRegistered);
-    if (result == ErrorCodes::KeyNotFound || result == ErrorCodes::FileNotFound || adminRegistered == "false") {
+    if (result == ErrorCodes::KeyNotFound || result == ErrorCodes::FileNotFound ||
+        adminRegistered == "false") {
         connection->SendError<JsonModels::LoginTryResultJson>(ErrorCodes::AdminNotRegistered);
         return;
     } else if (result != ErrorCodes::None) {
@@ -34,7 +36,7 @@ void UserManager::Login(const std::vector<std::string> &data, BluetoothConnectio
     }
 
     ConnectedUser *connectedUser = nullptr;
-    for (auto *active : _activeUsers.ReadList()) {
+    for (auto *active: _activeUsers) {
         if (active != nullptr && !active->User.empty() && active->User == user) {
             connectedUser = active;
             ESP_LOGI(__FUNCTION__, "Encontrado usuario travado, retomando");
@@ -42,7 +44,6 @@ void UserManager::Login(const std::vector<std::string> &data, BluetoothConnectio
             break;
         }
     }
-    _activeUsers.EndReadList();
     if (connectedUser == nullptr) {
         connectedUser = CreateUserInstance();
     }
@@ -106,7 +107,8 @@ void UserManager::Logoff(BluetoothConnection *connection) {
     JsonModels::BaseJsonDataError error;
     bool isLocked = connectedUser != nullptr;
     bool isLockedAndLoggedOff = isLocked && !connectedUser->IsLogged;
-    ESP_LOGI(__FUNCTION__, "isLocked: %u, isLockedAndLoggedOff: %u", isLocked, isLockedAndLoggedOff);
+    ESP_LOGI(__FUNCTION__, "isLocked: %u, isLockedAndLoggedOff: %u", isLocked,
+             isLockedAndLoggedOff);
     error.ErrorMessage = isLockedAndLoggedOff || !isLocked ? ErrorCodes::None : ErrorCodes::Error;
     auto json = error.ToJson();
     connection->SendJsonData(json);

@@ -39,10 +39,6 @@ auto BluetoothServer::CreatePrivateService() -> NimBLEService * {
     return BleServer->createService(uuid);
 }
 
-//auto BluetoothServer::CreatePlugCharacteristic() -> BLECharacteristic * {
-//    return CreateNotifyCharacteristic(privateService);
-//}
-
 auto BluetoothServer::CreateWriteCharacteristic(NimBLEService *service) -> NimBLECharacteristic * {
     auto uuid = GetUniqueId(true);
 
@@ -91,33 +87,20 @@ auto BluetoothServer::GetUniqueId(bool isCharacteristic) -> std::string {
     return uuidStr;
 }
 
-#ifdef USER_MANAGEMENT_ENABLED
-
-void BluetoothServer::SetupBt(ConnectedUser *userType, std::string deviceName) {
-#else
-
 void BluetoothServer::SetupBt(std::string deviceName) {
-#endif
+
     // Create the BLE Device
     NimBLEDevice::init(std::move(deviceName));
-
     // Set power to 9DB
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
 
     // Create the BLE Server
     BleServer = NimBLEDevice::createServer();
-
     // Create the BLE Service
     publicService = BleServer->createService(PUBLIC_SERVICE_UUID);
     privateService = CreatePrivateService();
     privateServiceUUID = privateService->getUUID().toString();
-#ifdef USER_MANAGEMENT_ENABLED
-    ConnectionManager::Init(CONFIG_BT_ACL_CONNECTIONS);
-    delete userType;
-#else
     ConnectionManager::Init(CONFIG_BT_NIMBLE_MAX_CONNECTIONS);
-#endif
-
 
     // Create a BLE Characteristic
     publicTxCharacteristic = publicService->createCharacteristic(

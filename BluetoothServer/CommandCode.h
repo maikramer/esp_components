@@ -6,13 +6,13 @@
 #define COMMANDCODE_H
 
 enum class CommandCode : uint8_t {
-    SetAdminInfoCode = 0,
-    LoginCode = 1,
-    LogoffCode = 2,
-    SignUpCode = 3,
-    GetUsersWaitingCode = 4,
-    ApproveUserCode = 5,
-    UserCommand = 6
+    SetAdminInfoCode = 100,
+    LoginCode = 101,
+    LogoffCode = 102,
+    SignUpCode = 103,
+    GetUsersWaitingCode = 104,
+    ApproveUserCode = 105,
+    UserCommand = 106
 
 };
 
