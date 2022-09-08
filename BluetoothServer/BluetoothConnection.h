@@ -128,6 +128,8 @@ public:
         _user = user;
     }
 
+    void Logoff();
+
 #endif
 
     NotificationNeeds GetNotificationNeeds();

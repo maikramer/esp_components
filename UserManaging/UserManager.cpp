@@ -32,7 +32,8 @@ void UserManager::CreateManager() {
                         });
 
     const DeviceCommand Logoff(0, std::string(NAMEOF(Logoff)), (uint8_t) CommandCode::LogoffCode,
-                               [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                               [this](const std::vector<std::string> &data,
+                                      BluetoothConnection *connection) {
                                    UserManager::Logoff(connection);
                                });
 
@@ -168,6 +169,19 @@ void UserManager::ApproveUser(const string &userName, BluetoothConnection *pConn
 ConnectedUser *UserManager::CreateUserInstance() {
     ESP_LOGI(__FUNCTION__, "Criando um ConnectedUser");
     return new ConnectedUser();
+}
+
+void UserManager::DeleteUser(ConnectedUser *user) {
+    auto res = UserManager::_activeUsers.Remove(user,
+                                                [](auto a, auto b) {
+                                                    return a->User == b->User;
+                                                });
+    delete user;
+    if (res) {
+        ESP_LOGI(__FUNCTION__, "User removido da lista com sucesso");
+    } else {
+        ESP_LOGE(__FUNCTION__, "User não foi removido da lista!!");
+    }
 }
 
 #endif

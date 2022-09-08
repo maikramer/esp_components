@@ -60,13 +60,11 @@ auto ConnectionManager::GetConnectionById(uint16_t id) -> BluetoothConnection * 
 #ifdef DEBUG_INFO
             ESP_LOGI(__FUNCTION__, "Connection Id: %d", id);
 #endif
-            _connectionPool.EndIteration();
             return connection;
         }
     }
 
     ESP_LOGE(__FUNCTION__, "Conexão com Id %d nao encontrado", id);
-    _connectionPool.EndIteration();
     return nullptr;
 }
 
@@ -89,8 +87,6 @@ auto ConnectionManager::GetFreeConnection() -> BluetoothConnection * {
             break;
         }
     }
-    _connectionPool.EndIteration();
-
 
     if (ret == nullptr) {
         ESP_LOGE(__FUNCTION__, "Sem Conexões livres");
@@ -135,7 +131,6 @@ void ConnectionManager::SendNotifications() {
             if (state == NotificationNeeds::NoSend) continue;
             connection->SendNotifyData(state != NotificationNeeds::SendImportant);
         }
-        _connectionPool.EndIteration();
     }
 }
 
@@ -149,6 +144,5 @@ void ConnectionManager::NotifyAll(bool isImportant) {
             connection->SetNotificationNeeds(
                     isImportant ? NotificationNeeds::SendImportant : NotificationNeeds::SendNormal);
         }
-        _connectionPool.EndIteration();
     }
 }

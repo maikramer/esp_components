@@ -28,10 +28,8 @@ public:
     static void Init(int noOfConnections);
 
     static Event<ConnectionManager *, BluetoothConnection *> OnConnect;
-
 private:
     static SafeList<BluetoothConnection *> _connectionPool;//NOLINT
-
 };
 
 

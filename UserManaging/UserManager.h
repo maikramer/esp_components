@@ -62,10 +62,14 @@ public:
 
     void CreateManager();
 
+    static void Disconnect(ConnectedUser *user);
+
 protected:
     virtual ConnectedUser *CreateUserInstance();
 
     static SafeList<ConnectedUser *> _activeUsers;//NOLINT
+    static void DeleteUser(ConnectedUser *user);
+
 };
 
 #endif

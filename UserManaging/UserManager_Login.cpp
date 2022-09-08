@@ -100,13 +100,28 @@ ErrorCode UserManager::CheckPassword(string &userName, string &pass, bool &isAdm
     return ErrorCodes::None;
 }
 
+void UserManager::Disconnect(ConnectedUser *user) {
+    if (user == nullptr) {
+        ESP_LOGE(__FUNCTION__, "Usuario nulo");
+        return;
+    }
+
+    auto res = user->Disconnect();
+    if (res) {
+        DeleteUser(user);
+    }
+}
+
 void UserManager::Logoff(BluetoothConnection *connection) {
     auto *connectedUser = connection->GetUser(false, false);
-    connectedUser->Logoff();
-
+    connection->Logoff();
+    auto isLocked = !connectedUser->Logoff();
+    if (!isLocked) {
+        DeleteUser(connectedUser);
+        connectedUser = nullptr;
+    }
     JsonModels::BaseJsonDataError error;
-    bool isLocked = connectedUser != nullptr;
-    bool isLockedAndLoggedOff = isLocked && !connectedUser->IsLogged;
+    bool isLockedAndLoggedOff = connectedUser != nullptr && !connectedUser->IsLogged;
     ESP_LOGI(__FUNCTION__, "isLocked: %u, isLockedAndLoggedOff: %u", isLocked,
              isLockedAndLoggedOff);
     error.ErrorMessage = isLockedAndLoggedOff || !isLocked ? ErrorCodes::None : ErrorCodes::Error;

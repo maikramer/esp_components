@@ -14,7 +14,7 @@
 #endif
 
 #define LOG_SENT
-//#define LOG_STATUS_SENT
+#define LOG_STATUS_SENT
 
 [[maybe_unused]] void
 BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t>()> callback) {
@@ -63,7 +63,7 @@ auto BluetoothConnection::GetConnectionInfoJson() const -> std::string {
 }
 
 void BluetoothConnection::SendNotifyData(bool isNotification) {
-#ifdef USER_MANAGEMENT_ENABLED
+#ifdef DEVICE_BASED_DATA
     auto list = _user->GetData();
 #else
     if (_getDataFunction == nullptr) {
@@ -181,25 +181,33 @@ auto BluetoothConnection::GetNotifyUUID() const -> std::string {
     return NotifyCharacteristic->getUUID().toString();
 }
 
+#ifdef USER_MANAGEMENT_ENABLED
+
+void BluetoothConnection::Logoff() {
+    _user = nullptr;
+}
+
+#endif
+
 void BluetoothConnection::Disconnect() {
     _isFree = true;
     _conn_ID = -1;
     DisconnectEvent.FireEvent(this, nullptr);
 
 #ifdef USER_MANAGEMENT_ENABLED
+    vTaskDelay(500);
     if (_user != nullptr) {
-        _user->Disconnect();
+        UserManager::Disconnect(_user);
         _user = nullptr;
     }
-
 #else
     _getDataFunction = nullptr;
 #endif
 }
 
 #ifdef USER_MANAGEMENT_ENABLED
-ConnectedUser *BluetoothConnection::GetUser(bool canBeNull, bool canBeEmpty) {
 
+ConnectedUser *BluetoothConnection::GetUser(bool canBeNull, bool canBeEmpty) {
     if (_user == nullptr) {
         if (!canBeNull) ESP_LOGE(__FUNCTION__, "Retornando um usuario nulo!!");
     } else if (_user->User.empty() && !canBeEmpty) {
@@ -207,5 +215,6 @@ ConnectedUser *BluetoothConnection::GetUser(bool canBeNull, bool canBeEmpty) {
     }
     return _user;
 }
+
 #endif
 

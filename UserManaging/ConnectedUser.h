@@ -51,23 +51,29 @@ public:
     Event<ConnectedUser *, void *> DisconnectEvent;
     Event<ConnectedUser *, void *> StopEvent;
 
-    virtual void Disconnect() {
+    virtual bool Disconnect() {
         DisconnectEvent.FireEvent(this, nullptr);
         if (!_isLocked) {
-            delete (this);
+            ESP_LOGI(__FUNCTION__, "Deletando ConnectedUser por desconexão");
+            return true;
         } else {
             StopSending();
         }
+        return false;
     }
 
-    virtual void Logoff() {
+
+    virtual bool Logoff() {
         LogoffEvent.FireEvent(this, nullptr);
         if (!_isLocked) {
-            delete (this);
+            ESP_LOGI(__FUNCTION__, "Deletando ConnectedUser por logoff");
+            return true;
         } else {
             StopSending();
+            ESP_LOGI(__FUNCTION__, "Deslogando ConnectedUser");
             IsLogged = false;
         }
+        return false;
     }
 
     virtual void Stop() {
@@ -103,6 +109,7 @@ public:
     virtual void StopSending() { _isSendingUpdates = false; }
 
     [[nodiscard]] bool IsLocked() const { return _isLocked; }
+
 
     ConnectedUser();
 

@@ -73,29 +73,29 @@ public:
     }
 
     typename std::list<T>::iterator end() {
+        Unlock();
+        _isIterating = false;
         return _list.end();
     }
 
-    void EndIteration() {
-        Unlock();
-        _isIterating = false;
-    }
-
-    void Remove(T item, std::function<bool(T, T)> compareFunction) {
+    bool Remove(T item, std::function<bool(T, T)> compareFunction) {
         if (_isIterating) {
             log_device(true, __FUNCTION__, "Nao pode modificar a lista enquanto a itera");
-            return;
+            return false;
         }
+        auto res = false;
         if (Lock()) {
             for (auto it = _list.begin(); it != _list.end(); ++it) {
                 if (compareFunction(*it, item)) {
                     _list.erase(it);
+                    res = true;
+                    break;
                 }
             }
             Unlock();
+            _isIterating = false;
         }
-        EndIteration();
-
+        return res;
     }
 
     auto Size() -> uint32_t {
