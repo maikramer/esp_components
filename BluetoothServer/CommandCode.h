@@ -12,7 +12,8 @@ enum class CommandCode : uint8_t {
     SignUpCode = 103,
     GetUsersWaitingCode = 104,
     ApproveUserCode = 105,
-    UserCommand = 106
+    ClearUsers = 106,
+    ScanForWifi = 107
 
 };
 

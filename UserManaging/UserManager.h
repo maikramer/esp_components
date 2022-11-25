@@ -34,7 +34,8 @@ namespace ErrorCodes {
     const ErrorCodeItem AdminNotRegistered{"AdminNotRegistered",
                                            "O Administrador não foi cadastrado ainda, o próximo registro será cadastrado como Administrador",
                                            ErrorCodeType::User};
-    const ErrorCodeItem NoUsersRegistered{"NoUsersRegistered", "Nenhum Usuário Cadastrado", ErrorCodeType::User};
+    const ErrorCodeItem NoUsersRegistered{"NoUsersRegistered", "Nenhum Usuário Cadastrado",
+                                          ErrorCodeType::User};
 }
 
 class UserManager {
@@ -56,6 +57,8 @@ public:
 
     static void ApproveUser(const string &userName, BluetoothConnection *pConnection);
 
+    static void ClearUsers(BluetoothConnection *pConnection);
+
     static ErrorCode CheckPassword(string &userName, string &pass, bool &isAdmin);
 
     static void SendLoginTryResult(ErrorCode errorCode, BluetoothConnection *connection);
@@ -69,6 +72,7 @@ protected:
 
     static SafeList<ConnectedUser *> _activeUsers;//NOLINT
     static void DeleteUser(ConnectedUser *user);
+
 
 };
 

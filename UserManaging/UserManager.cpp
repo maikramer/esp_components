@@ -27,7 +27,8 @@ void UserManager::CreateManager() {
     //Adiciona os comandos
 
     DeviceCommand Login(2, std::string(NAMEOF(Login)), (uint8_t) CommandCode::LoginCode,
-                        [this](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                        [this](const std::vector<std::string> &data,
+                               BluetoothConnection *connection) {
                             this->Login(data, connection);
                         });
 
@@ -38,14 +39,16 @@ void UserManager::CreateManager() {
                                });
 
     const DeviceCommand SignUp(1, std::string(NAMEOF(SignUp)), (uint8_t) CommandCode::SignUpCode,
-                               [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                               [](const std::vector<std::string> &data,
+                                  BluetoothConnection *connection) {
                                    UserManager::SignUp(data[0], connection);
                                });
 
     const DeviceCommand GetUsersWaiting(0, std::string(
                                                 NAMEOF(
                                                         GetUsersWaiting)), (uint8_t) CommandCode::GetUsersWaitingCode,
-                                        [](const std::vector<std::string> &data, BluetoothConnection *connection) {
+                                        [](const std::vector<std::string> &data,
+                                           BluetoothConnection *connection) {
                                             UserManager::GetUsersWaitingForApproval(connection);
                                         });
 
@@ -56,12 +59,20 @@ void UserManager::CreateManager() {
                                        BluetoothConnection *connection) {
                                         UserManager::ApproveUser(data[0], connection);
                                     });
+    const DeviceCommand ClearUsers(0, std::string(
+                                           NAMEOF(
+                                                   ClearUsers)), (uint8_t) CommandCode::ClearUsers,
+                                   [](const std::vector<std::string> &data,
+                                      BluetoothConnection *connection) {
+                                       UserManager::ClearUsers(connection);
+                                   });
 
     Commander::AddCommand(Login);
     Commander::AddCommand(Logoff);
     Commander::AddCommand(SignUp);
     Commander::AddCommand(GetUsersWaiting);
     Commander::AddCommand(ApproveUser);
+    Commander::AddCommand(ClearUsers);
 }
 
 ErrorCode UserManager::LoadUser(const string &userName, JsonModels::User &user) {//NOLINT
@@ -135,7 +146,8 @@ void UserManager::GetUsersWaitingForApproval(BluetoothConnection *connection) {
     std::map<std::string, JsonModels::User> usersWaiting;
 
     auto result = Storage::GetEntriesWithFilter(StorageConst::UsersFilename, usersWaiting,
-                                                Utility::FFL([](std::string userName, JsonModels::User user) {//NOLINT
+                                                Utility::FFL([](std::string userName,
+                                                                JsonModels::User user) {//NOLINT
                                                     return !user.IsConfirmed;
                                                 }));
 
@@ -164,6 +176,11 @@ void UserManager::ApproveUser(const string &userName, BluetoothConnection *pConn
         ESP_LOGE(__FUNCTION__, "Erro gravando o usuario %s", user.Name.c_str());
         pConnection->SendError<JsonModels::BaseJsonDataError>(res);
     }
+}
+
+void UserManager::ClearUsers(BluetoothConnection *pConnection) {
+    auto err = Storage::DeleteFile(StorageConst::UsersFilename);
+    pConnection->SendError<JsonModels::BaseJsonDataError>(err);
 }
 
 ConnectedUser *UserManager::CreateUserInstance() {

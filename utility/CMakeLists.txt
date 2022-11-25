@@ -1,4 +1,4 @@
-set(srcs Utility.cpp CrossPlatformUtility.cpp FilteredInput.cpp Event.cpp)
+set(srcs Utility.cpp CrossPlatformUtility.cpp FilteredInput.cpp Event.cpp LedBlinker.cpp)
 set(include_dirs . ../submodules/nameof/include)
 set(requires nvs_flash JsonModels ErrorCodes)
 

@@ -18,6 +18,7 @@
 #include "BluetoothConnection.h"
 #include "WirelessDevice.h"
 #include "Commander.h"
+#include "CommandCode.h"
 
 constexpr auto WIFI_CONNECTED_BIT = BIT0;
 constexpr auto WIFI_FAIL_BIT = BIT1;
@@ -45,7 +46,7 @@ namespace MK {
             esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
             assert(sta_netif);
             const DeviceCommand ScanForWifi(0, std::string(NAMEOF(ScanForWifi)),
-                                            (uint8_t) ReservedCodes::ScanForWifi,
+                                            (uint8_t) CommandCode::ScanForWifi,
                                             MK::Wifi::ScanAndSend);
             Commander::AddCommand(ScanForWifi);
         }

@@ -12,17 +12,6 @@
 #include <nameof.hpp>
 #include "BluetoothConnection.h"
 
-enum class ReservedCodes : uint8_t {
-    SetAdminInfoCode = 100,
-    LoginCode = 101,
-    LogoffCode = 102,
-    SignUpCode = 103,
-    GetUsersWaitingCode = 104,
-    ApproveUserCode = 105,
-    UserCommand = 106,
-    ScanForWifi = 107
-};
-
 class BluetoothConnection;
 
 class DeviceCommand {
