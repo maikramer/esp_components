@@ -102,7 +102,6 @@ void Utility::SetInput(gpio_num_t gpioNum, gpio_pullup_t pullUp, gpio_int_type_t
     io_conf.pin_bit_mask = ((uint64_t) 1) << gpioNum;
     //disable pull-down mode
     io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    //disable pull-up mode
     io_conf.pull_up_en = pullUp;
     //configure GPIO with the given settings
     gpio_config(&io_conf);

@@ -13,8 +13,9 @@
 
 #endif
 
-#define LOG_SENT
-#define LOG_STATUS_SENT
+//#define LOG_SENT
+//#define LOG_STATUS_SENT
+
 
 [[maybe_unused]] void
 BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t>()> callback) {
@@ -71,7 +72,15 @@ void BluetoothConnection::SendNotifyData(bool isNotification) {
         return;
     }
     auto list = _getDataFunction();
-    if (list.empty()) return;
+
+    if (list.empty() && !_needsFirstUpdate) {
+//        ESP_LOGI(__FUNCTION__, "Nao Enviando");
+        return;
+    }
+    _needsFirstUpdate = true;
+#if LOG_SENT
+    ESP_LOGI(__FUNCTION__, "Enviando");
+#endif
 #endif
     uint8_t data[list.size()];
 
@@ -184,6 +193,7 @@ auto BluetoothConnection::GetNotifyUUID() const -> std::string {
 #ifdef USER_MANAGEMENT_ENABLED
 
 void BluetoothConnection::Logoff() {
+    _needsFirstUpdate = true;
     _user = nullptr;
 }
 

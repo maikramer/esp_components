@@ -29,7 +29,7 @@ void remove_dir(const char *path) {
             }
         }
     }
-    if (path != StorageConst::BasePath) {
+    if (strcmp((const char *) StorageConst::BasePath, path) != 0) {
         remove(path);
     }
 
@@ -159,7 +159,8 @@ auto Storage::GetStorageStatus(StorageStatus &status) -> ErrorCode {
 
     status.FreeSpace = freeSectors * _sectorSize;
     status.TotalSpace = totalSectors * _sectorSize;
-    ESP_LOGI(__FUNCTION__, "%llu bytes livres do total de %llu", status.FreeSpace, status.TotalSpace);
+    ESP_LOGI(__FUNCTION__, "%llu bytes livres do total de %llu", status.FreeSpace,
+             status.TotalSpace);
     return ErrorCode(ErrorCodes::None);
 }
 

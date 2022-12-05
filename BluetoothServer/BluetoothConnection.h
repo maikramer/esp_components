@@ -160,8 +160,7 @@ private:
     NotificationNeeds _notificationNeeds = NotificationNeeds::NoSend;
     Status _lastStatus = SUCCESS_NOTIFY;
     bool _indicateFailed = false;
-
-
+    bool _needsFirstUpdate = true;
 };
 
 #endif

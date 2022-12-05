@@ -39,7 +39,6 @@ void FilteredInputEx::ExUpdate() {
         PressedEvent.FireEvent(this, nullptr);
         _pressedFired = true;
         _clickedDetectStart = now;
-        ESP_LOGI(__FUNCTION__, "Pressed");
     } else if (_lastState == (ActiveLow ? 0x0 : 0x1) && GetValue() == (ActiveLow ? 0x1 : 0x0) &&
                !_releasedFired) {
         ReleasedEvent.FireEvent(this, nullptr);

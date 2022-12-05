@@ -9,9 +9,9 @@
 #define INC_FILTEREDINPUT_H_
 
 #include <functional>
-#include <Event.h>
-#include <Utility.h>
-#include <priorities.h>
+#include "Event.h"
+#include "Utility.h"
+#include "priorities.h"
 
 #ifdef STM32L1
 #include <FreeRTOS.h>

@@ -94,7 +94,8 @@ void MK::Wifi::Start(std::string ssid, std::string password) {
                     .ft_enabled = true,
                     .owe_enabled= true,
                     .reserved=0,
-                    .sae_pwe_h2e = WPA3_SAE_PWE_UNSPECIFIED
+                    .sae_pwe_h2e = WPA3_SAE_PWE_UNSPECIFIED,
+                    .failure_retry_cnt = 5
             },
     };
     memcpy(wifi_config.sta.ssid, ssid.c_str(), ssid.length());

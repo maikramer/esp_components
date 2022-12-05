@@ -19,9 +19,9 @@
 #define LOG_STORAGE
 
 namespace StorageConst {
-    constexpr char BasePath[] = "/storage";
-    constexpr char UsersFilename[] = "users";
-    constexpr char ConfigFilename[] = "config";
+    constexpr const char *BasePath = "/storage";
+    constexpr const char *UsersFilename = "users";
+    constexpr const char *ConfigFilename = "config";
 }
 
 
@@ -78,6 +78,11 @@ public:
     StoreKeyValue(Tkey key, Tvalue value, const std::string &fileName,
                   bool overwrite) -> ErrorCode;
 
+
+    template<typename Tkey, typename Tvalue>
+    static auto ReadOrCreateKeyFromFile(Tkey key, Tvalue &out, const std::string &fileName,
+                                        std::string varName) -> ErrorCode;
+
     template<typename Tkey, typename Tvalue>
     static auto ReadKeyFromFile(Tkey key, Tvalue &out, const std::string &fileName) -> ErrorCode;
 
@@ -98,7 +103,8 @@ public:
 
 #ifdef USER_MANAGEMENT_ENABLED
 
-    static auto GetEntriesFromUser(const std::string &user, std::map<int64_t, uint32_t> &map) -> ErrorCode;
+    static auto
+    GetEntriesFromUser(const std::string &user, std::map<int64_t, uint32_t> &map) -> ErrorCode;
 
     static auto
     StoreUser(const JsonModels::User &user, bool overwrite) -> ErrorCode;
@@ -323,6 +329,34 @@ auto Storage::StoreKeyValueWithoutCheck(Tkey key, Tvalue value, const std::strin
 }
 
 template<typename Tkey, typename Tvalue>
+auto
+Storage::ReadOrCreateKeyFromFile(Tkey key, Tvalue &out, const std::string &fileName,
+                                 std::string varName) -> ErrorCode {
+    const char *Tag = (const char *) __FUNCTION__;
+    std::stringstream messageStr{};
+    auto status = Storage::ReadKeyFromFile(key, out, INFO_FILE);
+    if (status != ErrorCodes::None) {
+
+        if (status == ErrorCodes::FileNotFound || status == ErrorCodes::FileIsEmpty) {
+            ESP_LOGI(Tag, "Criando arquivo %s", fileName.c_str());
+            Storage::StoreKeyValue(varName, out, fileName, true);
+        } else if (status == ErrorCodes::KeyNotFound) {
+            ESP_LOGI(Tag, "Criando chave %s no arquivo %s", varName.c_str(), fileName.c_str());
+            Storage::StoreKeyValue(varName, out, fileName, true);
+        } else {
+            ESP_LOGE(Tag, "Erro Inesperado obtendo Dado: %s - %s", status.GetName(),
+                     status.GetDescription());
+        }
+
+    } else {
+        messageStr << varName << " : " << out;
+        ESP_LOGI(Tag, "Dado Carregado -> %s", messageStr.str().c_str());
+    }
+
+    return status;
+}
+
+template<typename Tkey, typename Tvalue>
 auto Storage::ReadKeyFromFile(Tkey key, Tvalue &out, const std::string &fileName) -> ErrorCode {
     std::stringstream pathStr{};
     pathStr.setf(std::ios::fixed);
@@ -362,7 +396,8 @@ auto Storage::ReadKeyFromFile(Tkey key, Tvalue &out, const std::string &fileName
             out = Utility::GetConvertedFromString<Tvalue>(findKeyRes[1]);
             found = true;
 #ifdef LOG_STORAGE
-            ESP_LOGI(__FUNCTION__, "Lido %s da chave %s", findKeyRes[1].c_str(), findKeyRes[0].c_str());
+            ESP_LOGI(__FUNCTION__, "Lido %s da chave %s", findKeyRes[1].c_str(),
+                     findKeyRes[0].c_str());
 #endif
             break;
         }

@@ -1,4 +1,4 @@
-set(srcs BluetoothServer.cpp Commander.cpp BluetoothConnection.cpp ConnectionManager.cpp)
+set(srcs BluetoothServer.cpp BluetoothManager.cpp Commander.cpp BluetoothConnection.cpp ConnectionManager.cpp)
 set(include_dirs .)
 set(requires config ArduinoNimBLE JsonModels ErrorCodes)
 
