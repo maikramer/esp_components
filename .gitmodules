@@ -1,13 +1,9 @@
-
-[submodule "submodules/json"]
-	path = submodules/json
-	url = https://github.com/nlohmann/json.git
 [submodule "submodules/nameof"]
 	path = submodules/nameof
 	url = https://github.com/Neargye/nameof.git
-[submodule "submodules/NimBLE-Arduino"]
-	path = submodules/NimBLE-Arduino
-	url = https://github.com/h2zero/NimBLE-Arduino.git
 [submodule "submodules/libtelnet"]
 	path = submodules/libtelnet
 	url = https://github.com/seanmiddleditch/libtelnet.git
+[submodule "submodules/esp-nimble-cpp"]
+	path = submodules/esp-nimble-cpp
+	url = https://github.com/h2zero/esp-nimble-cpp.git
