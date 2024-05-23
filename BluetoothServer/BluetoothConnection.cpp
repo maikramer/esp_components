@@ -43,15 +43,15 @@ void BluetoothConnection::Init() {
     }
 }
 
-void BluetoothConnection::onWrite(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc) {
+void BluetoothConnection::onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
+{
+    auto address = connInfo.getIdAddress();
     std::string rxValue = pCharacteristic->getValue();
     if (rxValue.length() > 0) {
-        ESP_LOGI(__FUNCTION__, "From Peer %d:%d:%d:%d:%d:%d : %s", desc->peer_id_addr.val[0],
-                 desc->peer_id_addr.val[1], desc->peer_id_addr.val[2], desc->peer_id_addr.val[3],
-                 desc->peer_id_addr.val[4], desc->peer_id_addr.val[5], rxValue.c_str());
+        ESP_LOGI(__FUNCTION__, "From Peer %s: %s", address.toString().c_str(), rxValue.c_str());
     }
 
-    auto *connection = ConnectionManager::GetConnectionById(desc->peer_id_addr.val[5]);
+    auto *connection = ConnectionManager::GetConnectionById(address.getNative()[5]);
     Commander::CheckForCommand(rxValue, connection);
 }
 
@@ -122,54 +122,11 @@ void BluetoothConnection::SendJson(const string &json) const {
     xSemaphoreGive(xSendMutex);
 }
 
-void
-BluetoothConnection::onStatus(NimBLECharacteristic *pCharacteristic, Status s, int code) {
-    _lastStatus = s;
-
-    string str;
-    bool error = false;
-    switch (s) {
-        case SUCCESS_INDICATE:
-            str = "SUCCESS_INDICATE";
-            break;
-        case SUCCESS_NOTIFY:
-            str = "SUCCESS_NOTIFY";
-            break;
-        case ERROR_INDICATE_DISABLED:
-            str = "ERROR_INDICATE_DISABLED";
-            _indicateFailed = true;
-            error = true;
-            break;
-        case ERROR_NOTIFY_DISABLED:
-            str = "ERROR_NOTIFY_DISABLED";
-            error = true;
-            break;
-        case ERROR_GATT:
-            str = "ERROR_GATT";
-            error = true;
-            break;
-        case ERROR_NO_CLIENT:
-            str = "ERROR_NO_CLIENT";
-            error = true;
-            break;
-        case ERROR_INDICATE_TIMEOUT:
-            str = "ERROR_INDICATE_TIMEOUT";
-            _indicateFailed = true;
-            error = true;
-            break;
-        case ERROR_INDICATE_FAILURE:
-            str = "ERROR_INDICATE_FAILURE";
-            _indicateFailed = true;
-            error = true;
-            break;
-    }
-    if (error) {
-        ESP_LOGE("Status", "%s", str.c_str());
-    }
+void BluetoothConnection::onStatus(NimBLECharacteristic *pCharacteristic, int code)
+{
+    auto str = NimBLEUtils::returnCodeToString(code);
 #ifdef LOG_STATUS_SENT
-    else {
         ESP_LOGI("Status", "%s", str.c_str());
-    }
 #endif
 }
 

@@ -116,13 +116,13 @@ public:
 
     void Init();
 
-    void onWrite(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc) override;
+    void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo);
 
-    void onStatus(NimBLECharacteristic *pCharacteristic, Status s, int code) override;
+    void onStatus(NimBLECharacteristic* pCharacteristic, int code) override;
 
 #ifdef USER_MANAGEMENT_ENABLED
 
-    ConnectedUser *GetUser(bool canBeNull, bool canBeEmpty);
+        ConnectedUser *GetUser(bool canBeNull, bool canBeEmpty);
 
     void SetUser(ConnectedUser *user) {
         _user = user;
@@ -158,7 +158,7 @@ private:
 
 
     NotificationNeeds _notificationNeeds = NotificationNeeds::NoSend;
-    Status _lastStatus = SUCCESS_NOTIFY;
+    int _lastStatus = 0;
     bool _indicateFailed = false;
     bool _needsFirstUpdate = true;
 };

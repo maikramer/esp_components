@@ -104,8 +104,8 @@ void MK::Wifi::Start(std::string ssid, std::string password) {
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_LOGI(TAG, "Wifi Inicializado, Heap: %ld", xPortGetFreeHeapSize());
-    ESP_LOGI(TAG, "Minimum Available Heap: %lu", xPortGetMinimumEverFreeHeapSize());
+    ESP_LOGI(TAG, "Wifi Inicializado, Heap: %u", xPortGetFreeHeapSize());
+    ESP_LOGI(TAG, "Minimum Available Heap: %u", xPortGetMinimumEverFreeHeapSize());
 
     /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
      * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */

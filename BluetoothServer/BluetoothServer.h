@@ -58,14 +58,14 @@ private:
     std::list<std::string> uuidList;
 
     class ServerCallbacks : public NimBLEServerCallbacks {
-        void onConnect(NimBLEServer *server, ble_gap_conn_desc *desc) override;
+        void onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo) override;
 
-        void onDisconnect(NimBLEServer *server, ble_gap_conn_desc *desc) override;
+        void onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo, int reason) override;
     };
 
     class SendDataCallbacks : public NimBLECharacteristicCallbacks {
     public:
-        void onRead(NimBLECharacteristic *pCharacteristic, ble_gap_conn_desc *desc) override;
+        void onRead(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) override;
     };
 
     NimBLEService *publicService = nullptr;

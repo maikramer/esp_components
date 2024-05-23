@@ -32,13 +32,13 @@ auto BluetoothUtility::GetUniqueId(bool isCharacteristic) -> std::string {
     return uuidStr;
 }
 
-void BluetoothManager::ServerCallbacks::onConnect(NimBLEServer *server __unused,
-                                                  ble_gap_conn_desc *desc) {
+void BluetoothManager::ServerCallbacks::onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo)
+{
     NimBLEDevice::startAdvertising();
 }
 
-void BluetoothManager::SendDataCallbacks::onRead(NimBLECharacteristic *pCharacteristic,
-                                                 ble_gap_conn_desc *desc) {
+void onRead(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
+{
     JsonModels::UuidInfoJsonData jsonData{};
 //    jsonData.ServiceUUID = BluetoothManager::instance().GetPrivateServiceUUID();
 //    jsonData.WriteUUID = GetWriteUUID();

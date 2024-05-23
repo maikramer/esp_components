@@ -17,67 +17,80 @@
 #include <ConnectedUser.h>
 #include <esp_random.h>
 
-static void SendDataTask(void *arg __unused) {
+static void SendDataTask(void *arg __unused)
+{
     TickType_t xLastWakeTime = 0;
     xLastWakeTime = xTaskGetTickCount();
-    for (;;) {
+    for (;;)
+    {
         ConnectionManager::SendNotifications();
 
         vTaskDelayUntil(&xLastWakeTime, SEND_DATARATE);
     }
 }
 
-BluetoothServer::BluetoothServer(token) {
+BluetoothServer::BluetoothServer(token)
+{
     ErrorCode::AddErrorItem(ErrorCodes::JsonError);
     ErrorCode::AddErrorItem(ErrorCodes::CommunicationError);
 }
 
-//Cuidado, se usar mais de uma vez pode haver conflito.
-auto BluetoothServer::CreatePrivateService() -> NimBLEService * {
+// Cuidado, se usar mais de uma vez pode haver conflito.
+auto BluetoothServer::CreatePrivateService() -> NimBLEService *
+{
     auto uuid = GetUniqueId(false);
     //    ESP_LOGI(__FUNCTION__, "Criado servico com UUID %s", uuidStr.c_str());
     return BleServer->createService(uuid);
 }
 
-auto BluetoothServer::CreateWriteCharacteristic(NimBLEService *service) -> NimBLECharacteristic * {
+auto BluetoothServer::CreateWriteCharacteristic(NimBLEService *service) -> NimBLECharacteristic *
+{
     auto uuid = GetUniqueId(true);
 
     if (service == nullptr)
         service = publicService;
 
     auto *ch = service->createCharacteristic(
-            uuid, NIMBLE_PROPERTY::WRITE);
+        uuid, NIMBLE_PROPERTY::WRITE);
 
     return ch;
 }
 
-auto BluetoothServer::CreateNotifyCharacteristic(NimBLEService *service) -> NimBLECharacteristic * {
+auto BluetoothServer::CreateNotifyCharacteristic(NimBLEService *service) -> NimBLECharacteristic *
+{
     auto uuid = GetUniqueId(true);
 
     if (service == nullptr)
         service = publicService;
 
     auto *ch = service->createCharacteristic(
-            uuid, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::INDICATE);
+        uuid, NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::INDICATE);
 
     return ch;
 }
 
-auto BluetoothServer::GetUniqueId(bool isCharacteristic) -> std::string {
+auto BluetoothServer::GetUniqueId(bool isCharacteristic) -> std::string
+{
     bool isUnique = false;
     string uuidStr;
-    while (!isUnique) {
+    while (!isUnique)
+    {
         std::stringstream uuid;
-        if (isCharacteristic) {
+        if (isCharacteristic)
+        {
             uuid << CHARACTERISTIC_UUID_STATE_BASE << esp_random() % 10 << esp_random() % 10;
-        } else {
+        }
+        else
+        {
             uuid << SERVICE_UUID_BASE << esp_random() % 10 << esp_random() % 10;
         }
         uuidStr = uuid.str();
         ESP_LOGI(__FUNCTION__, "UUID : %s", uuidStr.c_str());
         isUnique = true;
-        for (const auto &item: uuidList) {
-            if (item == uuidStr) {
+        for (const auto &item : uuidList)
+        {
+            if (item == uuidStr)
+            {
                 isUnique = false;
             }
         }
@@ -87,7 +100,8 @@ auto BluetoothServer::GetUniqueId(bool isCharacteristic) -> std::string {
     return uuidStr;
 }
 
-void BluetoothServer::SetupBt(std::string deviceName) {
+void BluetoothServer::SetupBt(std::string deviceName)
+{
 
     // Create the BLE Device
     NimBLEDevice::init(std::move(deviceName));
@@ -104,8 +118,8 @@ void BluetoothServer::SetupBt(std::string deviceName) {
 
     // Create a BLE Characteristic
     publicTxCharacteristic = publicService->createCharacteristic(
-            PUBLIC_CHARACTERISTIC_TX_UUID,
-            NIMBLE_PROPERTY::READ);
+        PUBLIC_CHARACTERISTIC_TX_UUID,
+        NIMBLE_PROPERTY::READ);
 
     BleServer->setCallbacks(new ServerCallbacks());
     publicTxCharacteristic->setCallbacks(new SendDataCallbacks);
@@ -124,15 +138,20 @@ void BluetoothServer::SetupBt(std::string deviceName) {
     Utility::CreateAndProfile("SendDataTask", SendDataTask, 8192, HIGH_PRIORITY, 1, nullptr);
 }
 
-void BluetoothServer::SendJsonData(NimBLECharacteristic *pCharacteristic, const string &json) {
-    if (!json.empty()) {
+void BluetoothServer::SendJsonData(NimBLECharacteristic *pCharacteristic, const string &json)
+{
+    if (!json.empty())
+    {
         SendJson(pCharacteristic, json);
-    } else {
+    }
+    else
+    {
         ESP_LOGE(__FUNCTION__, "Json Vazio");
     }
 }
 
-void BluetoothServer::SendJson(NimBLECharacteristic *pCharacteristic, const string &json) {
+void BluetoothServer::SendJson(NimBLECharacteristic *pCharacteristic, const string &json)
+{
     ESP_LOGI(__FUNCTION__, "Sending Json");
     unsigned char bytes[json.length()];
     auto size = Utility::StringToByteArray(json, bytes);
@@ -141,31 +160,27 @@ void BluetoothServer::SendJson(NimBLECharacteristic *pCharacteristic, const stri
     vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
-void BluetoothServer::ServerCallbacks::onConnect(NimBLEServer *server __unused,
-                                                 ble_gap_conn_desc *desc) {
+void BluetoothServer::ServerCallbacks::onConnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo)
+{
     NimBLEDevice::startAdvertising();
-    ESP_LOGI(__FUNCTION__, "Conectado ao Peer %d:%d:%d:%d:%d:%d", desc->peer_id_addr.val[0],
-             desc->peer_id_addr.val[1], desc->peer_id_addr.val[2], desc->peer_id_addr.val[3],
-             desc->peer_id_addr.val[4], desc->peer_id_addr.val[5]);
-    //todo: Resolver a questao da multi conexão
-    ConnectionManager::Connect(desc->peer_id_addr.val[5]);
+    auto address = connInfo.getIdAddress();
+    ESP_LOGI(__FUNCTION__, "Conectado ao Peer %s", address.toString().c_str());
+    // todo: Resolver a questao da multi conexão
+    ConnectionManager::Connect(address.getNative()[5]);
 }
 
-void BluetoothServer::ServerCallbacks::onDisconnect(BLEServer *server, ble_gap_conn_desc *desc) {
-
-    ESP_LOGI(__FUNCTION__, "Desconectado do Peer %d:%d:%d:%d:%d:%d", desc->peer_id_addr.val[0],
-             desc->peer_id_addr.val[1], desc->peer_id_addr.val[2], desc->peer_id_addr.val[3],
-             desc->peer_id_addr.val[4], desc->peer_id_addr.val[5]);
-    ConnectionManager::Disconnect(desc->peer_id_addr.val[5]);
+void BluetoothServer::ServerCallbacks::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo &connInfo, int reason)
+{
+    auto address = connInfo.getIdAddress();
+    ESP_LOGI(__FUNCTION__, "Desconectado do Peer %s", address.toString().c_str());
+    ConnectionManager::Disconnect(address.getNative()[5]);
 }
 
-
-void BluetoothServer::SendDataCallbacks::onRead(NimBLECharacteristic *pCharacteristic,
-                                                ble_gap_conn_desc *desc) {
-    ESP_LOGI(__FUNCTION__, "Peer %d:%d:%d:%d:%d:%d", desc->peer_id_addr.val[0],
-             desc->peer_id_addr.val[1], desc->peer_id_addr.val[2], desc->peer_id_addr.val[3],
-             desc->peer_id_addr.val[4], desc->peer_id_addr.val[5]);
-    auto *conn = ConnectionManager::GetConnectionById(desc->peer_id_addr.val[5]);
+void BluetoothServer::SendDataCallbacks::onRead(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
+{
+    auto address = connInfo.getIdAddress();
+    ESP_LOGI(__FUNCTION__, "Peer %s", address.toString().c_str());
+    auto *conn = ConnectionManager::GetConnectionById(address.getNative()[5]);
     auto json = conn->GetConnectionInfoJson();
     SendJsonData(pCharacteristic, json);
 }
