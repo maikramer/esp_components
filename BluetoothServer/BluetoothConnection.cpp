@@ -159,7 +159,7 @@ void BluetoothConnection::Logoff() {
 void BluetoothConnection::Disconnect() {
     _isFree = true;
     _conn_ID = -1;
-    DisconnectEvent.FireEvent(this, nullptr);
+    DisconnectEvent.trigger(this, nullptr);
 
 #ifdef USER_MANAGEMENT_ENABLED
     vTaskDelay(500);

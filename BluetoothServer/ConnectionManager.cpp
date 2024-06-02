@@ -30,7 +30,7 @@ void ConnectionManager::Connect(uint16_t conn_id) {
     auto *connection = GetFreeConnection();
     if (connection != nullptr) {
         connection->Connect(conn_id);
-        OnConnect.FireEvent(nullptr, connection);
+        OnConnect.trigger(nullptr, connection);
     } else {
         ESP_LOGE(__FUNCTION__, "Sem conexões livres");
         BluetoothServer::instance().BleServer->disconnect(conn_id);

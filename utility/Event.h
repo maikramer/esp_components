@@ -2,129 +2,130 @@
 #define EVENT_H
 
 #include <functional>
-#include "list"
-#include "map"
+#include <vector>
+#include <algorithm>
 
 #ifdef STM32L1
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
 #elif defined(ESP_PLATFORM)
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
-
 #endif
 
-//C - Caller e A o argumento
-template<class C, class A>
+/**
+ * @class Event
+ * @brief Manages events and their handlers.
+ *
+ * This class allows you to register handlers (callbacks) that are called when the event is triggered.
+ * Handlers can be added or removed dynamically. The class is thread-safe.
+ */
+template <typename... Args>
 class Event {
-private:
-    const int MAX_DELAY = 1000;
-    SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
-    int counter = 0;
-    std::map<int, std::function<void(C, A)>> listeners{};
 public:
-    // Retorna um handler para remover da lista depois
-    auto AddListener(std::function<void(C, A)> func) -> int;
+    /**
+     * @brief Constructor.
+     */
+    Event();
 
-    void RemoveListener(int handle);
+    /**
+     * @brief Destructor.
+     */
+    ~Event();
 
-    void FireEvent(C caller, A eventArgs);
+    /**
+     * @brief Adds a handler to the event.
+     * @param handler The function to be called when the event is triggered.
+     */
+    void addHandler(std::function<void(Args...)> handler);
+
+    /**
+     * @brief Removes a handler from the event.
+     * @param handler The function to be removed.
+     */
+    void removeHandler(std::function<void(Args...)> handler);
+
+    /**
+     * @brief Triggers the event, calling all registered handlers.
+     * @param args Arguments to pass to the handlers.
+     */
+    void trigger(Args... args);
+
+private:
+    std::vector<std::function<void(Args...)>> handlers; /**< List of event handlers */
+
+#ifdef STM32L1
+    SemaphoreHandle_t mutex; /**< Mutex to make the class thread-safe */
+#elif defined(ESP_PLATFORM)
+    SemaphoreHandle_t mutex; /**< Mutex to make the class thread-safe */
+#endif
 };
 
-template<class C, class A>
-auto Event<C, A>::AddListener(std::function<void(C, A)> func) -> int {
-    int handler = counter;
-    if (xSemaphoreTake(xSemaphore, MAX_DELAY) == pdPASS) {
-        listeners.insert(std::pair<int, std::function<void(C, A)>>(handler, func));
-        xSemaphoreGive(xSemaphore);
-    }
-    counter++;
+#ifdef STM32L1
+#define CREATE_MUTEX() xSemaphoreCreateMutex()
+#define DELETE_MUTEX(mutex) vSemaphoreDelete(mutex)
+#define TAKE_MUTEX(mutex) xSemaphoreTake(mutex, portMAX_DELAY)
+#define GIVE_MUTEX(mutex) xSemaphoreGive(mutex)
+#elif defined(ESP_PLATFORM)
+#define CREATE_MUTEX() xSemaphoreCreateMutex()
+#define DELETE_MUTEX(mutex) vSemaphoreDelete(mutex)
+#define TAKE_MUTEX(mutex) xSemaphoreTake(mutex, portMAX_DELAY)
+#define GIVE_MUTEX(mutex) xSemaphoreGive(mutex)
+#endif
 
-    return handler;
+/**
+ * @brief Constructor.
+ */
+template <typename... Args>
+Event<Args...>::Event() {
+    mutex = CREATE_MUTEX();
 }
 
-template<class C, class A>
-void Event<C, A>::RemoveListener(int handle) {
-    if (xSemaphoreTake(xSemaphore, MAX_DELAY) == pdPASS) {
-        listeners.erase(handle);
-        xSemaphoreGive(xSemaphore);
-    }
-}
-
-template<class C, class A>
-void Event<C, A>::FireEvent(C caller, A eventArgs) {
-    if (xSemaphoreTake(xSemaphore, MAX_DELAY) == pdPASS) {
-        for (auto const &f: listeners) {
-            f.second(caller, eventArgs);
-        }
-        xSemaphoreGive(xSemaphore);
-    }
-}
-
-
-//A o argumento
-template<class A>
-class SimpleEvent {
-private:
-    const int MAX_DELAY = 1000;
-    SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
-    int counter = 0;
-    std::map<int, std::function<void(A)>> listeners{};
-public:
-    // Retorna um handler para remover da lista depois
-    auto AddListener(std::function<void(A)> func) -> int;
-
-    void RemoveListener(int handle);
-
-    void FireEvent(A eventArgs);
-};
-
-template<class A>
-auto SimpleEvent<A>::AddListener(std::function<void(A)> func) -> int {
-    int handler = counter;
-    if (xSemaphoreTake(xSemaphore, MAX_DELAY) == pdPASS) {
-        listeners.insert(std::pair<int, std::function<void(A)>>(handler, func));
-        xSemaphoreGive(xSemaphore);
-    }
-    counter++;
-
-    return handler;
-}
-
-template<class A>
-void SimpleEvent<A>::RemoveListener(int handle) {
-    if (xSemaphoreTake(xSemaphore, MAX_DELAY) == pdPASS) {
-        listeners.erase(handle);
-        xSemaphoreGive(xSemaphore);
+/**
+ * @brief Destructor.
+ */
+template <typename... Args>
+Event<Args...>::~Event() {
+    if (mutex != NULL) {
+        DELETE_MUTEX(mutex);
     }
 }
 
-template<class A>
-void SimpleEvent<A>::FireEvent(A eventArgs) {
-    if (xSemaphoreTake(xSemaphore, MAX_DELAY) == pdPASS) {
-        for (auto const &f: listeners) {
-            f.second(eventArgs);
-        }
-        xSemaphoreGive(xSemaphore);
-    }
+/**
+ * @brief Adds a handler to the event.
+ * @param handler The function to be called when the event is triggered.
+ */
+template <typename... Args>
+void Event<Args...>::addHandler(std::function<void(Args...)> handler) {
+    TAKE_MUTEX(mutex);
+    handlers.push_back(handler);
+    GIVE_MUTEX(mutex);
 }
 
-class NakedEvent {
-private:
-    const int MAX_DELAY = 1000;
-    SemaphoreHandle_t xSemaphore = xSemaphoreCreateMutex();
-    int counter = 0;
-    std::map<int, std::function<void()>> listeners{};
-public:
-    // Retorna um handler para remover da lista depois
-    auto AddListener(std::function<void()> func) -> int;
+/**
+ * @brief Removes a handler from the event.
+ * @param handler The function to be removed.
+ */
+template <typename... Args>
+void Event<Args...>::removeHandler(std::function<void(Args...)> handler) {
+    TAKE_MUTEX(mutex);
+    handlers.erase(std::remove(handlers.begin(), handlers.end(), handler), handlers.end());
+    GIVE_MUTEX(mutex);
+}
 
-    void RemoveListener(int handle);
+/**
+ * @brief Triggers the event, calling all registered handlers.
+ * @param args Arguments to pass to the handlers.
+ */
+template <typename... Args>
+void Event<Args...>::trigger(Args... args) {
+    TAKE_MUTEX(mutex);
+    for (auto& handler : handlers) {
+        handler(args...);
+    }
+    GIVE_MUTEX(mutex);
+}
 
-    void FireEvent();
-};
-
-#endif //EVENT_H
+#endif // EVENT_H

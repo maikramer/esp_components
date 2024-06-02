@@ -36,15 +36,15 @@ void FilteredInputEx::ExUpdate() {
     auto now = pdTICKS_TO_MS(xTaskGetTickCount());
     if (_lastState == (ActiveLow ? 0x1 : 0x0) && GetValue() == (ActiveLow ? 0x0 : 0x1) &&
         !_pressedFired) {
-        PressedEvent.FireEvent(this, nullptr);
+        PressedEvent.trigger(this, nullptr);
         _pressedFired = true;
         _clickedDetectStart = now;
     } else if (_lastState == (ActiveLow ? 0x0 : 0x1) && GetValue() == (ActiveLow ? 0x1 : 0x0) &&
                !_releasedFired) {
-        ReleasedEvent.FireEvent(this, nullptr);
+        ReleasedEvent.trigger(this, nullptr);
         _releasedFired = true;
         if (now - _clickedDetectStart < 1000 && !_clickedFired) {
-            ClickedEvent.FireEvent(this, nullptr);
+            ClickedEvent.trigger(this, nullptr);
             _clickedFired = true;
         }
     } else {

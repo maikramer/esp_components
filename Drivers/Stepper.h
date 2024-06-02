@@ -40,7 +40,7 @@ public:
     uint32_t StepCount = 0;
     uint32_t DesiredSteps = 0;
     esp_timer_handle_t Timer;
-    NakedEvent OnFinishStepping;
+    Event<> OnFinishStepping;
 private:
 
 };

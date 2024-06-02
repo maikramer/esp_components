@@ -39,7 +39,7 @@ public:
     virtual NotificationNeeds GetNotificationNeeds();
 
     virtual ErrorCode Login(bool isAdmin, std::string userName) {
-        LoginEvent.FireEvent(this, nullptr);
+        LoginEvent.trigger(this, nullptr);
         IsLogged = true;
         IsAdmin = isAdmin;
         User = std::move(userName);
@@ -52,7 +52,7 @@ public:
     Event<ConnectedUser *, void *> StopEvent;
 
     virtual bool Disconnect() {
-        DisconnectEvent.FireEvent(this, nullptr);
+        DisconnectEvent.trigger(this, nullptr);
         if (!_isLocked) {
             ESP_LOGI(__FUNCTION__, "Deletando ConnectedUser por desconexão");
             return true;
@@ -64,7 +64,7 @@ public:
 
 
     virtual bool Logoff() {
-        LogoffEvent.FireEvent(this, nullptr);
+        LogoffEvent.trigger(this, nullptr);
         if (!_isLocked) {
             ESP_LOGI(__FUNCTION__, "Deletando ConnectedUser por logoff");
             return true;
@@ -77,7 +77,7 @@ public:
     }
 
     virtual void Stop() {
-        StopEvent.FireEvent(this, nullptr);
+        StopEvent.trigger(this, nullptr);
         if (!_isLocked) {
             IsContinuingToUse = false;
         } else {

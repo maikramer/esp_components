@@ -1,72 +1,104 @@
-//
-// Created by maikeu on 24/06/22.
-//
+#ifndef IP_ADDRESS_H
+#define IP_ADDRESS_H
 
-#ifndef IPADDRESS_H
-#define IPADDRESS_H
-
-
-#include <stdint.h>
+#include <esp_netif.h> // Include for esp_ip4_addr_t
 #include <string>
+#include "CommonErrorCodes.h"
 
+/**
+ * @file IPAddress.h
+ * @brief This file defines the IPAddress class, a wrapper for esp_ip4_addr_t
+ *        providing convenient methods for handling IPv4 addresses in ESP-IDF.
+ */
+
+/**
+ * @class IPAddress
+ * @brief Represents an IPv4 address, wrapping esp_ip4_addr_t for ease of use.
+ */
 class IPAddress {
-private:
-    union {
-        uint8_t bytes[4];
-        uint32_t dword;
-    } _address;
-
-    // Access the raw byte array containing the address.  Because this returns a pointer
-    // to the internal structure rather than a copy of the address this function should only
-    // be used when you know that the usage of the returned uint8_t* will be transient and not
-    // stored.
-    uint8_t *raw_address() {
-        return _address.bytes;
-    }
-
 public:
-    // Constructors
+    /**
+     * @brief Default constructor. Initializes the IP address to 0.0.0.0.
+     */
     IPAddress();
 
-    IPAddress(uint8_t first_octet, uint8_t second_octet, uint8_t third_octet, uint8_t fourth_octet);
+    /**
+     * @brief Constructor that initializes the IP address from four octets.
+     *
+     * @param firstOctet First octet of the IP address.
+     * @param secondOctet Second octet of the IP address.
+     * @param thirdOctet Third octet of the IP address.
+     * @param fourthOctet Fourth octet of the IP address.
+     */
+    IPAddress(uint8_t firstOctet, uint8_t secondOctet, uint8_t thirdOctet, uint8_t fourthOctet);
 
-    IPAddress(uint32_t address);
+    /**
+     * @brief Constructor that initializes the IP address from an esp_ip4_addr_t.
+     *
+     * @param address esp_ip4_addr_t structure containing the IP address.
+     */
+    explicit IPAddress(const esp_ip4_addr_t& address);
 
-    IPAddress(const uint8_t *address);
+    /**
+     * @brief Constructor that initializes the IP address from a string representation.
+     *
+     * @param address String representation of the IP address (e.g., "192.168.1.1").
+     */
+    explicit IPAddress(const std::string& address);
 
-    virtual ~IPAddress() {}
+    /**
+     * @brief Destructor.
+     */
+    ~IPAddress() = default;
 
-    bool fromString(const char *address);
+    /**
+     * @brief Sets the IP address from a string representation.
+     *
+     * @param address String representation of the IP address.
+     * @return ErrorCode indicating success or failure.
+     */
+    ErrorCode fromString(const std::string& address);
 
-    bool fromString(const std::string &address) { return fromString(address.c_str()); }
+    /**
+     * @brief Gets the string representation of the IP address.
+     *
+     * @return String representation of the IP address.
+     */
+    [[nodiscard]] std::string toString() const;
 
-    // Overloaded cast operator to allow IPAddress objects to be used where a pointer
-    // to a four-byte uint8_t array is expected
-    operator uint32_t() const {
-        return _address.dword;
-    }
+    /**
+     * @brief Gets the IP address as an esp_ip4_addr_t structure.
+     *
+     * @return esp_ip4_addr_t representation of the IP address.
+     */
+    [[nodiscard]] esp_ip4_addr_t get() const;
 
-    bool operator==(const IPAddress &addr) const {
-        return _address.dword == addr._address.dword;
-    }
+    /**
+     * @brief Gets a specific octet (byte) of the IP address.
+     *
+     * @param index Index of the octet to retrieve (0-3).
+     * @return The octet at the specified index.
+     */
+    uint8_t operator[](int index) const;
 
-    bool operator==(const uint8_t *addr) const;
+    /**
+     * @brief Equality comparison operator.
+     *
+     * @param other Another IPAddress object to compare with.
+     * @return True if the two IP addresses are equal, false otherwise.
+     */
+    bool operator==(const IPAddress& other) const;
 
-    // Overloaded index operator to allow getting and setting individual octets of the address
-    uint8_t operator[](int index) const {
-        return _address.bytes[index];
-    }
+    /**
+     * @brief Inequality comparison operator.
+     *
+     * @param other Another IPAddress object to compare with.
+     * @return True if the two IP addresses are not equal, false otherwise.
+     */
+    bool operator!=(const IPAddress& other) const;
 
-    uint8_t &operator[](int index) {
-        return _address.bytes[index];
-    }
-
-    // Overloaded copy operators to allow initialisation of IPAddress objects from other types
-    IPAddress &operator=(const uint8_t *address);
-
-    IPAddress &operator=(uint32_t address);
-
-    std::string toString() const;
+private:
+    esp_ip4_addr_t _address{}; /**< Internal representation of the IP address using esp_ip4_addr_t. */
 };
 
-#endif //IPADDRESS_H
+#endif // IP_ADDRESS_H

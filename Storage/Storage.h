@@ -8,7 +8,6 @@
 
 #include <cstdint>
 #include <map>
-#include <list>
 #include <JsonModels.h>
 #include <ErrorCode.h>
 #include "functional"
@@ -22,6 +21,7 @@ namespace StorageConst {
     constexpr const char *BasePath = "/storage";
     constexpr const char *UsersFilename = "users";
     constexpr const char *ConfigFilename = "config";
+    constexpr const char *InfoFilename = "info";
 }
 
 
@@ -334,7 +334,7 @@ Storage::ReadOrCreateKeyFromFile(Tkey key, Tvalue &out, const std::string &fileN
                                  std::string varName) -> ErrorCode {
     const char *Tag = (const char *) __FUNCTION__;
     std::stringstream messageStr{};
-    auto status = Storage::ReadKeyFromFile(key, out, INFO_FILE);
+    auto status = Storage::ReadKeyFromFile(key, out, StorageConst::InfoFilename);
     if (status != ErrorCodes::None) {
 
         if (status == ErrorCodes::FileNotFound || status == ErrorCodes::FileIsEmpty) {

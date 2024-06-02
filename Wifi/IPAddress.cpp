@@ -1,83 +1,65 @@
-//
-// Created by maikeu on 24/06/22.
-//
-
-#include <cstring>
 #include "IPAddress.h"
+#include <lwip/sockets.h> // For inet_pton and inet_ntop
+#include <esp_log.h>
 
+/**
+ * @file IPAddress.cpp
+ * @brief Implementation for the IPAddress class, a wrapper for esp_ip4_addr_t for easier IPv4 address handling.
+ */
+
+// Default constructor
 IPAddress::IPAddress() {
-    _address.dword = 0;
+    _address.addr = 0;
 }
 
-IPAddress::IPAddress(uint8_t first_octet, uint8_t second_octet, uint8_t third_octet,
-                     uint8_t fourth_octet) {
-    _address.bytes[0] = first_octet;
-    _address.bytes[1] = second_octet;
-    _address.bytes[2] = third_octet;
-    _address.bytes[3] = fourth_octet;
+// Constructor from 4 octets
+IPAddress::IPAddress(uint8_t firstOctet, uint8_t secondOctet, uint8_t thirdOctet, uint8_t fourthOctet) {
+    _address.addr = (firstOctet << 24) | (secondOctet << 16) | (thirdOctet << 8) | fourthOctet;
 }
 
-IPAddress::IPAddress(uint32_t address) {
-    _address.dword = address;
+// Constructor from esp_ip4_addr_t
+IPAddress::IPAddress(const esp_ip4_addr_t& address) : _address(address) {}
+
+// Constructor from string
+IPAddress::IPAddress(const std::string& address) {
+    fromString(address);
 }
 
-IPAddress::IPAddress(const uint8_t *address) {
-    memcpy(_address.bytes, address, sizeof(_address.bytes));
+// Set IP from string
+ErrorCode IPAddress::fromString(const std::string& address) {
+    if (inet_pton(AF_INET, address.c_str(), &_address.addr) != 1) {
+        ESP_LOGE("IPAddress", "Invalid IP address: %s", address.c_str());
+        return CommonErrorCodes::ArgumentError;
+    }
+    return CommonErrorCodes::None;
 }
 
-IPAddress &IPAddress::operator=(const uint8_t *address) {
-    memcpy(_address.bytes, address, sizeof(_address.bytes));
-    return *this;
-}
-
-IPAddress &IPAddress::operator=(uint32_t address) {
-    _address.dword = address;
-    return *this;
-}
-
-bool IPAddress::operator==(const uint8_t *addr) const {
-    return memcmp(addr, _address.bytes, sizeof(_address.bytes)) == 0;
-}
-
+// Get IP as string
 std::string IPAddress::toString() const {
-    char szRet[16];
-    sprintf(szRet, "%u.%u.%u.%u", _address.bytes[0], _address.bytes[1], _address.bytes[2],
-            _address.bytes[3]);
-    return std::string(szRet);
+    char buffer[INET_ADDRSTRLEN];
+    if (inet_ntop(AF_INET, &_address.addr, buffer, INET_ADDRSTRLEN) == nullptr) {
+        ESP_LOGE("IPAddress", "Failed to convert IP address to string.");
+        return "Invalid Address";
+    }
+    return {buffer};
 }
 
-bool IPAddress::fromString(const char *address) {
-    // TODO: add support for "a", "a.b", "a.b.c" formats
-
-    uint16_t acc = 0; // Accumulator
-    uint8_t dots = 0;
-
-    while (*address) {
-        char c = *address++;
-        if (c >= '0' && c <= '9') {
-            acc = acc * 10 + (c - '0');
-            if (acc > 255) {
-                // Value out of [0..255] range
-                return false;
-            }
-        } else if (c == '.') {
-            if (dots == 3) {
-                // Too much dots (there must be 3 dots)
-                return false;
-            }
-            _address.bytes[dots++] = acc;
-            acc = 0;
-        } else {
-            // Invalid char
-            return false;
-        }
-    }
-
-    if (dots != 3) {
-        // Too few dots (there must be 3 dots)
-        return false;
-    }
-    _address.bytes[3] = acc;
-    return true;
+// Get IP as esp_ip4_addr_t
+esp_ip4_addr_t IPAddress::get() const {
+    return _address;
 }
 
+// Access octet by index
+uint8_t IPAddress::operator[](int index) const {
+    return ((_address.addr >> ((3 - index) * 8)) & 0xFF);
+}
+
+// Equality comparison
+bool IPAddress::operator==(const IPAddress& other) const {
+    return (_address.addr == other._address.addr);
+}
+
+// Inequality comparison
+bool IPAddress::operator!=(const IPAddress& other) const {
+    return !(*this == other);
+}

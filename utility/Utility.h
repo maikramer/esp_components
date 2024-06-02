@@ -5,8 +5,6 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
-
-#include <freertos/projdefs.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <vector>
@@ -15,7 +13,6 @@
 #include <driver/gpio.h>
 #include <JsonModels.h>
 #include "esp_log.h"
-#include "stdexcept"
 #include "sstream"
 #include <list>
 

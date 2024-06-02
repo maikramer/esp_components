@@ -1,4 +1,4 @@
-set(srcs Utility.cpp CrossPlatformUtility.cpp Event.cpp)
+set(srcs Utility.cpp CrossPlatformUtility.cpp)
 set(include_dirs . ../submodules/nameof/include)
 set(requires nvs_flash JsonModels ErrorCodes)
 

@@ -1,36 +1,108 @@
-//
-// Created by maikeu on 17/07/2020.
-//
-
 #include "ErrorCode.h"
+#include <esp_log.h>
 
-std::map<std::string, const ErrorCodeItem *>ErrorCode::items{};
-bool ErrorCode::_initialized = false;
+#include <utility>
 
-ErrorCode::ErrorCode(const ErrorCodeItem item) {
-    if (items.find(item.Name) == items.end()) {
-        ESP_LOGE(__FUNCTION__, "Item de erro < %s > não está no banco de dados", item.Name);
-        _error = &ErrorCodes::Invalid;
+std::map<std::string, ErrorCode> ErrorCode::errorDatabase;
+bool ErrorCode::initialized = false;
+
+ErrorCode::ErrorCode() : _description("Invalid Error Code"), _type(ErrorCodeType::General) {}
+
+ErrorCode::ErrorCode(std::string  name, std::string  description, ErrorCodeType type)
+        : _name(std::move(name)), _description(std::move(description)), _type(type) {}
+
+const std::string& ErrorCode::description() const {
+    return _description;
+}
+
+const std::string& ErrorCode::name() const {
+    return _name;
+}
+
+ErrorCodeType ErrorCode::type() const {
+    return _type;
+}
+
+bool ErrorCode::isValid() const {
+    return !_name.empty();
+}
+
+bool ErrorCode::operator==(const ErrorCode& other) const {
+    return _name == other._name;
+}
+
+bool ErrorCode::operator!=(const ErrorCode& other) const {
+    return !(*this == other);
+}
+
+std::ostream& operator<<(std::ostream& os, const ErrorCode& errorCode) {
+    os << errorCode.description();
+    return os;
+}
+
+ErrorCode ErrorCode::define(const std::string& name, const std::string& description, ErrorCodeType type) {
+    if (errorDatabase.find(name) != errorDatabase.end()) {
+        ESP_LOGE("ErrorCode", "Error code with name '%s' already defined.", name.c_str());
+        return {}; // Return an invalid error code
+    }
+
+    ErrorCode newErrorCode(name, description, type);
+    errorDatabase[name] = newErrorCode;
+    return newErrorCode;
+}
+
+ErrorCode ErrorCode::get(const std::string& name) {
+    auto it = errorDatabase.find(name);
+    if (it != errorDatabase.end()) {
+        return it->second;
+    } else {
+        ESP_LOGW("ErrorCode", "Error code '%s' not found in database.", name.c_str());
+        return {}; // Return an invalid error code
+    }
+}
+
+void ErrorCode::initialize() {
+    if (initialized) {
         return;
     }
 
-    _error = items[item.Name];
+    // Common error codes are defined in CommonErrorCodes.cpp,
+    // so we don't need to define them here.
+
+    initialized = true;
 }
 
-bool ErrorCode::AddErrorItem(const ErrorCodeItem &item) {
-    if (items.find(item.Name) != items.end()) {
-        ESP_LOGE(__FUNCTION__, "Tentando adicionar %s, que já existe", item.Name);
-        return false;
+void ErrorCode::log(const char* tag, esp_log_level_t level, const std::string& additionalMessage) const {
+    if (!isValid()) {
+        ESP_LOGW(tag, "Invalid ErrorCode: Attempting to log an invalid error code.");
+        return;
     }
-    items[item.Name] = &item;
-    return true;
-}
 
-void ErrorCode::Init() {
-    if(_initialized) return;
-    AddErrorItem(ErrorCodes::Invalid);
-    AddErrorItem(ErrorCodes::None);
-    AddErrorItem(ErrorCodes::Error);
-    AddErrorItem(ErrorCodes::ExceptionError);
-    _initialized = true;
+    std::string logMessage = "[" + name() + "] " + description();
+
+    if (!additionalMessage.empty()) {
+        logMessage += " - " + additionalMessage;
+    }
+
+    switch (level) {
+        case ESP_LOG_ERROR:
+            ESP_LOGE(tag, "%s", logMessage.c_str());
+            break;
+        case ESP_LOG_WARN:
+            ESP_LOGW(tag, "%s", logMessage.c_str());
+            break;
+        case ESP_LOG_INFO:
+            ESP_LOGI(tag, "%s", logMessage.c_str());
+            break;
+        case ESP_LOG_DEBUG:
+            ESP_LOGD(tag, "%s", logMessage.c_str());
+            break;
+        case ESP_LOG_VERBOSE:
+            ESP_LOGV(tag, "%s", logMessage.c_str());
+            break;
+        default:
+            ESP_LOGW(tag, "Invalid log level provided: %d. Using ESP_LOG_ERROR.", level);
+            ESP_LOGE(tag, "%s", logMessage.c_str());
+            break;
+    }
 }
