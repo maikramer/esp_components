@@ -6,7 +6,7 @@
 #include <functional>
 #include "Telnet.h"
 #include "WifiOta.h"
-#include "CommonErrorCodes.h"
+#include "ErrorCode.h"
 
 /**
  * @file WifiTelnet.h

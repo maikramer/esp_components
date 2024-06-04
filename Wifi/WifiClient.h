@@ -6,6 +6,7 @@
 #include <esp_err.h>
 #include "IPAddress.h"
 #include "CommonErrorCodes.h"
+#include "ErrorCode.h"
 
 /**
  * @file WifiClient.h

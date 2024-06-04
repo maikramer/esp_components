@@ -1,4 +1,6 @@
 #include "WifiServer.h"
+#include "GeneralErrorCodes.h"
+#include "WifiErrorCodes.h"
 #include <lwip/sockets.h>
 #include <esp_wifi.h>
 #include <esp_netif.h>

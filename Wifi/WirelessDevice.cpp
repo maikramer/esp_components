@@ -5,5 +5,5 @@
 #include "WirelessDevice.h"
 
 void from_json(const nlohmann::json &j, WirelessDevice &device) {
-    device.FromJson(j);
+    device.fromJson(j);
 }

@@ -1,187 +1,181 @@
-#include <BluetoothConnection.h>
-#include <BluetoothServer.h>
-#include <Utility.h>
-#include <sstream>
+#include "BluetoothConnection.h"
+#include "BluetoothServer.h"
+#include "Utility.h"
 #include <esp_log.h>
-#include <ConnectedUser.h>
-#include "ConnectionManager.h"
+
+#ifdef USER_MANAGEMENT_ENABLED
+
+#include "ConnectedUser.h"
+#include "UserManager.h"
+
+#endif
+
 #include "JsonModels.h"
+#include "BluetoothErrorCodes.h"
+#include "GeneralErrorCodes.h"
 
-#ifndef USER_MANAGEMENT_ENABLED
+/**
+ * @file BluetoothConnection.cpp
+ * @brief Implementation of the BluetoothConnection class for managing individual Bluetooth connections.
+ */
 
-#include <utility>
-
+BluetoothConnection::BluetoothConnection()
+        : BaseConnection(), _writeCharacteristic(nullptr), _notifyCharacteristic(nullptr), _sendMutex(nullptr),
+          _isConnected(false), _connId(0)
+#ifdef USER_MANAGEMENT_ENABLED
+        , _user(nullptr)
 #endif
+{}
 
-//#define LOG_SENT
-//#define LOG_STATUS_SENT
-
-
-[[maybe_unused]] void
-BluetoothConnection::SetGetDataFunction(std::function<list<uint8_t>()> callback) {
-    _getDataFunction = std::move(callback);
-}
-
-void BluetoothConnection::SetNotificationNeeds(NotificationNeeds needs) {
-    _notificationNeeds = needs;
-}
-
-auto BluetoothConnection::GetNotificationNeeds() -> NotificationNeeds {
-    return _notificationNeeds;
-}
-
-void BluetoothConnection::Init() {
-    WriteCharacteristic = BluetoothServer::instance().CreatePrivateWriteCharacteristic();
-    WriteCharacteristic->setCallbacks(this);
-    NotifyCharacteristic = BluetoothServer::instance().CreatePrivateNotifyCharacteristic();
-    NotifyCharacteristic->setCallbacks(this);
-    xSendMutex = xSemaphoreCreateMutex();
-    if (xSendMutex == nullptr) {
-        ESP_LOGE(__FUNCTION__, "Erro criando mutex");
-    } else {
-        ESP_LOGI(__FUNCTION__, "Mutex criado");
+BluetoothConnection::~BluetoothConnection() {
+    disconnect(); // NOLINT
+    if (_sendMutex != nullptr) {
+        vSemaphoreDelete(_sendMutex);
     }
 }
 
-void BluetoothConnection::onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo)
-{
-    auto address = connInfo.getIdAddress();
-    std::string rxValue = pCharacteristic->getValue();
-    if (rxValue.length() > 0) {
-        ESP_LOGI(__FUNCTION__, "From Peer %s: %s", address.toString().c_str(), rxValue.c_str());
+ErrorCode BluetoothConnection::initialize() {
+    _writeCharacteristic = BluetoothServer::instance().createPrivateWriteCharacteristic();
+    if (!_writeCharacteristic) {
+        ESP_LOGE(__FUNCTION__, "Failed to create write characteristic.");
+        return CommonErrorCodes::BluetoothCharacteristicCreationFailed;
+    }
+    _writeCharacteristic->setCallbacks(this);
+
+    _notifyCharacteristic = BluetoothServer::instance().createPrivateNotifyCharacteristic();
+    if (!_notifyCharacteristic) {
+        ESP_LOGE(__FUNCTION__, "Failed to create notify characteristic.");
+        return CommonErrorCodes::BluetoothCharacteristicCreationFailed;
+    }
+    _notifyCharacteristic->setCallbacks(this);
+
+    _sendMutex = xSemaphoreCreateMutex();
+    if (_sendMutex == nullptr) {
+        ESP_LOGE(__FUNCTION__, "Error creating mutex.");
+        return CommonErrorCodes::MemoryAllocationFailed;
     }
 
-    auto *connection = ConnectionManager::GetConnectionById(address.getNative()[5]);
-    Commander::CheckForCommand(rxValue, connection);
+    ESP_LOGI(__FUNCTION__, "BluetoothConnection initialized successfully.");
+    return CommonErrorCodes::None;
 }
 
-auto BluetoothConnection::GetConnectionInfoJson() const -> std::string {
-    JsonModels::UuidInfoJsonData jsonData{};
-    jsonData.ServiceUUID = BluetoothServer::instance().GetPrivateServiceUUID();
-    jsonData.WriteUUID = GetWriteUUID();
-    jsonData.NotifyUUID = GetNotifyUUID();
-    return jsonData.ToJson();
-}
-
-void BluetoothConnection::SendNotifyData(bool isNotification) {
-#ifdef DEVICE_BASED_DATA
-    auto list = _user->GetData();
-#else
-    if (_getDataFunction == nullptr) {
-        ESP_LOGE(__FUNCTION__, "Sem funcoes para envio de dados definidas");
-        return;
-    }
-    auto list = _getDataFunction();
-
-    if (list.empty() && !_needsFirstUpdate) {
-//        ESP_LOGI(__FUNCTION__, "Nao Enviando");
-        return;
-    }
-    _needsFirstUpdate = true;
-#if LOG_SENT
-    ESP_LOGI(__FUNCTION__, "Enviando");
-#endif
-#endif
-    uint8_t data[list.size()];
-
-    std::copy(list.begin(), list.end(), data);
-    NotifyCharacteristic->setValue(data, list.size());
-    NotifyCharacteristic->notify(isNotification);
-    _notificationNeeds = NotificationNeeds::NoSend;
-}
-
-void BluetoothConnection::SendJsonData(const string &json) {
-    if (!json.empty()) {
-        SendJson(json);
-    } else {
-        ESP_LOGE(__FUNCTION__, "Json Vazio");
-    }
-}
-
-void BluetoothConnection::Test() {
-    xSemaphoreTake(xSendMutex, portMAX_DELAY);
-    xSemaphoreGive(xSendMutex);
-}
-
-void BluetoothConnection::SendJson(const string &json) const {
-    xSemaphoreTake(xSendMutex, portMAX_DELAY);
-
-#ifdef LOG_SENT
-    ESP_LOGI(__FUNCTION__, "Sending Json");
-    ESP_LOGI(__FUNCTION__, "Enviando %s", json.c_str());
-#endif
-
-    unsigned char bytes[json.length() + 1];
-    auto size = Utility::StringToByteArray(json, bytes);
-    NotifyCharacteristic->setValue(bytes, size);
-    NotifyCharacteristic->notify();
-#ifdef LOG_SENT
-    ESP_LOGI(__FUNCTION__, "Json Sent : %s", json.c_str());
-#endif
-    vTaskDelay(pdMS_TO_TICKS(2 * json.length()));
-    xSemaphoreGive(xSendMutex);
-}
-
-void BluetoothConnection::onStatus(NimBLECharacteristic *pCharacteristic, int code)
-{
-    auto str = NimBLEUtils::returnCodeToString(code);
-#ifdef LOG_STATUS_SENT
-        ESP_LOGI("Status", "%s", str.c_str());
-#endif
-}
-
-auto BluetoothConnection::IsFree() const -> bool { return _isFree; }
-
-auto BluetoothConnection::GetId() const -> int { return _conn_ID; }
-
-void BluetoothConnection::Connect(uint16_t conn_id) {
-    _conn_ID = conn_id;
+void BluetoothConnection::connect(uint16_t connId) {
+    _connId = connId;
     _isFree = false;
+    _isConnected = true;
 }
 
-auto BluetoothConnection::GetWriteUUID() const -> std::string {
-    return WriteCharacteristic->getUUID().toString();
+void BluetoothConnection::disconnect() {
+    if (!_isConnected) {
+        return; // Already disconnected
+    }
+
+    _isFree = true;
+    _isConnected = false;
+    _connId = 0;
+
+#ifdef USER_MANAGEMENT_ENABLED
+    if (_user != nullptr) {
+        UserManager::disconnect(_user);
+        _user = nullptr;
+    }
+#endif
+
+    onDisconnect.trigger(this, nullptr);
 }
 
-auto BluetoothConnection::GetNotifyUUID() const -> std::string {
-    return NotifyCharacteristic->getUUID().toString();
+bool BluetoothConnection::isFree() const {
+    return _isFree;
+}
+
+uint16_t BluetoothConnection::getId() const {
+    return _connId;
+}
+
+bool BluetoothConnection::isConnected() const {
+    return _isConnected;
+}
+
+void BluetoothConnection::onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo) {
+    std::string rxValue = pCharacteristic->getValue();
+
+    if (rxValue.length() > 0) {
+        ESP_LOGI(__FUNCTION__, "Received data from connection ID %d: %s", _connId, rxValue.c_str());
+        Commander::executeCommand(rxValue, this);
+    }
+}
+
+std::string BluetoothConnection::getConnectionInfoJson() const {
+    JsonModels::UuidInfoJsonData jsonData{};
+    jsonData.ServiceUUID = BluetoothServer::instance().getPrivateServiceUUID();
+    jsonData.WriteUUID = getWriteUUID();
+    jsonData.NotifyUUID = getNotifyUUID();
+    return jsonData.toJson();
+}
+
+ErrorCode BluetoothConnection::sendRawData(const uint8_t *data, size_t length) const {
+    return sendRawData(data, length, true); // Default to notification
+}
+
+ErrorCode BluetoothConnection::sendData(const std::vector<uint8_t> &data, bool isNotification) {
+    if (!_isConnected) {
+        return CommonErrorCodes::ConnectionClosed;
+    }
+    return sendRawData(data.data(), data.size(), isNotification);
+}
+
+std::string BluetoothConnection::getWriteUUID() const {
+    return _writeCharacteristic->getUUID().toString();
+}
+
+std::string BluetoothConnection::getNotifyUUID() const {
+    return _notifyCharacteristic->getUUID().toString();
 }
 
 #ifdef USER_MANAGEMENT_ENABLED
 
-void BluetoothConnection::Logoff() {
-    _needsFirstUpdate = true;
+void BluetoothConnection::setUser(ConnectedUser *user) {
+    _user = user;
+}
+
+ConnectedUser *BluetoothConnection::getUser(bool canBeNull, bool canBeEmpty) {
+    if (_user == nullptr && !canBeNull) {
+        ESP_LOGE(__FUNCTION__, "Returning a null user (not allowed)!");
+    } else if (_user != nullptr && _user->User.empty() && !canBeEmpty) {
+        ESP_LOGE(__FUNCTION__, "Returning a user with an empty name (not allowed)!");
+    }
+    return _user;
+}
+
+void BluetoothConnection::logoff() {
     _user = nullptr;
 }
 
 #endif
 
-void BluetoothConnection::Disconnect() {
-    _isFree = true;
-    _conn_ID = -1;
-    DisconnectEvent.trigger(this, nullptr);
-
-#ifdef USER_MANAGEMENT_ENABLED
-    vTaskDelay(500);
-    if (_user != nullptr) {
-        UserManager::Disconnect(_user);
-        _user = nullptr;
+// Private method
+ErrorCode BluetoothConnection::sendRawData(const uint8_t *data, size_t length, bool isNotification) const {
+    if (xSemaphoreTake(_sendMutex, 1000 / portTICK_PERIOD_MS) != pdTRUE) {
+        ESP_LOGE(__FUNCTION__, "Failed to acquire mutex.");
+        return CommonErrorCodes::Timeout;
     }
-#else
-    _getDataFunction = nullptr;
-#endif
+
+    _notifyCharacteristic->setValue(data, length);
+
+    if (isNotification) {
+        _notifyCharacteristic->notify();
+    } else {
+        _notifyCharacteristic->indicate();
+    }
+
+    xSemaphoreGive(_sendMutex);
+    return CommonErrorCodes::None;
 }
 
-#ifdef USER_MANAGEMENT_ENABLED
-
-ConnectedUser *BluetoothConnection::GetUser(bool canBeNull, bool canBeEmpty) {
-    if (_user == nullptr) {
-        if (!canBeNull) ESP_LOGE(__FUNCTION__, "Retornando um usuario nulo!!");
-    } else if (_user->User.empty() && !canBeEmpty) {
-        ESP_LOGE(__FUNCTION__, "Retornando um usuario vazio!!");
-    }
-    return _user;
-}
-
+void BluetoothConnection::onStatus(NimBLECharacteristic *pCharacteristic, int code) {
+    auto str = NimBLEUtils::returnCodeToString(code);
+#ifdef LOG_STATUS_SENT
+    ESP_LOGI("Status", "%s", str.c_str());
 #endif
 
+}

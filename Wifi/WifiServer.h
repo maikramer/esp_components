@@ -7,7 +7,7 @@
 #include "WifiClient.h"
 #include "IPAddress.h"
 #include "esp_wifi.h"
-#include "CommonErrorCodes.h"
+#include "ErrorCode.h"
 
 /**
  * @file WifiServer.h

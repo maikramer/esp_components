@@ -1,4 +1,5 @@
 #include "WifiTelnet.h"
+#include "GeneralErrorCodes.h"
 #include <esp_log.h>
 #include <esp_system.h>
 #include <algorithm>

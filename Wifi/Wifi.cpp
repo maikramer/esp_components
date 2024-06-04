@@ -15,7 +15,8 @@ Wifi::Wifi() : WifiConnection(), WifiTelnet(), WifiOta() {
  */
 void Wifi::begin(const char* ssid, const char* password) {
     WifiConnection::connect(ssid, password);
-    WifiTelnet::init();
+    WifiTelnet::start();
+    setWifiClient(&telnet.server.client); // Assuming the WifiClient is accessible this way
 }
 
 /**

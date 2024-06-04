@@ -1,22 +1,26 @@
 #include "WifiConnection.h"
+#include "GeneralErrorCodes.h"
+#include "CommunicationErrorCodes.h"
 #include <cstring>
 #include <esp_log.h>
 
-EventGroupHandle_t WifiConnection::wifiEventGroup;
-const char* WifiConnection::TAG = "WifiConnection";
+EventGroupHandle_t WifiConnection::_wifiEventGroup;
+const char *WifiConnection::TAG = "WifiConnection";
 
 /**
  * @file WifiConnection.cpp
- * @brief Implementation of the WifiConnection class for managing WiFi connections.
+ * @brief Implementation of the WifiConnection class for managing WiFi connections in station mode.
  */
 
-WifiConnection::WifiConnection() : _ipAddress(), _retryNum(0) {}
+WifiConnection::WifiConnection() :
+        BaseConnection(), _ipAddress(), _retryNum(0),
+        _isConnected(false), _connId(0), _wifiClient(nullptr) {}
 
 WifiConnection::~WifiConnection() {
-    disconnect(); // Disconnect from WiFi in the destructor
+    disconnect();//NOLINT
 }
 
-ErrorCode WifiConnection::connect(const std::string& ssid, const std::string& password) {
+ErrorCode WifiConnection::connect(const std::string &ssid, const std::string &password) {
     _ssid = ssid;
     _password = password;
 
@@ -28,19 +32,12 @@ ErrorCode WifiConnection::connect(const std::string& ssid, const std::string& pa
     }
     ESP_ERROR_CHECK(ret);
 
-    // Create event group
-    wifiEventGroup = xEventGroupCreate();
+    _wifiEventGroup = xEventGroupCreate();
 
-    // Initialize TCP/IP stack
     ESP_ERROR_CHECK(esp_netif_init());
-
-    // Create default event loop
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-
-    // Create a station interface
     esp_netif_create_default_wifi_sta();
 
-    // Initialize WiFi with default configuration
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
@@ -60,20 +57,19 @@ ErrorCode WifiConnection::connect(const std::string& ssid, const std::string& pa
 
     // Configure WiFi connection
     wifi_config_t wifi_config = {};
-    std::strncpy((char*)wifi_config.sta.ssid, ssid.c_str(), sizeof(wifi_config.sta.ssid));
-    std::strncpy((char*)wifi_config.sta.password, password.c_str(), sizeof(wifi_config.sta.password));
+    std::strncpy((char *) wifi_config.sta.ssid, ssid.c_str(), sizeof(wifi_config.sta.ssid));
+    std::strncpy((char *) wifi_config.sta.password, password.c_str(), sizeof(wifi_config.sta.password));
 
-    // Set WiFi mode to station (STA) and apply configuration
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA) );
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
 
     // Start WiFi
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "Connecting to WiFi network: %s", ssid.c_str());
 
-    // Wait for connection or failure (up to 10 seconds)
-    EventBits_t bits = xEventGroupWaitBits(wifiEventGroup,
+    // Wait for connection or failure
+    EventBits_t bits = xEventGroupWaitBits(_wifiEventGroup,
                                            WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
                                            pdFALSE,
                                            pdFALSE,
@@ -87,39 +83,50 @@ ErrorCode WifiConnection::connect(const std::string& ssid, const std::string& pa
         return CommonErrorCodes::WifiConnectionFailed;
     } else {
         ESP_LOGE(TAG, "Timeout waiting for WiFi connection.");
-        return CommonErrorCodes::ConnectionTimeout;
+        return CommonErrorCodes::Timeout;
     }
 }
 
 void WifiConnection::disconnect() {
     if (isConnected()) {
         ESP_ERROR_CHECK(esp_wifi_disconnect());
-        xEventGroupWaitBits(wifiEventGroup, WIFI_FAIL_BIT, pdFALSE, pdTRUE, portMAX_DELAY); // Wait for disconnect
+        xEventGroupWaitBits(_wifiEventGroup, WIFI_FAIL_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
         ESP_LOGI(TAG, "Disconnected from WiFi network.");
     }
+    _isConnected = false;
 }
 
-bool WifiConnection::isConnected() {
-    return (xEventGroupGetBits(wifiEventGroup) & WIFI_CONNECTED_BIT);
+bool WifiConnection::isConnected() const {
+    return _isConnected;
 }
 
-std::string WifiConnection::getSSID() {
+std::string WifiConnection::getSSID() const {
     if (!isConnected()) {
-        return ""; // Return empty string if not connected
+        return "";
     }
 
     wifi_config_t wifi_config;
     ESP_ERROR_CHECK(esp_wifi_get_config(WIFI_IF_STA, &wifi_config));
-    return {(char*)wifi_config.sta.ssid};
+    return {(char *) wifi_config.sta.ssid};
 }
 
 IPAddress WifiConnection::getIPAddress() const {
     return _ipAddress;
 }
 
-void WifiConnection::eventHandler(void* arg, esp_event_base_t event_base,
-                                  int32_t event_id, void* event_data) {
-    auto* self = static_cast<WifiConnection*>(arg);
+ErrorCode WifiConnection::sendRawData(const uint8_t *data, size_t length) const {
+    auto error = _wifiClient->write(data, length);
+    if (error != CommonErrorCodes::None) {
+        error.log(TAG);
+        return error;
+    }
+
+    return CommonErrorCodes::None;
+}
+
+void WifiConnection::eventHandler(void *arg, esp_event_base_t event_base,
+                                  int32_t event_id, void *event_data) {
+    auto *self = static_cast<WifiConnection *>(arg);
 
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
@@ -129,14 +136,16 @@ void WifiConnection::eventHandler(void* arg, esp_event_base_t event_base,
             self->_retryNum++;
             ESP_LOGI(TAG, "Retrying connection to WiFi network...");
         } else {
-            xEventGroupSetBits(wifiEventGroup, WIFI_FAIL_BIT);
-            self->onDisconnected.trigger();
+            xEventGroupSetBits(_wifiEventGroup, WIFI_FAIL_BIT);
+            self->onDisconnect.trigger(self, nullptr);
+            self->_isConnected = false; // Update connection status
         }
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        auto* event = (ip_event_got_ip_t*) event_data;
-        self->_ipAddress = IPAddress(event->ip_info.ip); // Set the IP address
+        auto *event = (ip_event_got_ip_t *) event_data;
+        self->_ipAddress = IPAddress(event->ip_info.ip);
         self->_retryNum = 0;
-        xEventGroupSetBits(wifiEventGroup, WIFI_CONNECTED_BIT);
-        self->onConnected.trigger();
+        self->_isConnected = true; // Update connection status
+        xEventGroupSetBits(_wifiEventGroup, WIFI_CONNECTED_BIT);
+        // You can trigger an onConnect event here if needed
     }
 }

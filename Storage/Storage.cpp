@@ -1,174 +1,166 @@
-//
-// Created by maikeu on 07/07/2020.
-//
-#include <sstream>
-#include <dirent.h>
 #include "Storage.h"
-#include <ff.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
-uint32_t Storage::_sectorSize;//NOLINT
+/**
+ * @file Storage.cpp
+ * @brief Implementation of the Storage class for managing files and data on external storage.
+ */
 
-void remove_dir(const char *path) {
-    struct dirent *entry = nullptr;
-    DIR *dir = nullptr;
-    dir = opendir(path);
-    while ((entry = readdir(dir))) {//NOLINT
-        DIR *sub_dir = nullptr;
-        FILE *file = nullptr;
-        if (*(entry->d_name) != '.') {
-            std::stringstream str{};
-            str << path << "/" << entry->d_name;
-            if ((sub_dir = opendir(str.str().c_str()))) {
-                closedir(sub_dir);
-                remove_dir(str.str().c_str());
-            } else {
-                if ((file = fopen(str.str().c_str(), "r"))) {
-                    fclose(file);
-                    remove(str.str().c_str());
-                }
-            }
+uint32_t Storage::_sectorSize;
+
+ErrorCode Storage::initialize() {
+    // Create the base storage directory if it doesn't exist
+    struct stat st = {0};
+    if (stat(StorageConstants::BasePath, &st) == -1) {
+        if (mkdir(StorageConstants::BasePath, 0755) != 0) {
+            ESP_LOGE("Storage", "Failed to create base storage directory: %s", StorageConstants::BasePath);
+            return CommonErrorCodes::OperationFailed;
         }
     }
-    if (strcmp((const char *) StorageConst::BasePath, path) != 0) {
-        remove(path);
-    }
 
-}
+    // You may need to add additional initialization code here, such as:
+    // - Mounting the SD card if necessary
+    // - Initializing other storage devices
 
-bool compare_files(const std::string &p1, const std::string &p2) {
-    std::ifstream f1(p1, std::ifstream::binary | std::ifstream::ate);
-    std::ifstream f2(p2, std::ifstream::binary | std::ifstream::ate);
-
-    if (f1.fail() || f2.fail()) {
-        ESP_LOGE(__FUNCTION__, "Erro na abertura dos arquivos");
-        return false; //file problem
-    }
-
-    if (f1.tellg() != f2.tellg()) {
-        ESP_LOGE(__FUNCTION__, "Tamanhos sao diferentes");
-        return false; //size mismatch
-    }
-
-    //seek back to beginning and use std::equal to compare contents
-    f1.seekg(0, std::ifstream::beg);
-    f2.seekg(0, std::ifstream::beg);
-    bool equals = std::equal(std::istreambuf_iterator<char>(f1.rdbuf()),
-                             std::istreambuf_iterator<char>(),
-                             std::istreambuf_iterator<char>(f2.rdbuf()));
-
-    if (!equals) {
-        ESP_LOGE(__FUNCTION__, "Tamanhos sao diferentes");
-    }
-
-    return equals;
-}
-
-auto Storage::EraseData() -> ErrorCode {
-    remove_dir(StorageConst::BasePath);
-    return ErrorCodes::None;
-}
-
-auto Storage::DeleteFile(const std::string &fileName) -> ErrorCode {
-    std::stringstream str{};
-    str.setf(std::ios::fixed);
-    str << StorageConst::BasePath << "/" << fileName << ".txt";
-    auto path = str.str();
-    auto stream = std::ifstream(path, std::ifstream::in);
-    if (stream.fail()) {
-        ESP_LOGW(__FUNCTION__, "Tentando apagar arquivo inexistente");
-        return ErrorCodes::FileNotFound;
-    }
-    stream.close();
-
-    std::remove(path.c_str());
-
-    stream = std::ifstream(path);
-    if (!stream.fail()) {
-        ESP_LOGE(__FUNCTION__, "Erro apagando arquivo");
-        stream.close();
-        return ErrorCodes::StorageError;
-    }
-
-    return ErrorCodes::None;
-}
-
-auto Storage::CopyFile(const std::string &fileSource, const std::string &fileDest) -> ErrorCode {
-    std::stringstream str{};
-    str.setf(std::ios::fixed);
-    str << StorageConst::BasePath << "/" << fileSource << ".txt";
-    auto pathSource = str.str();
-    auto existTest = std::ifstream(pathSource, std::ifstream::in);
-    if (existTest.fail()) {
-        ESP_LOGW(__FUNCTION__, "Tentando copiar arquivo inexistente");
-        return ErrorCodes::FileNotFound;
-    }
-
-    str.str("");
-    str.clear();
-    str << StorageConst::BasePath << "/" << fileDest << ".txt";
-    auto pathDest = str.str();
-
-    //Apaga o arquivo anterior
-    auto result = DeleteFile(fileDest);
-    if (result == ErrorCodes::StorageError) {
-        ESP_LOGE(__FUNCTION__, "Erro apagando arquivo");
-        return ErrorCodes::StorageError;
-    }
-
-    std::ifstream source(pathSource, std::ios::binary);
-    std::ofstream dest(pathDest, std::ios::binary & std::ios::app);
-    if (source.fail() || dest.fail()) {
-        ESP_LOGE(__FUNCTION__, "Erro abrindo os arquivos");
-        return ErrorCodes::StorageError;
-    }
-
-    std::istreambuf_iterator<char> begin_source(source);
-    std::istreambuf_iterator<char> end_source;
-    std::ostreambuf_iterator<char> begin_dest(dest);
-
-    //Copia o arquivo, a forma de testar nao garante
-    ESP_LOGI(__FUNCTION__, "Copiando de %s para %s", pathSource.c_str(), pathDest.c_str());
-    std::copy(begin_source, end_source, begin_dest);
-    source.close();
-    dest.close();
-
-    bool success = compare_files(pathSource, pathDest);
-    if (!success) {
-        ESP_LOGE(__FUNCTION__, "Arquivos nao sao iguais");
-        return ErrorCodes::StorageError;
-    }
-
-    return ErrorCodes::None;
-}
-
-auto Storage::GetStorageStatus(StorageStatus &status) -> ErrorCode {
+    // Get sector size for storage status
     FATFS *fs = nullptr;
-    uint32_t fre_clust = 0;
-    uint64_t freeSectors = 0;
-    uint64_t totalSectors = 0;
-
-    /* Get volume information and free clusters of drive 0 */
-    auto res = f_getfree("0:", &fre_clust, &fs);
-    if (res != FR_OK) {
-        ESP_LOGE(__FUNCTION__, "Erro obtendo informacoes do disco");
-        return ErrorCode(ErrorCodes::Error);
+    if (f_getfree("0:", nullptr, &fs) != FR_OK) {
+        ESP_LOGE("Storage", "Failed to get storage information.");
+        return CommonErrorCodes::StorageInitFailed;
     }
-    /* Get total sectors and free sectors */
-    totalSectors = (fs->n_fatent - 2) * fs->csize;
-    freeSectors = fre_clust * fs->csize;
 
-    status.FreeSpace = freeSectors * _sectorSize;
-    status.TotalSpace = totalSectors * _sectorSize;
-    ESP_LOGI(__FUNCTION__, "%llu bytes livres do total de %llu", status.FreeSpace,
-             status.TotalSpace);
-    return ErrorCode(ErrorCodes::None);
+    if (fs != nullptr) {
+        _sectorSize = fs->csize * 512; // Sector size in bytes
+    } else {
+        ESP_LOGE("Storage", "Failed to get storage sector size.");
+        return CommonErrorCodes::StorageInitFailed;
+    }
+
+    return CommonErrorCodes::None;
 }
 
-bool Storage::CheckFileNameForReserved(const std::string &fileName) {
-    if ((std::strcmp(fileName.c_str(), StorageConst::ConfigFilename) == 0) ||
-        (std::strcmp(fileName.c_str(), StorageConst::UsersFilename) == 0)) {
-        ESP_LOGE(__FUNCTION__, "Arquivo com nome %s é reservado", fileName.c_str());
-        return true;
+ErrorCode Storage::eraseData() {
+    DIR *dir = opendir(StorageConstants::BasePath);
+    if (dir == nullptr) {
+        ESP_LOGE("Storage", "Failed to open storage directory: %s", StorageConstants::BasePath);
+        return CommonErrorCodes::OperationFailed;
     }
-    return false;
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue; // Skip "." and ".." entries
+        }
+
+        std::string filePath = getFilePath(entry->d_name);
+        if (remove(filePath.c_str()) != 0) {
+            ESP_LOGE("Storage", "Failed to delete file: %s", filePath.c_str());
+            closedir(dir);
+            return CommonErrorCodes::OperationFailed;
+        }
+    }
+
+    closedir(dir);
+    return CommonErrorCodes::None;
+}
+
+ErrorCode Storage::deleteFile(const std::string& fileName) {
+    std::string filePath = getFilePath(fileName);
+    if (remove(filePath.c_str()) != 0) {
+        ESP_LOGE("Storage", "Failed to delete file: %s", filePath.c_str());
+        return CommonErrorCodes::FileNotFound;
+    }
+    return CommonErrorCodes::None;
+}
+
+ErrorCode Storage::copyFile(const std::string& sourceFileName, const std::string& destinationFileName) {
+    std::string sourcePath = getFilePath(sourceFileName);
+    std::string destPath = getFilePath(destinationFileName);
+
+    std::ifstream sourceFile(sourcePath, std::ios::binary);
+    std::ofstream destFile(destPath, std::ios::binary);
+
+    if (!sourceFile.is_open()) {
+        ESP_LOGE("Storage", "Failed to open source file for copying: %s", sourcePath.c_str());
+        return CommonErrorCodes::FileOpenError;
+    }
+    if (!destFile.is_open()) {
+        ESP_LOGE("Storage", "Failed to open destination file for copying: %s", destPath.c_str());
+        sourceFile.close();
+        return CommonErrorCodes::FileOpenError;
+    }
+
+    destFile << sourceFile.rdbuf();
+
+    sourceFile.close();
+    destFile.close();
+
+    return CommonErrorCodes::None;
+}
+
+ErrorCode Storage::getStatus(StorageStatus& status) {
+    FATFS *fs = nullptr;
+    DWORD fre_clust;
+
+    if (f_getfree("0:", &fre_clust, &fs) != FR_OK) {
+        ESP_LOGE("Storage", "Failed to get storage status.");
+        return CommonErrorCodes::StorageInitFailed;
+    }
+
+    if (fs == nullptr) {
+        return CommonErrorCodes::StorageInitFailed;
+    }
+
+    status.totalSpace = (fs->n_fatent - 2) * fs->csize * _sectorSize;
+    status.freeSpace = fre_clust * fs->csize * _sectorSize;
+
+    return CommonErrorCodes::None;
+}
+
+#ifdef USER_MANAGEMENT_ENABLED
+// User-related storage operations
+ErrorCode Storage::getEntriesFromUser(const std::string& user, std::map<int64_t, uint32_t>& dataMap) {
+    return getEntriesFromFile(user, dataMap);
+}
+
+ErrorCode Storage::storeUser(const JsonModels::User& user, bool overwrite) {
+    ESP_LOGI("Storage", "Storing user: %s", user.Name.c_str());
+    if (isReservedFileName(user.Name)) {
+        return CommonErrorCodes::ArgumentError;
+    }
+    return storeKeyValueInternal(user.Name, user, StorageConstants::UsersFilename, overwrite);
+}
+
+ErrorCode Storage::loadUser(const std::string& userName, JsonModels::User& user) {
+    return readKeyValue(userName, user, StorageConstants::UsersFilename);
+}
+
+ErrorCode Storage::getAllUsers(std::map<std::string, JsonModels::User>& usersMap) {
+    ErrorCode result = getEntriesFromFile(StorageConstants::UsersFilename, usersMap);
+    if (result == CommonErrorCodes::FileNotFound || result == CommonErrorCodes::FileIsEmpty) {
+        return CommonErrorCodes::UserNotFound;
+    }
+    return result;
+}
+#endif
+
+// Configuration storage operations
+ErrorCode Storage::storeConfig(const std::string& key, const std::string& value, bool overwrite) {
+    ESP_LOGI("Storage", "Storing config: %s", key.c_str());
+    return storeKeyValue(key, value, StorageConstants::ConfigFilename, overwrite);
+}
+
+ErrorCode Storage::loadConfig(const std::string& key, std::string& value) {
+    return readKeyValue(key, value, StorageConstants::ConfigFilename);
+}
+
+bool Storage::isReservedFileName(const std::string& fileName) {
+    return (fileName == StorageConstants::ConfigFilename ||
+            fileName == StorageConstants::UsersFilename ||
+            fileName == StorageConstants::InfoFilename);
+}
+
+std::string Storage::getFilePath(const std::string& fileName) {
+    return std::string(StorageConstants::BasePath) + "/" + fileName + ".txt";
 }

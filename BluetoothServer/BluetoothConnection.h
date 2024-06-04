@@ -4,163 +4,164 @@
 #include <string>
 #include <NimBLECharacteristic.h>
 #include <functional>
-#include <JsonModels.h>
-#include <Storage.h>
+#include "BaseConnection.h" // Inherit from BaseConnection
+#include "JsonModels.h"
 #include "projectConfig.h"
-#include "ErrorCode.h"
-#include "Event.h"
 
 #ifdef USER_MANAGEMENT_ENABLED
-
-class ConnectedUser;
-
+#include "ConnectedUser.h"
 #endif
 
-#include "list"
+/**
+ * @file BluetoothConnection.h
+ * @brief This file defines the BluetoothConnection class for managing individual Bluetooth connections.
+ */
 
-enum class NotificationNeeds {
-    NoSend,
-    SendNormal,
-    SendImportant
-};
-
-class BluetoothConnection : public NimBLECharacteristicCallbacks {
+/**
+ * @class BluetoothConnection
+ * @brief Represents a single Bluetooth connection, handling data transmission, notifications, and user management (optional).
+ *
+ * This class inherits from BaseConnection to provide a consistent interface for communication connections.
+ */
+class BluetoothConnection : public BaseConnection, public NimBLECharacteristicCallbacks {
 public:
-    NimBLECharacteristic *WriteCharacteristic = nullptr;
-    NimBLECharacteristic *NotifyCharacteristic = nullptr;
-    SemaphoreHandle_t xSendMutex = nullptr;
-    Event<BluetoothConnection *, void *> DisconnectEvent;
+    /**
+     * @brief Constructor.
+     */
+    BluetoothConnection();
 
-    [[nodiscard]] std::string GetWriteUUID() const;
+    /**
+     * @brief Destructor.
+     */
+    ~BluetoothConnection() override; // Override the base class destructor
 
-    [[nodiscard]] std::string GetNotifyUUID() const;
+    /**
+     * @brief Initializes the BluetoothConnection, creating the necessary characteristics and mutex.
+     *
+     * @return ErrorCode indicating success or failure of the initialization process.
+     */
+    ErrorCode initialize();
 
-    template<typename Tmodel>
-    void SendError(ErrorCode errorCode) {
-        static_assert(std::is_base_of<JsonModels::BaseJsonDataError, Tmodel>::value,
-                      "Lista deve ter como base BaseListJsonData");
+    /**
+     * @brief Connects the BluetoothConnection to a specific connection ID.
+     *
+     * @param connId The connection ID to associate with this connection.
+     */
+    void connect(uint16_t connId);
 
-        if (errorCode != ErrorCodes::None) {
-            ESP_LOGE(__FUNCTION__, "Erro \"%s\" -> %s", errorCode.GetName(),
-                     errorCode.GetDescription());
-        }
+    /**
+     * @brief Disconnects the BluetoothConnection, freeing resources and notifying listeners.
+     */
+    void disconnect() override;
 
-        Tmodel jsonData;
-        jsonData.ErrorMessage = errorCode;
-        if (std::is_base_of<JsonModels::BaseListJsonDataBasic, Tmodel>() ||
-            std::is_same<JsonModels::BaseListJsonDataBasic, Tmodel>()) {
-            reinterpret_cast<JsonModels::BaseListJsonDataBasic *>(&jsonData)->End = true;
-        }
+    /**
+     * @brief Checks if the BluetoothConnection is currently free (not associated with a connection ID).
+     *
+     * @return True if the connection is free, false otherwise.
+     */
+    [[nodiscard]] bool isFree() const;
 
-        auto json_str = jsonData.ToJson();
-        SendJsonData(json_str);
-    }
+    /**
+     * @brief Gets the connection ID associated with this BluetoothConnection.
+     *
+     * @return The connection ID.
+     */
+    [[nodiscard]] uint16_t getId() const;
 
-    template<typename Tmodel, typename T1, typename T2>
-    void
-    SendList(const std::map<T1, T2> &map, Tmodel *firstItem = nullptr, Tmodel *lastItem = nullptr) {
-        static_assert(std::is_base_of<JsonModels::BaseListJsonDataBasic, Tmodel>::value,
-                      "Lista deve ter como base BaseListJsonData");
-        if (map.empty()) {
-            ErrorCode error = ErrorCodes::ListIsEmpty;
-            SendError<Tmodel>(error);
-            return;
-        }
+    /**
+     * @brief Handles a write event on the associated write characteristic.
+     *
+     * @param pCharacteristic A pointer to the characteristic that received the write event.
+     * @param connInfo Information about the connection that initiated the write.
+     */
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override;
 
-        for (auto it = map.begin(); it != map.end(); ++it) {
-            if (it == map.begin() && firstItem != nullptr) {
-                SendJsonData(firstItem->ToJson());
-                continue;
-            } else if (std::next(it) == map.end() && lastItem != nullptr) {
-                SendJsonData(lastItem->ToJson());
-                continue;
-            }
-
-            Tmodel jsonData;
-            if (it == map.begin()) {
-                jsonData.Begin = true;
-            }
-
-            jsonData.FromPair(it->first, it->second);
-
-            if (std::next(it) == map.end()) {
-                jsonData.End = true;
-            }
-            auto jr_str = jsonData.ToJson();
-//#ifdef LOGGING
-            ESP_LOGI(__FUNCTION__, "Sending %s", jr_str.c_str());
-//#endif
-            SendJsonData(jr_str);
-        }
-    }
-
-    template<typename Tmodel>
-    void SendJsonData(Tmodel jsonData) {
-        static_assert(std::is_base_of<JsonModels::BaseJsonDataError, Tmodel>::value,
-                      "Lista deve ter como base BaseListJsonData");
-        if (std::is_base_of<JsonModels::BaseListJsonDataBasic, Tmodel>()) {
-            reinterpret_cast<JsonModels::BaseListJsonDataBasic *>(&jsonData)->End = true;
-        }
-
-        auto json_str = jsonData.ToJson();
-        SendJsonData(json_str);
-    }
-
-    void Disconnect();
-
-    void Connect(uint16_t conn_id);
-
-    [[nodiscard]] bool IsFree() const;
-
-    [[nodiscard]] int GetId() const;
-
-    void Init();
-
-    void onWrite(NimBLECharacteristic *pCharacteristic, NimBLEConnInfo &connInfo);
-
+    /**
+     * @brief Handles a status change event on the associated notify characteristic.
+     *
+     * @param pCharacteristic A pointer to the characteristic whose status changed.
+     * @param code The status code.
+     */
     void onStatus(NimBLECharacteristic* pCharacteristic, int code) override;
 
+    /**
+     * @brief Sends data as a notification or indication.
+     *
+     * @param data The data to send.
+     * @param isNotification If true, send as a notification; otherwise, send as an indication.
+     * @return ErrorCode indicating success or failure of the send operation.
+     */
+    ErrorCode sendData(const std::vector<uint8_t>& data, bool isNotification);
+
+    /**
+     * @brief Gets the UUID of the write characteristic.
+     *
+     * @return The UUID of the write characteristic.
+     */
+    [[nodiscard]] std::string getWriteUUID() const;
+
+    /**
+     * @brief Gets the UUID of the notify characteristic.
+     *
+     * @return The UUID of the notify characteristic.
+     */
+    [[nodiscard]] std::string getNotifyUUID() const;
+
+    /**
+     * @brief Gets the JSON string containing connection information.
+     *
+     * @return The JSON string with connection info (UUIDs of the service and characteristics).
+     */
+    [[nodiscard]] std::string getConnectionInfoJson() const;
+
 #ifdef USER_MANAGEMENT_ENABLED
+    /**
+     * @brief Sets the ConnectedUser associated with this connection.
+     *
+     * @param user A pointer to the ConnectedUser object.
+     */
+    void setUser(ConnectedUser* user);
 
-        ConnectedUser *GetUser(bool canBeNull, bool canBeEmpty);
+    /**
+     * @brief Gets the ConnectedUser associated with this connection.
+     *
+     * @param canBeNull If true, the function can return nullptr if no user is assigned.
+     * @param canBeEmpty If true, the function can return a ConnectedUser with an empty user name.
+     * @return A pointer to the ConnectedUser, or nullptr if no user is assigned (and `canBeNull` is true).
+     */
+    ConnectedUser* getUser(bool canBeNull = true, bool canBeEmpty = true);
 
-    void SetUser(ConnectedUser *user) {
-        _user = user;
-    }
-
-    void Logoff();
-
+    /**
+     * @brief Logs off the user, clearing the user data and updating notification needs.
+     */
+    void logoff();
 #endif
-
-    NotificationNeeds GetNotificationNeeds();
-
-    void SetGetDataFunction(std::function<std::list<uint8_t>()> callback);
-
-    void SetNotificationNeeds(NotificationNeeds needs);
-
-    void SendNotifyData(bool isNotification);
-
-    [[nodiscard]] std::string GetConnectionInfoJson() const;
-
-    void SendJsonData(const std::string &json);
-
-    void Test();
 
 private:
-    bool _isFree = true;
-    int _conn_ID = -1;
+    NimBLECharacteristic* _writeCharacteristic; /**< Characteristic for receiving write commands. */
+    NimBLECharacteristic* _notifyCharacteristic; /**< Characteristic for sending notifications. */
+    SemaphoreHandle_t _sendMutex; /**< Mutex to protect concurrent access to send operations. */
+    bool _isFree{};
+    bool _isConnected; /**< Flag indicating if the connection is active. */
+    uint16_t _connId; /**< The connection ID. */
+
 #ifdef USER_MANAGEMENT_ENABLED
-    ConnectedUser *_user;
+    ConnectedUser* _user; /**< Pointer to the associated ConnectedUser object (if user management is enabled). */
 #endif
-    std::function<std::list<uint8_t>()> _getDataFunction;
 
-    void SendJson(const std::string &json) const;
+    /**
+     * @brief Sends a raw byte array over the notification characteristic.
+     *
+     * @param data The data to send.
+     * @param length The length of the data.
+     * @param isNotification If true, send as a notification; otherwise, send as an indication.
+     * @return ErrorCode indicating success or failure.
+     */
+    ErrorCode sendRawData(const uint8_t* data, size_t length, bool isNotification) const;
 
+    ErrorCode sendRawData(const uint8_t *data, size_t length) const override;
 
-    NotificationNeeds _notificationNeeds = NotificationNeeds::NoSend;
-    int _lastStatus = 0;
-    bool _indicateFailed = false;
-    bool _needsFirstUpdate = true;
+    [[nodiscard]] bool isConnected() const override;
 };
 
-#endif
+#endif // BLUETOOTHCONNECTION_H

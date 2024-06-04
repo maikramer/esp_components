@@ -2,6 +2,8 @@
 // Created by maikeu on 27/06/22.
 //
 
+#include <utility>
+
 #include "nlohmann/json.hpp"
 #include "JsonModels.h"
 
@@ -12,20 +14,20 @@
 class WirelessDevice : public JsonModels::BaseJsonData {
 public:
     std::string Ssid;
-    int Rssi;
-    uint Channel;
+    int Rssi{};
+    uint Channel{};
 
-    WirelessDevice(const std::string &ssid, int rssi, uint channel) : Ssid(ssid), Rssi(rssi),
+    WirelessDevice(std::string ssid, int rssi, uint channel) : Ssid(std::move(ssid)), Rssi(rssi),
                                                                       Channel(channel) {}
 
     WirelessDevice() = default;
 
 
-    [[nodiscard]] std::string ToJson() const override {
-        return ToPureJson().dump();
+    [[nodiscard]] std::string toJson() const override {
+        return toPureJson().dump();
     }
 
-    [[nodiscard]] std::string ToString() const {
+    [[nodiscard]] std::string toString() const {
         std::stringstream stream;
         stream << "SSID: " << Ssid << "RSSI: " << Rssi
                << "Canal: "
@@ -33,7 +35,7 @@ public:
         return stream.str();
     }
 
-    [[nodiscard]] nlohmann::json ToPureJson() const {
+    [[nodiscard]] nlohmann::json toPureJson() const {
         nlohmann::json j;
         j["Ssid"] = Ssid;
         j["Rssi"] = Rssi;
@@ -41,7 +43,7 @@ public:
         return j;
     }
 
-    bool FromJson(const nlohmann::json &j) override {
+    bool fromJson(const nlohmann::json &j) override {
         if (j.is_null()) return false;
         try {
             Ssid = j["Ssid"];
@@ -60,23 +62,23 @@ public:
 
 class ScanForWifiListJsonData : public JsonModels::BaseListJsonData<std::string, WirelessDevice> {
 public:
-    std::string Ssid = "";
+    std::string Ssid;
     WirelessDevice WirelessDeviceJson{};
 
-    ScanForWifiListJsonData(const std::string &ssid, const WirelessDevice &wirelessDeviceJson)
-            : Ssid(ssid), WirelessDeviceJson(wirelessDeviceJson) {}
+    ScanForWifiListJsonData(std::string ssid, WirelessDevice wirelessDeviceJson)
+            : Ssid(std::move(ssid)), WirelessDeviceJson(std::move(wirelessDeviceJson)) {}
 
     ScanForWifiListJsonData() = default;
 
-    [[nodiscard]] std::string ToJson() const override {
-        auto j = GetPartialListJson();
+    [[nodiscard]] std::string toJson() const override {
+        auto j = getPartialListJson();
         j["Ssid"] = Ssid;
-        j["WirelessDeviceJson"] = WirelessDeviceJson.ToPureJson();
+        j["WirelessDeviceJson"] = WirelessDeviceJson.toPureJson();
 
         return j.dump();
     }
 
-    void FromPair(std::string ssid, WirelessDevice wirelessDevice) override {
+    void fromPair(std::string ssid, WirelessDevice wirelessDevice) override {
         Ssid = ssid;
         WirelessDeviceJson = wirelessDevice;
     }
