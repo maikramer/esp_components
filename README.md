@@ -25,7 +25,7 @@ Adicione este componente ao seu projeto ESP-IDF adicionando ao arquivo `idf_comp
 ```yaml
 dependencies:
   esp_components:
-    git: https://github.com/seu-usuario/esp_components.git
+    git: https://github.com/maikramer/esp_components.git
     # ou use um caminho local:
     # path: ../esp_components
 ```
@@ -77,7 +77,7 @@ esp_components/
 Este componente requer:
 - ESP-IDF v5.0 ou superior
 - Componentes ESP-IDF padrão: `esp_wifi`, `nvs_flash`, `bt`, etc.
-- Componente externo: `johboh__nlohmann-json` (via IDF Component Manager)
+- Componente externo: `johboh/nlohmann-json` (via IDF Component Manager)
 
 ## Licença
 

@@ -9,7 +9,7 @@ No arquivo `idf_component.yml` do seu projeto:
 ```yaml
 dependencies:
   esp_components:
-    git: https://github.com/seu-usuario/esp_components.git
+    git: https://github.com/maikramer/esp_components.git
     version: "^1.0.0"
 ```
 
