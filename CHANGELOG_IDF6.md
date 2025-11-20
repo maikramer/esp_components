@@ -37,12 +37,31 @@
 - Atualizado para refletir que requer ESP-IDF v6.0 ou superior
 - Adicionados componentes `esp_netif` e `esp_event` na lista de dependências
 
+### Componente Drivers
+
+#### Stepper.cpp
+- **xQueueSemaphoreTake()** → **xSemaphoreTake()**: Substituído pela API correta do FreeRTOS no IDF v6.0
+
+#### Stepper.h
+- Removido include de `rom/ets_sys.h` (deprecado)
+- Adicionado include de `driver/gpio.h` para compatibilidade
+
+### Componente Utility
+
+#### Utility.cpp
+- **GPIO_REG_READ()** → **gpio_get_level()**: Substituído acesso direto ao registro por API oficial
+- Removidos includes de `soc/gpio_reg.h` e `rom/gpio.h` (deprecados)
+- Adicionado include de `driver/gpio.h`
+
 ## APIs Deprecadas Removidas/Substituídas
 
 1. **IP_EVENT_STA_GOT_IP** → **IP_EVENT_STA_GOT_IPV4**
 2. **ip_event_got_ip_t** → **ip_event_got_ipv4_t**
 3. **esp_https_ota()** → **esp_https_ota_begin()/perform()/finish()**
 4. **vTaskDelayUntil()** → **xTaskDelayUntil()**
+5. **xQueueSemaphoreTake()** → **xSemaphoreTake()**
+6. **GPIO_REG_READ()** → **gpio_get_level()**
+7. **rom/ets_sys.h**, **soc/gpio_reg.h**, **rom/gpio.h** → **driver/gpio.h**
 
 ## Notas Importantes
 

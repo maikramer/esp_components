@@ -7,8 +7,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <esp_log.h>
-#include <soc/gpio_reg.h>
-#include <rom/gpio.h>
+#include "driver/gpio.h"
 #include "Utility.h"
 
 
@@ -131,7 +130,7 @@ void Utility::ListJsonKeys(const nlohmann::json &j) {
 }
 
 uint32_t Utility::ReadOutput(gpio_num_t gpio) {
-    return (GPIO_REG_READ(gpio < 31 ? GPIO_OUT_REG : GPIO_OUT1_REG) >> gpio & 0x1F) & 1U;
+    return gpio_get_level(gpio);
 }
 
 

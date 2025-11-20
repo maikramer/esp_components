@@ -6,7 +6,7 @@
 #define ROTULADORAVENERA_STEPPER_H
 
 
-#include <rom/ets_sys.h>
+#include "driver/gpio.h"
 #include "Utility.h"
 #include "Event.h"
 

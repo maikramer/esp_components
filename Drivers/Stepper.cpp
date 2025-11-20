@@ -24,7 +24,7 @@ IRAM_ATTR static void PeriodicCallback(void *arg) {
 [[noreturn]] static void OnFinishSteppingTsk(void *arg) {
     for (;;) {
         auto *st = static_cast<Stepper *>(arg);
-        xQueueSemaphoreTake(finishSteppingSem, portMAX_DELAY);
+        xSemaphoreTake(finishSteppingSem, portMAX_DELAY);
         st->OnFinishStepping.trigger();
     }
 }
