@@ -1,0 +1,11 @@
+## IDF Component Manager Manifest File
+version: "1.0.0"
+description: "Biblioteca de componentes ESP32 para comunicação, armazenamento, drivers e utilitários"
+url: "https://github.com/seu-usuario/esp_components"
+license: "MIT"
+maintainers: "seu-nome <seu-email@exemplo.com>"
+
+# Dependências externas necessárias
+dependencies:
+  johboh__nlohmann-json: "^3.12.0"
+
