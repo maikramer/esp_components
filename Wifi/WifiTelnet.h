@@ -67,7 +67,7 @@ public:
 
 private:
     Telnet _telnet; /**< The underlying Telnet server object. */
-    WifiOta _ota; /**< The WifiOta object for handling OTA updates. */
+    mutable WifiOta _ota; /**< The WifiOta object for handling OTA updates. */
     bool _isRunning;  /**< Flag to indicate whether the Telnet server is running. */
 
     std::map<std::string, std::function<ErrorCode(const std::vector<std::string>&)>> _commandHandlers; /**< Map of registered command handlers. */

@@ -13,6 +13,7 @@
 #include "IPAddress.h"
 #include "WifiErrorCodes.h"
 #include "WifiClient.h"
+#include "Event.h"
 
 /**
  * @file WifiConnection.h
@@ -98,6 +99,11 @@ public:
      * @return Number of networks found, or negative value on error.
      */
     int scan(wifi_ap_record_t* ap_list, uint16_t max_aps);
+
+    /**
+     * @brief Event triggered when WiFi connection is established.
+     */
+    Event<WifiConnection*, void*> onConnect;
 
 private:
     static void eventHandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);

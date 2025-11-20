@@ -59,7 +59,9 @@ ErrorCode Flash::mountFlash(const char* partitionLabel, const char* mountPoint) 
     const esp_vfs_fat_mount_config_t mount_config = {
             .format_if_mount_failed = false,
             .max_files = 5,
-            .allocation_unit_size = CONFIG_WL_SECTOR_SIZE
+            .allocation_unit_size = CONFIG_WL_SECTOR_SIZE,
+            .disk_status_check_enable = false,
+            .use_one_fat = false
     };
 
     esp_err_t err = esp_vfs_fat_spiflash_mount_rw_wl(mountPoint, partitionLabel, &mount_config, &_wearHandle);

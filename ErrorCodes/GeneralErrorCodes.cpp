@@ -16,4 +16,5 @@ namespace CommonErrorCodes {
     const ErrorCode CommandAlreadyRegistered = ErrorCode::define("CommandAlreadyRegistered", "Command already registered", ErrorCodeType::General);
     const ErrorCode InvalidCommand = ErrorCode::define("InvalidCommand", "Invalid command received", ErrorCodeType::General);
     const ErrorCode ConnectionClosed = ErrorCode::define("ConnectionClosed", "Connection is closed", ErrorCodeType::General);
+    const ErrorCode ListIsEmpty = ErrorCode::define("ListIsEmpty", "The list is empty", ErrorCodeType::General);
 }

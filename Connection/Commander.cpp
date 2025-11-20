@@ -11,9 +11,9 @@
 #include "vector"
 
 typedef struct Command_s {//NOLINT
-    std::function<void(const std::vector<std::string> &, BluetoothConnection *)> Function{};
+    std::function<void(const std::vector<std::string> &, BaseConnection *)> Function{};
     std::vector<std::string> Data;
-    BluetoothConnection *Connection{};
+    BaseConnection *Connection{};
 } Command_t;
 
 static QueueHandle_t xCommandQueue = xQueueCreate(10, sizeof(void *));//NOLINT
@@ -45,7 +45,7 @@ void Commander::AddCommand(const DeviceCommand& command) {
 
 std::list<DeviceCommand> Commander::_commands;//NOLINT
 
-void Commander::CheckForCommand(const std::string &rxValue, BluetoothConnection *connection) {
+void Commander::CheckForCommand(const std::string &rxValue, BaseConnection *connection) {
     //Extrai comando
     uint8_t commandCode = rxValue.c_str()[0];
     auto rxData = std::string(rxValue.c_str() + 1);

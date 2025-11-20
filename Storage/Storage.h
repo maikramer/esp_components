@@ -10,6 +10,7 @@
 #include "projectConfig.h"
 #include "esp_log.h"
 #include "ff.h"
+#include "NVS.h"
 
 /**
  * @file Storage.h
@@ -47,10 +48,18 @@ public:
      * @brief Initializes the Storage class.
      *
      * This function must be called before using any other Storage methods.
+     * It will try to initialize file system first, and fallback to NVS if file system is not available.
      *
      * @return ErrorCode indicating success or failure of the initialization.
      */
     static ErrorCode initialize();
+    
+    /**
+     * @brief Checks if file system storage is available.
+     *
+     * @return True if file system is available, false if using NVS fallback.
+     */
+    static bool isFileSystemAvailable();
 
     /**
      * @brief Erases all data from the storage device.
@@ -168,6 +177,8 @@ public:
 
 private:
     static uint32_t _sectorSize; /**< The sector size of the storage device. */
+    static bool _fileSystemAvailable; /**< Flag indicating if file system is available. */
+    static bool _initialized; /**< Flag indicating if Storage has been initialized. */
 
     /**
      * @brief Checks if a file name is reserved by the system.
@@ -218,7 +229,8 @@ ErrorCode Storage::readKeyValue(const TKey& key, TValue& value, const std::strin
 
     std::ifstream input(filePath);
     if (!input) {
-        ESP_LOGE("Storage", "Error opening file for reading: %s", filePath.c_str());
+        // File doesn't exist - this is normal for first run, use debug level
+        ESP_LOGD("Storage", "File not found: %s (first run?)", filePath.c_str());
         return CommonErrorCodes::FileOpenError;
     }
 
@@ -243,14 +255,14 @@ ErrorCode Storage::readKeyValue(const TKey& key, TValue& value, const std::strin
     }
 
     ESP_LOGW("Storage", "Key '%s' not found in file: %s", keyStream.str().c_str(), filePath.c_str());
-    return CommonErrorCodes::KeyNotFound;
+    return CommonErrorCodes::FileNotFound;
 }
 
 template<typename TKey, typename TValue>
 ErrorCode Storage::readOrCreateKeyValue(const TKey& key, TValue& value,
                                         const std::string& fileName, const std::string& keyName) {
     ErrorCode err = readKeyValue(key, value, fileName);
-    if (err == CommonErrorCodes::FileNotFound || err == CommonErrorCodes::KeyNotFound) {
+    if (err == CommonErrorCodes::FileNotFound || err == CommonErrorCodes::FileIsEmpty) {
         // Key or file not found, so create the key-value pair
         ESP_LOGI("Storage", "Creating key '%s' in file: %s", keyName.c_str(), fileName.c_str());
         return storeKeyValue(keyName, value, fileName);
@@ -316,8 +328,8 @@ ErrorCode Storage::storeKeyValueInternal(const TKey& key, const TValue& value,
             std::stringstream keyStream;
             keyStream << key;
             ESP_LOGW("Storage", "Key '%s' already exists in file: %s", keyStream.str().c_str(), fileName.c_str());
-            return CommonErrorCodes::KeyAlreadyExists;
-        } else if (err != CommonErrorCodes::FileNotFound && err != CommonErrorCodes::KeyNotFound) {
+            return CommonErrorCodes::FileExists;
+        } else if (err != CommonErrorCodes::FileNotFound && err != CommonErrorCodes::FileIsEmpty) {
             return err;
         }
     }

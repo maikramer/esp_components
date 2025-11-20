@@ -23,9 +23,15 @@ std::istream &JsonModels::operator>>(std::istream &in, JsonModels::BaseJsonData 
 }
 
 bool JsonModels::BaseJsonData::fromString(const std::string &jsonStr) {
-    nlohmann::json j = nlohmann::json::parse(jsonStr);
-    if (j.is_null()) return false;
-    return fromJson(j);
+    try {
+        nlohmann::json j = nlohmann::json::parse(jsonStr);
+        if (j.is_null()) return false;
+        return fromJson(j);
+    } catch (const nlohmann::json::exception &e) {
+        const char* error_msg = e.what();
+        ESP_LOGE(__FUNCTION__, "Exception: %s", error_msg);
+        return false;
+    }
 }
 
 nlohmann::json JsonModels::BaseJsonDataError::getPartialJson(bool force) const {
@@ -76,10 +82,9 @@ bool JsonModels::UuidInfoJsonData::fromJson(const nlohmann::json &j) {
         NotifyUUID = j["NotifyUUID"];
         ServiceUUID = j["ServiceUUID"];
         WriteUUID = j["WriteUUID"];
-    } catch (nlohmann::json::exception &e) {
-        ESP_LOGE(__FUNCTION__, "Exception: %s", e.what());
-        return false;
-    } catch (...) {
+    } catch (const nlohmann::json::exception &e) {
+        const char* error_msg = e.what();
+        ESP_LOGE(__FUNCTION__, "Exception: %s", error_msg);
         return false;
     }
     return true;
@@ -98,10 +103,9 @@ bool JsonModels::LoginTryResultJson::fromJson(const nlohmann::json &j) {
     if (j.is_null()) return false;
     try {
         IsAdmin = j["IsAdmin"];
-    } catch (nlohmann::json::exception &e) {
-        ESP_LOGE(__FUNCTION__, "Exception: %s", e.what());
-        return false;
-    } catch (...) {
+    } catch (const nlohmann::json::exception &e) {
+        const char* error_msg = e.what();
+        ESP_LOGE(__FUNCTION__, "Exception: %s", error_msg);
         return false;
     }
     return true;
@@ -140,10 +144,9 @@ bool JsonModels::User::fromString(const std::string &jsonStr) {
         Email = j["Email"];
         IsConfirmed = j["IsConfirmed"];
         IsAdmin = j["IsAdmin"];
-    } catch (nlohmann::json::exception &e) {
-        ESP_LOGE(__FUNCTION__, "Exception: %s", e.what());
-        return false;
-    } catch (...) {
+    } catch (const nlohmann::json::exception &e) {
+        const char* error_msg = e.what();
+        ESP_LOGE(__FUNCTION__, "Exception: %s", error_msg);
         return false;
     }
 
@@ -158,10 +161,9 @@ bool JsonModels::User::fromJson(const nlohmann::json &j) {
         Email = j["Email"];
         IsConfirmed = j["IsConfirmed"];
         IsAdmin = j["IsAdmin"];
-    } catch (nlohmann::json::exception &e) {
-        ESP_LOGE(__FUNCTION__, "Exception: %s", e.what());
-        return false;
-    } catch (...) {
+    } catch (const nlohmann::json::exception &e) {
+        const char* error_msg = e.what();
+        ESP_LOGE(__FUNCTION__, "Exception: %s", error_msg);
         return false;
     }
     return true;

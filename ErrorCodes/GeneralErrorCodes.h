@@ -21,6 +21,7 @@ namespace CommonErrorCodes {
         extern const ErrorCode CommandAlreadyRegistered; /**< Attempt to register an already registered command. */
         extern const ErrorCode InvalidCommand;      /**< An invalid command was received. */
         extern const ErrorCode ConnectionClosed;     /**< The connection is closed. */
+        extern const ErrorCode ListIsEmpty;          /**< The list is empty. */
 
 }
 

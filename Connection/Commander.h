@@ -9,30 +9,29 @@
 #include <utility>
 #include <list>
 #include <vector>
-#include <nameof.hpp>
-#include "BluetoothConnection.h"
+#include "BaseConnection.h"
 
-class BluetoothConnection;
+class BaseConnection;
 
 class DeviceCommand {
 public:
     DeviceCommand(const uint32_t dataSize, std::string internalName, const uint8_t code,
                   std::function<void(const std::vector<std::string> &,
-                                     BluetoothConnection *)> functionPtr) : DataSize(
+                                     BaseConnection *)> functionPtr) : DataSize(
             dataSize), InternalName(std::move(internalName)), Code(code), Function(
             std::move(functionPtr)) {}
 
     const uint32_t DataSize;
     std::string InternalName;
     const uint8_t Code;
-    std::function<void(const std::vector<std::string> &, BluetoothConnection *)> Function;
+    std::function<void(const std::vector<std::string> &, BaseConnection *)> Function;
 };
 
 class Commander {
 public:
     Commander() = delete;
 
-    static void CheckForCommand(const std::string &rxValue, BluetoothConnection *connection);
+    static void CheckForCommand(const std::string &rxValue, BaseConnection *connection);
 
     static void AddCommand(const DeviceCommand &command);
 

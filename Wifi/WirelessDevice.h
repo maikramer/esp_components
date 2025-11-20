@@ -50,7 +50,8 @@ public:
             Rssi = j["Rssi"];
             Channel = j["Channel"];
         } catch (nlohmann::json::exception &e) {
-            ESP_LOGE(__FUNCTION__, "WirelessDevice:Exception: %s", e.what());
+            const char* error_msg = e.what();
+            ESP_LOGE(__FUNCTION__, "WirelessDevice:Exception: %s", error_msg);
             return false;
         } catch (...) {
             return false;

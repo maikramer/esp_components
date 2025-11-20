@@ -191,11 +191,11 @@ ErrorCode BaseConnection::sendList(const std::map<TKey, TValue>& map, TModel* fi
     return CommonErrorCodes::None;
 }
 
-NotificationNeeds BaseConnection::getNotificationNeeds() const {
+inline NotificationNeeds BaseConnection::getNotificationNeeds() const {
     return _notificationNeeds;
 }
 
-void BaseConnection::setNotificationNeeds(NotificationNeeds needs) {
+inline void BaseConnection::setNotificationNeeds(NotificationNeeds needs) {
     _notificationNeeds = needs;
 }
 

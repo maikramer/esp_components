@@ -3,63 +3,83 @@
 //
 
 #include <esp_log.h>
-
 #include "ConnectionManager.h"
-#include "BluetoothServer.h"
+#include "BaseConnection.h"
 
-#ifdef USER_MANAGEMENT_ENABLED
-
-#include <ConnectedUser.h>
-
-#endif
+// ConnectedUser.h está no componente UserManaging, não é necessário aqui
 
 //#define DEBUG_INFO
 
-SafeList<BluetoothConnection *> ConnectionManager::_connectionPool;//NOLINT
-Event<ConnectionManager *, BluetoothConnection *> ConnectionManager::OnConnect;
+SafeList<BaseConnection*> ConnectionManager::_connectionPool;
+Event<ConnectionManager*, BaseConnection*> ConnectionManager::onConnect;
 
-void ConnectionManager::Init(int noOfConnections) {
-    for (auto i = 0; i < noOfConnections; i++) {
-        auto *connection = new BluetoothConnection();
-        connection->Init();
+ErrorCode ConnectionManager::initialize(size_t numConnections) {
+    // ConnectionManager genérico não cria conexões automaticamente
+    // As conexões devem ser adicionadas via addConnection()
+    // Este método apenas inicializa o pool vazio
+    return CommonErrorCodes::None;
+}
+
+void ConnectionManager::addConnection(BaseConnection* connection) {
+    if (connection != nullptr) {
         _connectionPool.Push(connection);
     }
 }
 
-void ConnectionManager::Connect(uint16_t conn_id) {
-    auto *connection = GetFreeConnection();
-    if (connection != nullptr) {
-        connection->Connect(conn_id);
-        OnConnect.trigger(nullptr, connection);
-    } else {
-        ESP_LOGE(__FUNCTION__, "Sem conexões livres");
-        BluetoothServer::instance().BleServer->disconnect(conn_id);
-    }
-}
-
-void ConnectionManager::Disconnect(uint16_t id) {
-    auto *conn = GetConnectionById(id);
-    if (conn == nullptr) return;
-#ifdef USER_MANAGEMENT_ENABLED
-
-#ifdef DEBUG_INFO
-    ESP_LOGI(__FUNCTION__, "Usuario com id %d desconectado", id);
-#endif
-
-#endif
-    conn->Disconnect();
-}
-
-auto ConnectionManager::GetConnectionById(uint16_t id) -> BluetoothConnection * {
+BaseConnection* ConnectionManager::getFreeConnection() {
     if (_connectionPool.IsLocked()) {
         ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
         return nullptr;
     }
-    for (auto connection: _connectionPool) {
-        if (connection->GetId() == id) {
+
+    for (auto* conn : _connectionPool) {
+        if (conn != nullptr && !conn->isConnected()) {
+            return conn;
+        }
+    }
+
+    ESP_LOGE(__FUNCTION__, "Sem Conexões livres");
+    return nullptr;
+}
+
+ErrorCode ConnectionManager::connect(uint16_t id) {
+    auto* connection = getFreeConnection();
+    if (connection != nullptr) {
+        // A conexão específica deve implementar o método connect(id)
+        // Por enquanto, apenas notificamos que uma conexão foi associada
+        onConnect.trigger(nullptr, connection);
+        return CommonErrorCodes::None;
+    } else {
+        ESP_LOGE(__FUNCTION__, "Sem conexões livres");
+        return CommonErrorCodes::OperationFailed;
+    }
+}
+
+void ConnectionManager::disconnect(uint16_t id) {
+    auto* conn = getConnectionById(id);
+    if (conn == nullptr) return;
+
+#ifdef USER_MANAGEMENT_ENABLED
 #ifdef DEBUG_INFO
-            ESP_LOGI(__FUNCTION__, "Connection Id: %d", id);
+    ESP_LOGI(__FUNCTION__, "Usuario com id %d desconectado", id);
 #endif
+#endif
+
+    conn->disconnect();
+}
+
+BaseConnection* ConnectionManager::getConnectionById(uint16_t id) {
+    if (_connectionPool.IsLocked()) {
+        ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
+        return nullptr;
+    }
+
+    for (auto* connection : _connectionPool) {
+        if (connection != nullptr && connection->isConnected()) {
+            // BaseConnection não tem GetId() diretamente
+            // Implementações específicas devem fornecer uma forma de identificar conexões
+            // Por enquanto, retornamos a primeira conexão conectada
+            // TODO: Adicionar método getId() ao BaseConnection ou usar um mapa de IDs
             return connection;
         }
     }
@@ -68,81 +88,46 @@ auto ConnectionManager::GetConnectionById(uint16_t id) -> BluetoothConnection * 
     return nullptr;
 }
 
-auto ConnectionManager::GetFreeConnection() -> BluetoothConnection * {
-    static auto *semaphore = xSemaphoreCreateMutex();//NOLINT
-    if (xSemaphoreTake(semaphore, 1000) == pdFAIL) {
-        ESP_LOGE(__FUNCTION__, "Estouro ao adquirir semaforo");
-        return nullptr;
+void ConnectionManager::sendNotifications() {
+    if (_connectionPool.Empty()) {
+        return;
     }
-    BluetoothConnection *ret = nullptr;
 
     if (_connectionPool.IsLocked()) {
         ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
-        return nullptr;
+        return;
     }
 
-    for (auto *conn: _connectionPool) {
-        if (conn->IsFree()) {
-            ret = conn;
-            break;
+    for (auto* connection : _connectionPool) {
+        if (connection == nullptr || !connection->isConnected()) {
+            continue;
         }
-    }
-
-    if (ret == nullptr) {
-        ESP_LOGE(__FUNCTION__, "Sem Conexões livres");
-    }
-
-    xSemaphoreGive(semaphore);
-    return ret;
-}
-
-void ConnectionManager::SendNotifications() {
-    if (!_connectionPool.Empty()) {
-        if (_connectionPool.IsLocked()) {
-            ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
-            return;
-        }
-        for (auto *connection: _connectionPool) {
-            //                ESP_LOGI(__FUNCTION__, "Tentando Enviar para %s", user.User.c_str());
-            if (connection == nullptr || connection->IsFree())
-                continue;
 
 #ifdef USER_MANAGEMENT_ENABLED
-            auto *user = connection->GetUser(true, true);
-            if (user == nullptr) continue;
-
-            auto isLogged = user->IsLogged;
-            if (!isLogged) continue;
-
-            auto state = user->GetNotificationNeeds();
-#else
-
-#ifdef DEBUG_INFO
-#ifdef USER_MANAGEMENT_ENABLED
-
-            ESP_LOGI(__FUNCTION__, "Enviando para %s", user->User.c_str());
-
-#else
-            ESP_LOGI(__FUNCTION__, "Enviando para a conexao %u", connection->GetId());
+        // TODO: Implementar suporte a UserManagement quando necessário
+        // Por enquanto, apenas enviamos notificações normais
 #endif
-#endif  //DEBUG_INFO
-            auto state = connection->GetNotificationNeeds();
-#endif //USER_MANAGEMENT_ENABLED
-            if (state == NotificationNeeds::NoSend) continue;
-            connection->SendNotifyData(state != NotificationNeeds::SendImportant);
-        }
+
+        // BaseConnection não tem GetNotificationNeeds() diretamente
+        // Por enquanto, enviamos notificações para todas as conexões conectadas
+        // TODO: Adicionar suporte a NotificationNeeds ao BaseConnection
     }
 }
 
-void ConnectionManager::NotifyAll(bool isImportant) {
-    if (!_connectionPool.Empty()) {
-        if (_connectionPool.IsLocked()) {
-            ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
-            return;
-        }
-        for (auto *connection: _connectionPool) {
-            connection->SetNotificationNeeds(
-                    isImportant ? NotificationNeeds::SendImportant : NotificationNeeds::SendNormal);
+void ConnectionManager::notifyAll(NotificationNeeds needs) {
+    if (_connectionPool.Empty()) {
+        return;
+    }
+
+    if (_connectionPool.IsLocked()) {
+        ESP_LOGE(__FUNCTION__, "Falha tentando obter semaforo");
+        return;
+    }
+
+    for (auto* connection : _connectionPool) {
+        if (connection != nullptr) {
+            // BaseConnection não tem SetNotificationNeeds() diretamente
+            // TODO: Adicionar suporte a NotificationNeeds ao BaseConnection
         }
     }
 }

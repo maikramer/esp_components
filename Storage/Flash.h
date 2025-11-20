@@ -5,7 +5,6 @@
 #include "ErrorCode.h"
 #include <esp_log.h>
 #include "esp_partition.h"
-#include "esp_spi_flash.h"
 #include <esp_vfs_fat.h>
 #include <driver/spi_common.h>
 

@@ -5,6 +5,7 @@
 #include <map>
 #include <nvs_flash.h>
 #include <nvs_handle.hpp>
+#include <nvs.h>
 #include "CommonErrorCodes.h"
 #include "esp_log.h"
 
@@ -106,12 +107,13 @@ ErrorCode NVS::storeValue(const std::string& namespaceName, const std::string& k
 
     // Check if the key already exists (if overwrite is false)
     if (!overwrite) {
-        err = readValue<T>(namespaceName, key, value); // Read the value to check if it exists
+        T existingValue;
+        err = readValue<T>(namespaceName, key, existingValue); // Read the value to check if it exists
         if (err == CommonErrorCodes::None) {
             nvs_close(handle);
             ESP_LOGW("NVS", "Key '%s' already exists in namespace '%s'", key.c_str(), namespaceName.c_str());
-            return CommonErrorCodes::KeyAlreadyExists;
-        } else if (err != CommonErrorCodes::KeyNotFound) {
+            return CommonErrorCodes::FileExists;
+        } else if (err != CommonErrorCodes::FileNotFound && err != CommonErrorCodes::FileIsEmpty) {
             nvs_close(handle);
             return err; // Return other errors from readValue
         }
@@ -175,7 +177,7 @@ ErrorCode NVS::readValue(const std::string& namespaceName, const std::string& ke
         esp_err = nvs_get_str(handle, key.c_str(), nullptr, &requiredSize); // Get required size
         if (esp_err != ESP_OK) {
             nvs_close(handle);
-            return CommonErrorCodes::KeyNotFound;
+            return CommonErrorCodes::FileNotFound;
         }
         char* valueBuffer = new char[requiredSize]; // Allocate buffer
         esp_err = nvs_get_str(handle, key.c_str(), valueBuffer, &requiredSize);
@@ -206,7 +208,9 @@ ErrorCode NVS::readValue(const std::string& namespaceName, const std::string& ke
     nvs_close(handle);
 
     if (esp_err == ESP_ERR_NVS_NOT_FOUND) {
-        return CommonErrorCodes::KeyNotFound;
+        // Key not found - this is normal if the key hasn't been stored yet
+        ESP_LOGD("NVS", "Key '%s' not found in namespace '%s'", key.c_str(), namespaceName.c_str());
+        return CommonErrorCodes::FileNotFound;
     } else if (esp_err != ESP_OK) {
         ESP_LOGE("NVS", "Failed to read value: %s", esp_err_to_name(esp_err));
         return CommonErrorCodes::StorageReadError;
@@ -225,48 +229,39 @@ ErrorCode NVS::getEntriesFromNamespace(const std::string& namespaceName, std::ma
 
     dataMap.clear();
 
-    // Use nvs_entry_find with the correct type
-    nvs_iterator_t it;
-    nvs_entry_find(NVSConstants::PartitionName, namespaceName.c_str(),
-                                       nvs_type_t(nvs::ItemType(typeid(T))),&it);
+    // Iterate through all entries in the namespace
+    // Note: We can't use typeid with -fno-rtti, so we iterate all entries and try to read them
+    // In ESP-IDF v6.0, we use NVS_TYPE_ANY to iterate all types
+    nvs_iterator_t it = nullptr;
+    nvs_entry_find(NVSConstants::PartitionName, namespaceName.c_str(), NVS_TYPE_ANY, &it);
+    
     while (it != nullptr) {
         nvs_entry_info_t info;
         nvs_entry_info(it, &info);
         T value;
         ErrorCode readErr = readValue(namespaceName, std::string(info.key), value);
-        if (readErr != CommonErrorCodes::None) {
-            ESP_LOGE("NVS", "Error reading value for key '%s': %s", info.key, readErr.description().c_str());
-            nvs_release_iterator(it);
-            nvs_close(handle);
-            return readErr;
+        if (readErr == CommonErrorCodes::None) {
+            // Successfully read the value, add to map
+            dataMap[info.key] = value;
+        } else {
+            // Skip entries that don't match the type T
+            ESP_LOGD("NVS", "Skipping key '%s' (type mismatch or read error)", info.key);
         }
-        dataMap[info.key] = value;
         nvs_entry_next(&it);
     }
 
-    nvs_release_iterator(it);
+    if (it != nullptr) {
+        nvs_release_iterator(it);
+    }
     nvs_close(handle);
 
     if (dataMap.empty()) {
-        return CommonErrorCodes::NamespaceIsEmpty;
+        return CommonErrorCodes::FileIsEmpty;
     }
 
     return CommonErrorCodes::None;
 }
 
-// Private helper method
-ErrorCode NVS::openNamespace(const std::string& namespaceName, nvs_handle_t& handle, nvs_open_mode_t readWriteMode) {
-    esp_err_t esp_err = nvs_open_from_partition(NVSConstants::PartitionName, namespaceName.c_str(),
-                                                readWriteMode, &handle);
-    if (esp_err != ESP_OK) {
-        ESP_LOGE("NVS", "Failed to open namespace '%s': %s", namespaceName.c_str(), esp_err_to_name(esp_err));
-        if (esp_err == ESP_ERR_NVS_NOT_FOUND) {
-            return CommonErrorCodes::NamespaceNotFound;
-        } else {
-            return CommonErrorCodes::StorageInitFailed; // Corrected error code
-        }
-    }
-    return CommonErrorCodes::None;
-}
+// Private helper method - implementation in NVS.cpp
 
 #endif // NVS_H
