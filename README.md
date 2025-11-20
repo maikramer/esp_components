@@ -32,19 +32,21 @@ dependencies:
 
 ### Usar em seu CMakeLists.txt
 
-Depois de adicionar o componente, você pode usá-lo em seu `CMakeLists.txt`:
+⚠️ **IMPORTANTE**: Quando o componente é adicionado via git, você deve referenciar os subcomponentes diretamente, não o componente raiz:
 
 ```cmake
 idf_component_register(
     SRCS "main.cpp"
     INCLUDE_DIRS "."
-    REQUIRES esp_components
+    REQUIRES Wifi Connection utility ErrorCodes JsonModels
 )
 ```
 
+**Não use** `REQUIRES esp_components` quando o componente é baixado via git, pois os subcomponentes podem não ser encontrados automaticamente.
+
 ### Usar Componentes Individuais
 
-Quando usar componentes específicos, referencie-os diretamente pelo nome:
+Quando usar componentes específicos, referencie-os diretamente pelo nome (recomendado):
 
 ```cmake
 idf_component_register(

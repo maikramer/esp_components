@@ -1,8 +1,14 @@
 # Troubleshooting - Problemas Comuns
 
+## Erro: "Directory does not contain a component"
+
+Se você receber este erro, significa que o `CMakeLists.txt` na raiz está faltando. Este arquivo é necessário quando o componente é adicionado via `idf_component.yml`.
+
+**Solução**: Certifique-se de que o repositório Git contém o `CMakeLists.txt` na raiz.
+
 ## Erro: "Failed to resolve component 'utility' required by component 'JsonModels': unknown name"
 
-Este erro ocorre quando o componente é adicionado via git e os subcomponentes não são detectados automaticamente.
+Este erro ocorre quando o componente é adicionado via git e os subcomponentes não são detectados automaticamente pelo ESP-IDF Component Manager.
 
 ### Solução 1: Usar caminho local (Recomendado para desenvolvimento)
 
