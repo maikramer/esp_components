@@ -8,8 +8,8 @@ license: "MIT"
 
 # Dependências locais via path
 dependencies:
-  utility:
-    path: ../utility
+  Utility:
+    path: ../Utility
   Connection:
     path: ../Connection
   ErrorCodes:

@@ -53,7 +53,7 @@ ErrorCode Storage::initialize() {
                          StorageConstants::BasePath, total / 1024, used / 1024);
             } else {
                 ESP_LOGI("Storage", "SPIFFS mounted successfully at %s", StorageConstants::BasePath);
-            }
+        }
         } else if (ret == ESP_ERR_INVALID_STATE) {
             // SPIFFS already mounted (by previous call)
             ESP_LOGI("Storage", "SPIFFS already mounted, using existing mount");

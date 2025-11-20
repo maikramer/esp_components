@@ -6,7 +6,7 @@ Se você receber este erro, significa que o `CMakeLists.txt` na raiz está falta
 
 **Solução**: Certifique-se de que o repositório Git contém o `CMakeLists.txt` na raiz.
 
-## Erro: "Failed to resolve component 'utility' required by component 'JsonModels': unknown name"
+## Erro: "Failed to resolve component 'Utility' required by component 'JsonModels': unknown name"
 
 Este erro ocorre quando o componente é adicionado via git e os subcomponentes não são detectados automaticamente pelo ESP-IDF Component Manager.
 
@@ -38,7 +38,7 @@ Se o problema persistir, você pode referenciar os componentes diretamente no se
 idf_component_register(
     SRCS "main.cpp"
     INCLUDE_DIRS "."
-    REQUIRES Wifi Connection utility ErrorCodes JsonModels
+    REQUIRES Wifi Connection Utility ErrorCodes JsonModels
 )
 ```
 
@@ -77,7 +77,7 @@ managed_components/esp_components/
 │   └── CMakeLists.txt
 ├── Connection/
 │   └── CMakeLists.txt
-├── utility/
+├── Utility/
 │   └── CMakeLists.txt
 ├── Wifi/
 │   └── CMakeLists.txt

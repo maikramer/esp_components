@@ -1,5 +1,5 @@
 ## IDF Component Manager Manifest File
-## Componente: utility
+## Componente: Utility
 ## Utilitários gerais (eventos, exceções, containers seguros, etc.)
 
 version: "1.0.0"

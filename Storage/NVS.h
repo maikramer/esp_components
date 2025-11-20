@@ -242,7 +242,7 @@ ErrorCode NVS::getEntriesFromNamespace(const std::string& namespaceName, std::ma
         ErrorCode readErr = readValue(namespaceName, std::string(info.key), value);
         if (readErr == CommonErrorCodes::None) {
             // Successfully read the value, add to map
-            dataMap[info.key] = value;
+        dataMap[info.key] = value;
         } else {
             // Skip entries that don't match the type T
             ESP_LOGD("NVS", "Skipping key '%s' (type mismatch or read error)", info.key);
@@ -251,7 +251,7 @@ ErrorCode NVS::getEntriesFromNamespace(const std::string& namespaceName, std::ma
     }
 
     if (it != nullptr) {
-        nvs_release_iterator(it);
+    nvs_release_iterator(it);
     }
     nvs_close(handle);
 

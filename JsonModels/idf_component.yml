@@ -9,8 +9,8 @@ license: "MIT"
 # Dependências externas e locais
 dependencies:
   johboh/nlohmann-json: "^3.12.0"
-  utility:
-    path: ../utility
+  Utility:
+    path: ../Utility
   ErrorCodes:
     path: ../ErrorCodes
 

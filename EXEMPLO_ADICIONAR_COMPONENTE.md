@@ -69,19 +69,19 @@ idf.py build
 ```
 
 O Component Manager resolverá automaticamente todas as dependências do Wifi:
-- Wifi → Connection, utility, ErrorCodes
-- Connection → utility, JsonModels
-- JsonModels → utility, ErrorCodes
-- ErrorCodes → utility
+- Wifi → Connection, Utility, ErrorCodes
+- Connection → Utility, JsonModels
+- JsonModels → Utility, ErrorCodes
+- ErrorCodes → Utility
 
 ## Exemplos de Outros Componentes
 
-### Adicionar apenas utility
+### Adicionar apenas Utility
 
 ```yaml
 dependencies:
-  utility:
-    path: ../../esp_components/utility
+  Utility:
+    path: ../../esp_components/Utility
 ```
 
 ### Adicionar ErrorCodes
@@ -145,7 +145,7 @@ projetos/
 │   └── CMakeLists.txt
 └── esp_components/  ← Componentes compartilhados
     ├── Wifi/
-    ├── utility/
+    ├── Utility/
     ├── ErrorCodes/
     └── ...
 ```

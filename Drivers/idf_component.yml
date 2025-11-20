@@ -12,8 +12,8 @@ dependencies:
     path: ../JsonModels
   ErrorCodes:
     path: ../ErrorCodes
-  utility:
-    path: ../utility
+  Utility:
+    path: ../Utility
 
 # Requer ESP-IDF v6.0 ou superior
 idf:

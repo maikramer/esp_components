@@ -5,7 +5,7 @@ Este repositório foi reorganizado para permitir que você adicione apenas os co
 ## Estrutura de Dependências
 
 ```
-utility (base)
+Utility (base)
 ├── ErrorCodes
 │   └── JsonModels
 │       ├── Connection
@@ -21,14 +21,14 @@ utility (base)
 
 ## Como Usar Componentes Individuais
 
-### Exemplo 1: Usar apenas utility e ErrorCodes
+### Exemplo 1: Usar apenas Utility e ErrorCodes
 
 No seu `idf_component.yml`:
 
 ```yaml
 dependencies:
-  utility:
-    path: ../esp_components/utility
+  Utility:
+    path: ../esp_components/Utility
   ErrorCodes:
     path: ../esp_components/ErrorCodes
 ```
@@ -39,7 +39,7 @@ No seu `CMakeLists.txt`:
 idf_component_register(
     SRCS "main.cpp"
     INCLUDE_DIRS "."
-    REQUIRES utility ErrorCodes
+    REQUIRES Utility ErrorCodes
 )
 ```
 
@@ -54,10 +54,10 @@ dependencies:
 ```
 
 O Component Manager resolverá automaticamente as dependências:
-- Wifi → Connection, utility, ErrorCodes
-- Connection → utility, JsonModels
-- JsonModels → utility, ErrorCodes
-- ErrorCodes → utility
+- Wifi → Connection, Utility, ErrorCodes
+- Connection → Utility, JsonModels
+- JsonModels → Utility, ErrorCodes
+- ErrorCodes → Utility
 
 ### Exemplo 3: Usar BluetoothServer
 
@@ -71,10 +71,10 @@ dependencies:
 
 Dependências resolvidas automaticamente:
 - BluetoothServer → NimBLE, JsonModels, ErrorCodes, Connection
-- NimBLE → utility
-- JsonModels → utility, ErrorCodes
-- ErrorCodes → utility
-- Connection → utility, JsonModels
+- NimBLE → Utility
+- JsonModels → Utility, ErrorCodes
+- ErrorCodes → Utility
+- Connection → Utility, JsonModels
 
 ### Exemplo 4: Usar Storage e UserManaging
 
@@ -92,36 +92,36 @@ dependencies:
 
 ### Componentes Base (sem dependências locais)
 
-- **utility**: Utilitários gerais (eventos, exceções, containers seguros)
+- **Utility**: Utilitários gerais (eventos, exceções, containers seguros)
   - Dependências externas: `johboh/nlohmann-json`
 
 ### Componentes de Nível 1
 
 - **ErrorCodes**: Sistema de códigos de erro padronizado
-  - Dependências: `utility`
+  - Dependências: `Utility`
 
 ### Componentes de Nível 2
 
 - **JsonModels**: Modelos JSON e serialização
-  - Dependências: `utility`, `ErrorCodes`, `johboh/nlohmann-json`
+  - Dependências: `Utility`, `ErrorCodes`, `johboh/nlohmann-json`
 - **NimBLE**: Wrapper C++ para NimBLE
-  - Dependências: `utility`
+  - Dependências: `Utility`
 
 ### Componentes de Nível 3
 
 - **Connection**: Gerenciamento de conexões base
-  - Dependências: `utility`, `JsonModels`
+  - Dependências: `Utility`, `JsonModels`
 - **Storage**: Armazenamento (NVS, Flash, SD Card)
-  - Dependências: `utility`, `JsonModels`
+  - Dependências: `Utility`, `JsonModels`
 
 ### Componentes de Nível 4
 
 - **BluetoothServer**: Servidor Bluetooth usando NimBLE
   - Dependências: `NimBLE`, `JsonModels`, `ErrorCodes`, `Connection`
 - **Wifi**: Funcionalidades WiFi
-  - Dependências: `utility`, `Connection`, `ErrorCodes`
+  - Dependências: `Utility`, `Connection`, `ErrorCodes`
 - **Drivers**: Drivers para bateria e stepper
-  - Dependências: `JsonModels`, `ErrorCodes`, `utility`
+  - Dependências: `JsonModels`, `ErrorCodes`, `Utility`
 - **IoUtility**: Utilitários de I/O
   - Dependências: `JsonModels`, `ErrorCodes`
 - **UserManaging**: Gerenciamento de usuários

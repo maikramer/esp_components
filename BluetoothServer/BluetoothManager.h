@@ -15,7 +15,7 @@
 
 /**
  * @class BluetoothUtility
- * @brief Provides utility functions for working with Bluetooth, such as generating unique UUIDs.
+ * @brief Provides Utility functions for working with Bluetooth, such as generating unique UUIDs.
  */
 class BluetoothUtility {
 private:

@@ -48,7 +48,7 @@ idf_component_register(
 idf_component_register(
     SRCS "main.cpp"
     INCLUDE_DIRS "."
-    REQUIRES Wifi Connection utility ErrorCodes
+    REQUIRES Wifi Connection Utility ErrorCodes
 )
 ```
 
@@ -80,7 +80,7 @@ idf_component_register(
 #include "Wifi.h"
 #include "Connection.h"
 #include "ErrorCodes.h"
-#include "utility/Utility.h"
+#include "Utility/Utility.h"
 
 void app_main() {
     // Usar componentes do esp_components

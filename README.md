@@ -13,7 +13,7 @@ Biblioteca de componentes reutilizáveis para ESP-IDF, incluindo comunicação (
 - **NimBLE**: Wrapper C++ para NimBLE
 - **Storage**: Armazenamento (NVS, Flash, SD Card)
 - **UserManaging**: Gerenciamento de usuários
-- **utility**: Utilitários gerais (eventos, exceções, etc.)
+- **Utility**: Utilitários gerais (eventos, exceções, etc.)
 - **Wifi**: Funcionalidades WiFi (servidor, cliente, OTA, Telnet)
 
 ## Como Usar
@@ -38,7 +38,7 @@ dependencies:
 idf_component_register(
     SRCS "main.cpp"
     INCLUDE_DIRS "."
-    REQUIRES Wifi Connection utility ErrorCodes JsonModels
+    REQUIRES Wifi Connection Utility ErrorCodes JsonModels
 )
 ```
 
@@ -52,13 +52,13 @@ Quando usar componentes específicos, referencie-os diretamente pelo nome (recom
 idf_component_register(
     SRCS "main.cpp"
     INCLUDE_DIRS "."
-    REQUIRES Wifi Connection utility ErrorCodes JsonModels
+    REQUIRES Wifi Connection Utility ErrorCodes JsonModels
 )
 ```
 
 **Nota Importante**: 
 
-⚠️ **Problema conhecido com componentes via Git**: Se você encontrar erros como "Failed to resolve component 'utility'" ao usar o componente via git, há algumas soluções:
+⚠️ **Problema conhecido com componentes via Git**: Se você encontrar erros como "Failed to resolve component 'Utility'" ao usar o componente via git, há algumas soluções:
 
 1. **Solução Recomendada**: Use caminho local para desenvolvimento:
    ```yaml
@@ -69,7 +69,7 @@ idf_component_register(
 
 2. **Alternativa**: Referencie os componentes diretamente no seu `CMakeLists.txt`:
    ```cmake
-   REQUIRES Wifi Connection utility ErrorCodes JsonModels
+   REQUIRES Wifi Connection Utility ErrorCodes JsonModels
    ```
    Em vez de apenas `REQUIRES esp_components`
 
@@ -95,7 +95,7 @@ esp_components/
 ├── NimBLE/             # Wrapper NimBLE C++
 ├── Storage/            # Armazenamento
 ├── UserManaging/       # Gerenciamento de usuários
-├── utility/            # Utilitários gerais
+├── Utility/            # Utilitários gerais
 ├── Wifi/               # Funcionalidades WiFi
 └── submodules/         # Submódulos Git
 ```

@@ -9,8 +9,8 @@ license: "MIT"
 # Dependências locais via path
 # Removido UserManaging para evitar dependência circular
 dependencies:
-  utility:
-    path: ../utility
+  Utility:
+    path: ../Utility
   JsonModels:
     path: ../JsonModels
 

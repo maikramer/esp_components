@@ -32,14 +32,25 @@ ErrorCode WifiOta::performUpdate(const std::string& url) {
         return CommonErrorCodes::OperationFailed;
     }
 
-    // Perform OTA update
+    // Perform OTA update com relatório de progresso
+    int last_progress = -1;
     while (1) {
         err = esp_https_ota_perform(https_ota_handle);
         if (err != ESP_ERR_HTTPS_OTA_IN_PROGRESS) {
             break;
         }
-        // Report progress if callback is set
-        // Note: Progress reporting can be added here if needed
+        
+        // Calcular e reportar progresso
+        int image_len_read = esp_https_ota_get_image_len_read(https_ota_handle);
+        int image_size = esp_https_ota_get_image_size(https_ota_handle);
+        
+        if (image_size > 0) {
+            int progress = (image_len_read * 100) / image_size;
+            if (progress != last_progress && progress >= 0 && progress <= 100) {
+                onProgress.trigger(progress);
+                last_progress = progress;
+            }
+        }
     }
 
     if (err == ESP_OK) {

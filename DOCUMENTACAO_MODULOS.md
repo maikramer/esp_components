@@ -13,7 +13,7 @@ Este documento fornece uma descrição detalhada de todos os módulos disponíve
 7. [NimBLE](#nimble)
 8. [Storage](#storage)
 9. [UserManaging](#usermanaging)
-10. [utility](#utility)
+10. [Utility](#Utility)
 11. [Wifi](#wifi)
 
 ---
@@ -82,7 +82,7 @@ Classe utilitária para operações Bluetooth.
 - `Connection`: Gerenciamento de conexões base
 - `JsonModels`: Modelos JSON
 - `ErrorCodes`: Sistema de códigos de erro
-- `utility`: Utilitários gerais
+- `Utility`: Utilitários gerais
 
 ### Exemplo de Uso
 
@@ -168,7 +168,7 @@ Classe estática para gerenciar um pool de conexões.
 - `onConnect`: Disparado quando uma nova conexão é estabelecida
 
 ### Dependências
-- `utility`: Utilitários gerais (Event, SafeList)
+- `Utility`: Utilitários gerais (Event, SafeList)
 - `JsonModels`: Modelos JSON
 - `ErrorCodes`: Sistema de códigos de erro
 
@@ -244,7 +244,7 @@ Classe para monitorar a tensão da bateria usando ADC.
 - `ADC_WIDTH`: Largura do ADC (ADC_BITWIDTH_12)
 
 ### Dependências
-- `utility`: Utilitários gerais (Event, Utility)
+- `Utility`: Utilitários gerais (Event, Utility)
 - `ErrorCodes`: Sistema de códigos de erro
 
 ### Exemplo de Uso
@@ -331,7 +331,7 @@ Cada módulo define seus próprios códigos de erro:
 - `StorageWriteError`: Erro de escrita de armazenamento
 
 ### Dependências
-- `utility`: Utilitários gerais
+- `Utility`: Utilitários gerais
 
 ### Exemplo de Uso
 
@@ -420,7 +420,7 @@ Classe estendida de `FilteredInput` com eventos de pressionar/soltar/clicar.
 - Suporte a múltiplas instâncias
 
 ### Dependências
-- `utility`: Utilitários gerais (Event, Utility)
+- `Utility`: Utilitários gerais (Event, Utility)
 - `ErrorCodes`: Sistema de códigos de erro
 
 ### Exemplo de Uso
@@ -519,7 +519,7 @@ Modelo JSON para informações de UUID.
 - `>>`: Operador de entrada para streams
 
 ### Dependências
-- `utility`: Utilitários gerais
+- `Utility`: Utilitários gerais
 - `ErrorCodes`: Sistema de códigos de erro
 - `johboh/nlohmann-json`: Biblioteca JSON externa
 
@@ -553,7 +553,7 @@ Wrapper C++ para a biblioteca NimBLE do ESP-IDF. Fornece uma interface orientada
 - Suporte a serviços, características e descritores BLE
 
 ### Dependências
-- `utility`: Utilitários gerais
+- `Utility`: Utilitários gerais
 
 ### Nota
 Este módulo é principalmente um wrapper e é usado internamente pelo módulo `BluetoothServer`. Para uso direto, consulte a documentação do NimBLE do ESP-IDF.
@@ -654,7 +654,7 @@ Classe para gerenciar cartão SD via SPI.
 - Integração com sistema de arquivos FATFS
 
 ### Dependências
-- `utility`: Utilitários gerais
+- `Utility`: Utilitários gerais
 - `JsonModels`: Modelos JSON (para operações com usuários)
 - `ErrorCodes`: Sistema de códigos de erro
 
@@ -745,7 +745,7 @@ Gerenciador simplificado de usuários.
 - `JsonModels`: Modelos JSON (User, LoginTryResultJson, etc.)
 - `BluetoothServer`: Servidor Bluetooth para autenticação
 - `ErrorCodes`: Sistema de códigos de erro
-- `utility`: Utilitários gerais
+- `Utility`: Utilitários gerais
 
 ### Exemplo de Uso
 
@@ -775,7 +775,7 @@ if (user != nullptr) {
 
 ---
 
-## utility
+## Utility
 
 ### Descrição
 Módulo base com utilitários gerais usados por todos os outros módulos. Inclui sistema de eventos, containers thread-safe, padrões de design e utilitários de sistema.
@@ -980,7 +980,7 @@ Classe base para dispositivos sem fio.
 
 ### Dependências
 - `Connection`: Gerenciamento de conexões base
-- `utility`: Utilitários gerais
+- `Utility`: Utilitários gerais
 - `ErrorCodes`: Sistema de códigos de erro
 - `esp_wifi`: Componente WiFi do ESP-IDF
 - `esp_netif`: Componente de rede do ESP-IDF
@@ -1013,7 +1013,7 @@ ESP_LOGI("APP", "Encontradas %d redes", count);
 ## Resumo de Dependências
 
 ```
-utility (base)
+Utility (base)
 ├── ErrorCodes
 │   └── JsonModels
 │       ├── Connection

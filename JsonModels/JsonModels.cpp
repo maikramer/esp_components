@@ -24,9 +24,9 @@ std::istream &JsonModels::operator>>(std::istream &in, JsonModels::BaseJsonData 
 
 bool JsonModels::BaseJsonData::fromString(const std::string &jsonStr) {
     try {
-        nlohmann::json j = nlohmann::json::parse(jsonStr);
-        if (j.is_null()) return false;
-        return fromJson(j);
+    nlohmann::json j = nlohmann::json::parse(jsonStr);
+    if (j.is_null()) return false;
+    return fromJson(j);
     } catch (const nlohmann::json::exception &e) {
         const char* error_msg = e.what();
         ESP_LOGE(__FUNCTION__, "Exception: %s", error_msg);
