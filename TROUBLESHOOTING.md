@@ -25,9 +25,10 @@ dependencies:
 Quando o componente é baixado via git, ele é colocado em `managed_components/esp_components/`. O ESP-IDF deve detectar automaticamente os subcomponentes em subdiretórios que contenham `CMakeLists.txt`.
 
 Certifique-se de que:
-1. Não há um `CMakeLists.txt` na raiz do componente (foi removido para permitir detecção automática)
+1. Há um `CMakeLists.txt` na raiz do componente que registra um componente wrapper mínimo
 2. Cada subcomponente tem seu próprio `CMakeLists.txt` em seu diretório
 3. Os submódulos Git estão inicializados (se necessário)
+4. O componente raiz tem pelo menos um arquivo header (ex: `esp_components.h`) para ser reconhecido como válido
 
 ### Solução 3: Referenciar componentes diretamente
 
@@ -84,5 +85,5 @@ managed_components/esp_components/
 └── idf_component.yml
 ```
 
-**Importante**: Não deve haver um `CMakeLists.txt` na raiz de `managed_components/esp_components/` para que os subcomponentes sejam detectados automaticamente.
+**Importante**: Deve haver um `CMakeLists.txt` na raiz de `managed_components/esp_components/` que registra um componente wrapper mínimo. Os subcomponentes são detectados automaticamente em subdiretórios.
 
