@@ -54,9 +54,31 @@ idf_component_register(
 )
 ```
 
-**Nota Importante**: Se você encontrar erros de "component not found" ao usar como dependência externa via git, certifique-se de que:
-1. Os submódulos Git estão inicializados (execute `git submodule update --init --recursive` no repositório)
-2. Você está referenciando os componentes pelo nome correto (ex: `utility`, não `esp_components::utility`)
+**Nota Importante**: 
+
+⚠️ **Problema conhecido com componentes via Git**: Se você encontrar erros como "Failed to resolve component 'utility'" ao usar o componente via git, há algumas soluções:
+
+1. **Solução Recomendada**: Use caminho local para desenvolvimento:
+   ```yaml
+   dependencies:
+     esp_components:
+       path: ../esp_components
+   ```
+
+2. **Alternativa**: Referencie os componentes diretamente no seu `CMakeLists.txt`:
+   ```cmake
+   REQUIRES Wifi Connection utility ErrorCodes JsonModels
+   ```
+   Em vez de apenas `REQUIRES esp_components`
+
+3. **Limpar e reconstruir**: Após mudanças, execute:
+   ```bash
+   idf.py fullclean
+   rm -rf managed_components
+   idf.py build
+   ```
+
+Veja `TROUBLESHOOTING.md` para mais detalhes sobre problemas comuns.
 
 ## Estrutura
 
