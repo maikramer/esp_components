@@ -124,6 +124,72 @@ ErrorCode WifiConnection::sendRawData(const uint8_t *data, size_t length) const 
     return CommonErrorCodes::None;
 }
 
+int WifiConnection::scan(wifi_ap_record_t* ap_list, uint16_t max_aps) {
+    if (ap_list == nullptr || max_aps == 0) {
+        ESP_LOGE(TAG, "Parâmetros inválidos para scan");
+        return -1;
+    }
+    
+    ESP_LOGI(TAG, "Iniciando scan WiFi...");
+    
+    // Desconectar se estiver conectando/conectado para permitir scan
+    if (_isConnected) {
+        esp_wifi_disconnect();
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
+    
+    // Garantir que o WiFi esteja iniciado antes de fazer scan
+    esp_err_t ret = esp_wifi_start();
+    if (ret != ESP_OK && ret != ESP_ERR_WIFI_NOT_INIT) {
+        ESP_LOGW(TAG, "esp_wifi_start() retornou: %s (continuando mesmo assim)", esp_err_to_name(ret));
+    }
+    
+    // Aguardar um pouco para o WiFi inicializar completamente (se necessário)
+    vTaskDelay(pdMS_TO_TICKS(200));
+    
+    // Configurar scan
+    wifi_scan_config_t scan_config = {};
+    scan_config.ssid = nullptr;  // Escanear todas as redes
+    scan_config.bssid = nullptr;
+    scan_config.channel = 0;  // Todos os canais
+    scan_config.show_hidden = false;
+    scan_config.scan_type = WIFI_SCAN_TYPE_ACTIVE;
+    scan_config.scan_time.active.min = 100;  // 100ms mínimo
+    scan_config.scan_time.active.max = 300;  // 300ms máximo
+    
+    // Iniciar scan
+    ret = esp_wifi_scan_start(&scan_config, true);  // true = bloquear até completar
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Erro ao iniciar scan: %s", esp_err_to_name(ret));
+        return -1;
+    }
+    
+    // Aguardar conclusão do scan
+    uint16_t ap_count = 0;
+    ret = esp_wifi_scan_get_ap_num(&ap_count);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Erro ao obter número de APs: %s", esp_err_to_name(ret));
+        return -1;
+    }
+    
+    ESP_LOGI(TAG, "Encontradas %d redes WiFi", ap_count);
+    
+    // Limitar ao máximo solicitado
+    if (ap_count > max_aps) {
+        ap_count = max_aps;
+    }
+    
+    // Obter lista de APs
+    ret = esp_wifi_scan_get_ap_records(&ap_count, ap_list);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Erro ao obter lista de APs: %s", esp_err_to_name(ret));
+        return -1;
+    }
+    
+    ESP_LOGI(TAG, "Scan concluído, retornando %d redes", ap_count);
+    return static_cast<int>(ap_count);
+}
+
 void WifiConnection::eventHandler(void *arg, esp_event_base_t event_base,
                                   int32_t event_id, void *event_data) {
     auto *self = static_cast<WifiConnection *>(arg);
@@ -146,6 +212,6 @@ void WifiConnection::eventHandler(void *arg, esp_event_base_t event_base,
         self->_retryNum = 0;
         self->_isConnected = true; // Update connection status
         xEventGroupSetBits(_wifiEventGroup, WIFI_CONNECTED_BIT);
-        // You can trigger an onConnect event here if needed
+        self->onConnect.trigger(self, nullptr);
     }
 }

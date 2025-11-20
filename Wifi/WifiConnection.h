@@ -90,6 +90,15 @@ public:
         _wifiClient = wifiClient;
     }
 
+    /**
+     * @brief Scans for available WiFi networks.
+     *
+     * @param ap_list Array to store the found access points.
+     * @param max_aps Maximum number of access points to scan for.
+     * @return Number of networks found, or negative value on error.
+     */
+    int scan(wifi_ap_record_t* ap_list, uint16_t max_aps);
+
 private:
     static void eventHandler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
     static EventGroupHandle_t _wifiEventGroup; /**< Event group for WiFi events. */
