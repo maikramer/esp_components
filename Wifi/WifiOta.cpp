@@ -19,21 +19,42 @@ ErrorCode WifiOta::startUpdate(const std::string& url) {
 ErrorCode WifiOta::performUpdate(const std::string& url) {
     esp_http_client_config_t config = {};
     config.url = url.c_str();
-    config.cert_pem = (char *)""; // Replace with your server certificate if needed
+    config.cert_pem = nullptr; // Replace with your server certificate if needed
 
     esp_https_ota_config_t ota_config = {};
     ota_config.http_config = &config;
-    ota_config.decrypt_cb = nullptr;
-    ota_config.decrypt_user_ctx = nullptr;
-    ota_config.enc_img_header_size = 0;
 
-    esp_err_t err = esp_https_ota(&ota_config);
+    esp_https_ota_handle_t https_ota_handle = nullptr;
+    esp_err_t err = esp_https_ota_begin(&ota_config, &https_ota_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "OTA begin failed! Error: %s", esp_err_to_name(err));
+        onUpdateFailed.trigger();
+        return CommonErrorCodes::OperationFailed;
+    }
+
+    // Perform OTA update
+    while (1) {
+        err = esp_https_ota_perform(https_ota_handle);
+        if (err != ESP_ERR_HTTPS_OTA_IN_PROGRESS) {
+            break;
+        }
+        // Report progress if callback is set
+        // Note: Progress reporting can be added here if needed
+    }
+
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "OTA update successful!");
+        esp_err_t ret = esp_https_ota_finish(https_ota_handle);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "OTA finish failed! Error: %s", esp_err_to_name(ret));
+            onUpdateFailed.trigger();
+            return CommonErrorCodes::OperationFailed;
+        }
         onUpdateComplete.trigger();
         return CommonErrorCodes::None;
     } else {
         ESP_LOGE(TAG, "OTA update failed! Error: %s", esp_err_to_name(err));
+        esp_https_ota_abort(https_ota_handle);
         onUpdateFailed.trigger();
         // Return specific error codes based on the esp_https_ota error
         switch (err) {

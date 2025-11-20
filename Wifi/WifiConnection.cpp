@@ -50,7 +50,7 @@ ErrorCode WifiConnection::connect(const std::string &ssid, const std::string &pa
                                                         this,
                                                         &instance_any_id));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-                                                        IP_EVENT_STA_GOT_IP,
+                                                        IP_EVENT_STA_GOT_IPV4,
                                                         &eventHandler,
                                                         this,
                                                         &instance_got_ip));
@@ -140,8 +140,8 @@ void WifiConnection::eventHandler(void *arg, esp_event_base_t event_base,
             self->onDisconnect.trigger(self, nullptr);
             self->_isConnected = false; // Update connection status
         }
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        auto *event = (ip_event_got_ip_t *) event_data;
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IPV4) {
+        auto *event = (ip_event_got_ipv4_t *) event_data;
         self->_ipAddress = IPAddress(event->ip_info.ip);
         self->_retryNum = 0;
         self->_isConnected = true; // Update connection status

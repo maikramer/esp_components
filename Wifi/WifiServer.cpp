@@ -4,6 +4,7 @@
 #include <lwip/sockets.h>
 #include <esp_wifi.h>
 #include <esp_netif.h>
+#include <esp_event.h>
 #include <esp_log.h>
 
 /**
@@ -99,6 +100,19 @@ ErrorCode WifiServer::accept(WifiClient& client) const {
 
 ErrorCode WifiServer::configureAccessPoint(const std::string& ssid, const std::string& password,
                                            const IPAddress& ip) {
+    // Initialize netif and event loop if not already done
+    esp_err_t ret = esp_netif_init();
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+        ESP_LOGE("WifiServer", "Failed to initialize netif");
+        return CommonErrorCodes::WifiInitFailed;
+    }
+
+    ret = esp_event_loop_create_default();
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
+        ESP_LOGE("WifiServer", "Failed to create event loop");
+        return CommonErrorCodes::WifiInitFailed;
+    }
+
     // Stop any existing WiFi mode
     if (esp_wifi_stop() != ESP_OK) {
         ESP_LOGE("WifiServer", "Failed to stop existing WiFi");

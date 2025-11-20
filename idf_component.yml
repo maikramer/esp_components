@@ -6,6 +6,10 @@ license: "MIT"
 maintainers:
   - "Maikeu Locatelli <maike.kramer@exemplo.com>"
 
+# Requer ESP-IDF v6.0 ou superior
+idf:
+  version: ">=6.0.0"
+
 # Dependências externas necessárias
 dependencies:
     johboh/nlohmann-json: ^3.12.0

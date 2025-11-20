@@ -1,5 +1,5 @@
 set(srcs "JsonModels.cpp")
 set(include_dirs .)
-set(requires utility config johboh__nlohmann-json ErrorCodes UserManaging)
+set(requires utility config johboh/nlohmann-json ErrorCodes UserManaging)
 
 idf_component_register(SRCS "${srcs}" INCLUDE_DIRS "${include_dirs}" REQUIRES "${requires}")

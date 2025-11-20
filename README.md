@@ -44,15 +44,19 @@ idf_component_register(
 
 ### Usar Componentes Individuais
 
-Você também pode usar componentes específicos diretamente:
+Quando usar componentes específicos, referencie-os diretamente pelo nome:
 
 ```cmake
 idf_component_register(
     SRCS "main.cpp"
     INCLUDE_DIRS "."
-    REQUIRES Wifi Connection utility
+    REQUIRES Wifi Connection utility ErrorCodes JsonModels
 )
 ```
+
+**Nota Importante**: Se você encontrar erros de "component not found" ao usar como dependência externa via git, certifique-se de que:
+1. Os submódulos Git estão inicializados (execute `git submodule update --init --recursive` no repositório)
+2. Você está referenciando os componentes pelo nome correto (ex: `utility`, não `esp_components::utility`)
 
 ## Estrutura
 
@@ -75,8 +79,8 @@ esp_components/
 ## Dependências Externas
 
 Este componente requer:
-- ESP-IDF v5.0 ou superior
-- Componentes ESP-IDF padrão: `esp_wifi`, `nvs_flash`, `bt`, etc.
+- ESP-IDF v6.0 ou superior
+- Componentes ESP-IDF padrão: `esp_wifi`, `esp_netif`, `esp_event`, `nvs_flash`, `bt`, etc.
 - Componente externo: `johboh/nlohmann-json` (via IDF Component Manager)
 
 ## Licença

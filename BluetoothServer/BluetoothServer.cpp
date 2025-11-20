@@ -185,7 +185,7 @@ void BluetoothServer::startSendDataTask() {
                 TickType_t xLastWakeTime = xTaskGetTickCount();
                 for (;;) {
                     ConnectionManager::sendNotifications(); // Send notifications to connected clients
-                    vTaskDelayUntil(&xLastWakeTime, SEND_DATARATE);
+                    xTaskDelayUntil(&xLastWakeTime, SEND_DATARATE);
                 }
             },
             "SendDataTask",

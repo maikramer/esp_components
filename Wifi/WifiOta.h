@@ -28,7 +28,7 @@ public:
      * @param url The URL of the firmware image to download and install.
      * @return ErrorCode indicating success or failure of the OTA update process.
      */
-    ErrorCode startUpdate(const std::string& url) const;
+    ErrorCode startUpdate(const std::string& url);
 
     /**
      * @brief Event triggered when the OTA update process starts.
