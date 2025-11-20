@@ -1,5 +1,5 @@
-set(srcs Utility.cpp CrossPlatformUtility.cpp)
+set(srcs Utility.cpp CrossPlatformUtility.cpp Event.cpp)
 set(include_dirs . ../submodules/nameof/include)
 set(requires nvs_flash johboh/nlohmann-json ErrorCodes)
 
-idf_component_register(SRCS "Utility.cpp" "${srcs}" INCLUDE_DIRS "${include_dirs}" REQUIRES "${requires}")
+idf_component_register(SRCS "${srcs}" INCLUDE_DIRS "${include_dirs}" REQUIRES "${requires}")
