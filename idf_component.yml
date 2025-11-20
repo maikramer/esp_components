@@ -1,16 +1,18 @@
 ## IDF Component Manager Manifest File
-version: "1.0.0"
-description: "Biblioteca de componentes ESP32 para comunicação, armazenamento, drivers e utilitários"
-url: "https://github.com/maikramer/esp_components"
-license: "MIT"
+version: 1.0.0
+description: Biblioteca de componentes ESP32 para comunicação, armazenamento, 
+  drivers e utilitários
+url: https://github.com/maikramer/esp_components
+license: MIT
 maintainers:
-  - "Maikeu Locatelli <maike.kramer@exemplo.com>"
+- Maikeu Locatelli <maike.kramer@exemplo.com>
 
 # Requer ESP-IDF v6.0 ou superior
 idf:
-  version: ">=6.0.0"
+  version: '>=6.0.0'
 
 # Dependências externas necessárias
 dependencies:
-    johboh/nlohmann-json: ^3.12.0
+  johboh/nlohmann-json: ^3.12.0
 
+  h2zero/esp-nimble-cpp: ^2.3.3

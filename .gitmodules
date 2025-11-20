@@ -4,6 +4,3 @@
 [submodule "submodules/libtelnet"]
 	path = submodules/libtelnet
 	url = https://github.com/seanmiddleditch/libtelnet.git
-[submodule "submodules/esp-nimble-cpp"]
-	path = submodules/esp-nimble-cpp
-	url = https://github.com/h2zero/esp-nimble-cpp.git
