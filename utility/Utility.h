@@ -11,7 +11,7 @@
 #include "string"
 #include <hal/gpio_types.h>
 #include <driver/gpio.h>
-#include <JsonModels.h>
+#include <nlohmann/json.hpp>
 #include "esp_log.h"
 #include "sstream"
 #include <list>
