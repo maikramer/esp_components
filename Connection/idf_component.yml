@@ -1,0 +1,18 @@
+## IDF Component Manager Manifest File
+## Componente: Connection
+## Gerenciamento de conexões base (TCP, Bluetooth, etc.)
+
+version: "1.0.0"
+description: "Gerenciamento de conexões base para ESP-IDF (TCP, Bluetooth, etc.)"
+license: "MIT"
+
+# Dependências locais via path
+dependencies:
+  utility:
+    path: ../utility
+  JsonModels:
+    path: ../JsonModels
+
+# Requer ESP-IDF v6.0 ou superior
+idf:
+  version: ">=6.0.0"

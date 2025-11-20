@@ -1,0 +1,16 @@
+## IDF Component Manager Manifest File
+## Componente: NimBLE
+## Wrapper C++ para NimBLE (Bluetooth Low Energy)
+
+version: "1.0.0"
+description: "Wrapper C++ para NimBLE (Bluetooth Low Energy) no ESP-IDF"
+license: "MIT"
+
+# Dependências locais via path
+dependencies:
+  utility:
+    path: ../utility
+
+# Requer ESP-IDF v6.0 ou superior
+idf:
+  version: ">=6.0.0"

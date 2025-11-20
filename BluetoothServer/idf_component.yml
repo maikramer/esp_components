@@ -1,0 +1,22 @@
+## IDF Component Manager Manifest File
+## Componente: BluetoothServer
+## Servidor Bluetooth usando NimBLE
+
+version: "1.0.0"
+description: "Servidor Bluetooth para ESP-IDF usando NimBLE"
+license: "MIT"
+
+# Dependências locais via path
+dependencies:
+  NimBLE:
+    path: ../NimBLE
+  JsonModels:
+    path: ../JsonModels
+  ErrorCodes:
+    path: ../ErrorCodes
+  Connection:
+    path: ../Connection
+
+# Requer ESP-IDF v6.0 ou superior
+idf:
+  version: ">=6.0.0"

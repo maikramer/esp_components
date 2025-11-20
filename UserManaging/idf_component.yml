@@ -1,0 +1,20 @@
+## IDF Component Manager Manifest File
+## Componente: UserManaging
+## Gerenciamento de usuários
+
+version: "1.0.0"
+description: "Sistema de gerenciamento de usuários para ESP-IDF"
+license: "MIT"
+
+# Dependências locais via path
+dependencies:
+  Storage:
+    path: ../Storage
+  JsonModels:
+    path: ../JsonModels
+  BluetoothServer:
+    path: ../BluetoothServer
+
+# Requer ESP-IDF v6.0 ou superior
+idf:
+  version: ">=6.0.0"
